@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace SilentZ\Features\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class FeaturesCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-features';
 
     public $description = 'My command';
 
