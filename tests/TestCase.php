@@ -4,7 +4,7 @@ namespace SilentZ\Features\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use SilentZ\Features\FeaturesServiceProvider;
+use SilentZ\Features\ServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -20,7 +20,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            FeaturesServiceProvider::class,
+            ServiceProvider::class,
         ];
     }
 
