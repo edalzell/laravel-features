@@ -1,13 +1,12 @@
 {
-    "name": "silentzco/laravel-features",
+    "name": "silentz/laravel-features",
     "description": "This is my package laravel-features",
+    "license": "MIT",
     "keywords": [
         "Silent Z",
         "laravel",
         "laravel-features"
     ],
-    "homepage": "https://github.com/silentzco/laravel-features",
-    "license": "MIT",
     "authors": [
         {
             "name": "Erin Dalzell",
@@ -15,61 +14,59 @@
             "role": "Developer"
         }
     ],
+    "homepage": "https://github.com/silentzco/laravel-features",
     "require": {
-        "php": "^8.4",
-        "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^11.0||^12.0"
+        "php": "^8.3",
+        "illuminate/contracts": "^11.0 || ^12.0"
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
-        "larastan/larastan": "^3.0",
-        "orchestra/testbench": "^10.0.0||^9.0.0",
+        "orchestra/testbench": "^9.0.0 || ^10.0.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-arch": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-deprecation-rules": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
-        "spatie/laravel-ray": "^1.35"
+        "spatie/laravel-ray": "^1.40"
     },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "SilentZ\\Features\\": "src/",
-            "SilentZ\\Features\\Database\\Factories\\": "database/factories/"
+            "SilentZ\\Features\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "SilentZ\\Features\\Tests\\": "tests/",
-            "Workbench\\App\\": "workbench/app/"
+            "SilentZ\\Features\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "aliases": {
+                "Features": "SilentZ\\Features\\Facades\\Features"
+            },
+            "providers": [
+                "SilentZ\\Features\\ServiceProvider"
+            ]
         }
     },
     "scripts": {
         "post-autoload-dump": "@composer run prepare",
-        "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "test": "vendor/bin/pest",
-        "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
-    },
-    "config": {
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "phpstan/extension-installer": true
-        }
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "SilentZ\\Features\\FeaturesServiceProvider"
-            ],
-            "aliases": {
-                "Features": "SilentZ\\Features\\Facades\\Features"
-            }
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+        "test-coverage": "vendor/bin/pest --coverage"
+    }
 }
