@@ -17,6 +17,7 @@
     "homepage": "https://github.com/silentzco/laravel-features",
     "require": {
         "php": "^8.3",
+        "composer/composer": "^2.8",
         "illuminate/contracts": "^11.0 || ^12.0"
     },
     "require-dev": {
@@ -52,6 +53,7 @@
         "sort-packages": true
     },
     "extra": {
+        "class": "SilentZ\\Features\\Composer\\GenerateNamespaces",
         "laravel": {
             "aliases": {
                 "Features": "SilentZ\\Features\\Facades\\Features"
