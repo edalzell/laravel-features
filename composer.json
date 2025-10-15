@@ -36,6 +36,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
+        "classmap": ["src/Composer/GenerateNamespaces"],
         "psr-4": {
             "SilentZ\\Features\\": "src/"
         }
