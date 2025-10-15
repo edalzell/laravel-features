@@ -36,7 +36,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
-        "classmap": ["src/Composer/GenerateNamespaces.php"],
+        "classmap": ["src/Composer"],
         "psr-4": {
             "SilentZ\\Features\\": "src/"
         }
