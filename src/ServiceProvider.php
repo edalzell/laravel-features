@@ -20,6 +20,10 @@ class ServiceProvider extends LaravelServiceProvider
 
     private function features(): Collection
     {
+        if (! is_dir(app_path('Features'))) {
+            return collect();
+        }
+
         $folders = Finder::create()
             ->in(app_path('Features'))
             ->directories();
