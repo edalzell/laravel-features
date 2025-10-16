@@ -1,6 +1,8 @@
 <?php
 
-namespace SilentZ\Features\Concerns;
+namespace SilentZ\Features\Concerns\Provider;
+
+use SilentZ\Features\Feature;
 
 /**
  * @method bool exists(string $path)
@@ -9,10 +11,10 @@ namespace SilentZ\Features\Concerns;
  */
 trait SupportsDatabase
 {
-    public function registerDatabase(): static
+    public function registerMigrations(Feature $feature): static
     {
-        if ($this->exists('database/migrations')) {
-            $this->loadMigrationsFrom($this->feature()->migrationPath());
+        if ($feature->hasMigrations()) {
+            $this->loadMigrationsFrom($this->feature()->migrationsPath());
         }
 
         return $this;

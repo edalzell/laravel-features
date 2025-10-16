@@ -6,10 +6,11 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use SilentZ\Features\Concerns\Features\HasConfiguration;
+use SilentZ\Features\Concerns\Features\HasDatabase;
 
 class Feature
 {
-    use HasConfiguration;
+    use HasConfiguration, HasDatabase;
 
     private Filesystem $disk;
 
