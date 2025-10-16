@@ -2,33 +2,43 @@
 
 namespace SilentZ\Features;
 
-use Illuminate\Support\Collection;
+use Composer\Autoload\ClassLoader;
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
 
 class ServiceProvider extends LaravelServiceProvider
 {
-    public function boot() {}
-
     public function register()
     {
-        $this->features()
-            ->filter(fn (Feature $feature) => $feature->provider !== null)
-            ->each(fn (Feature $feature) => $this->app->register($feature->provider));
+        $this->registerFeatureProviders();
     }
 
-    private function features(): Collection
+    private function addNamespaces(): void
     {
-        if (! is_dir(app_path('Features'))) {
-            return collect();
+        $loader = new ClassLoader;
+        $loader->addPsr4('App\\Features\\One\\Database\\Seeders\\', app_path('Features/One/database/check/'));
+        $loader->register();
+    }
+
+    private function disk(): Filesystem
+    {
+        return Storage::build([
+            'driver' => 'local',
+            'root' => app_path('Features'),
+        ]);
+    }
+
+    private function registerFeatureProviders(): void
+    {
+        if (empty($features = $this->disk()->directories())) {
+            return;
         }
 
-        $folders = Finder::create()
-            ->in(app_path('Features'))
-            ->directories();
-
-        return collect($folders)
-            ->map(fn (SplFileInfo $directory) => Feature::fromDirectory($directory));
+        foreach ($features as $feature) {
+            if ($this->disk()->exists($feature.DIRECTORY_SEPARATOR.'ServiceProvider.php')) {
+                $this->app->register('App\\Features\\'.$feature.'\\ServiceProvider');
+            }
+        }
     }
 }
