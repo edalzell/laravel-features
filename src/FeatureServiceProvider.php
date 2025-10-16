@@ -6,12 +6,13 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use SilentZ\Features\Concerns\Provider\SupportsConfiguration;
+use SilentZ\Features\Concerns\Provider\SupportsDatabase;
 use Spatie\Blink\Blink;
 use Symfony\Component\Filesystem\Path;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
-    use SupportsConfiguration;
+    use SupportsConfiguration, SupportsDatabase;
 
     public function boot()
     {
@@ -21,6 +22,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     public function register()
     {
         $this->registerConfiguration($this->feature());
+        $this->registerMigrations($this->feature());
     }
 
     private function disk(): Filesystem
