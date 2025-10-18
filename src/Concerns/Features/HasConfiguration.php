@@ -14,16 +14,26 @@ trait HasConfiguration
 {
     public function hasConfig(): bool
     {
-        return $this->exists('config');
+        return $this->exists($this->relativeConfigPath());
     }
 
-    public function configPath(): string
+    public function absoluteConfigPath(): string
     {
-        return $this->disk->path('config/'.$this->slug);
+        return $this->disk()->path('config/'.$this->configFile());
+    }
+
+    public function configFile(): string
+    {
+        return $this->slug.'.php';
     }
 
     public function configTag(): string
     {
         return $this->slug.'-config';
+    }
+
+    public function relativeConfigPath(): string
+    {
+        return 'config/'.$this->configFile();
     }
 }

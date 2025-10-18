@@ -3,7 +3,6 @@
 namespace SilentZ\Features;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use SilentZ\Features\Concerns\Features\HasConfiguration;
 use SilentZ\Features\Concerns\Features\HasDatabase;
@@ -23,17 +22,15 @@ class Feature
             'root' => app_path('Features/'.$name),
         ]);
 
-        $this->slug = str($name)->slug()->toString();
+        $this->slug = str($name)->kebab()->toString();
     }
 
-    public function registerProvider(Application $app): void
+    public function disk(): Filesystem
     {
-        if ($this->exists('ServiceProvider.php')) {
-            $app->register('App\\Features\\'.$this->name.'\\ServiceProvider');
-        }
+        return $this->disk;
     }
 
-    private function exists(string $path): bool
+    public function exists(string $path): bool
     {
         return $this->disk->exists($path);
     }

@@ -14,10 +14,12 @@ trait SupportsConfiguration
 {
     public function bootConfiguration(): static
     {
-        if ($this->feature()->hasConfig()) {
+        $feature = $this->feature();
+
+        if ($feature->hasConfig()) {
             $this->publishes([
-                $this->disk()->path($this->feature()->configPath()) => config_path($this->feature()->slug),
-            ], $this->feature()->configTag());
+                $feature->absoluteConfigPath() => config_path($feature->configFile()),
+            ], $feature->configTag());
         }
 
         return $this;
@@ -26,7 +28,7 @@ trait SupportsConfiguration
     public function registerConfiguration(): static
     {
         if ($this->feature()->hasConfig()) {
-            $this->mergeConfigFrom($this->feature()->configPath().'.php', $this->feature()->slug);
+            $this->mergeConfigFrom($this->feature()->absoluteConfigPath(), $this->feature()->slug);
         }
 
         return $this;
