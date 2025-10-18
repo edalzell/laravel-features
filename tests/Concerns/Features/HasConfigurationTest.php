@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Storage;
 use SilentZ\Features\Feature;
 
 it('checks for config file', function () {
