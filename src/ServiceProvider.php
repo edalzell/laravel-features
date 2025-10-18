@@ -2,7 +2,6 @@
 
 namespace SilentZ\Features;
 
-use Composer\Autoload\ClassLoader;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
@@ -12,13 +11,6 @@ class ServiceProvider extends LaravelServiceProvider
     public function register()
     {
         $this->registerFeatureProviders();
-    }
-
-    private function addNamespaces(): void
-    {
-        $loader = new ClassLoader;
-        $loader->addPsr4('App\\Features\\One\\Database\\Seeders\\', app_path('Features/One/database/check/'));
-        $loader->register();
     }
 
     private function disk(): Filesystem
@@ -36,7 +28,7 @@ class ServiceProvider extends LaravelServiceProvider
         }
 
         foreach ($features as $feature) {
-            if ($this->disk()->exists($feature.'/ServiceProvider.php')) {
+            if ($this->disk()->exists($feature.'/src/ServiceProvider.php')) {
                 $this->app->register('App\\Features\\'.$feature.'\\ServiceProvider');
             }
         }
