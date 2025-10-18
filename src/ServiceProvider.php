@@ -36,7 +36,7 @@ class ServiceProvider extends LaravelServiceProvider
         }
 
         foreach ($features as $feature) {
-            if ($this->disk()->exists($feature.DIRECTORY_SEPARATOR.'ServiceProvider.php')) {
+            if ($this->disk()->exists($feature.'/ServiceProvider.php')) {
                 $this->app->register('App\\Features\\'.$feature.'\\ServiceProvider');
             }
         }

@@ -54,7 +54,6 @@
         "sort-packages": true
     },
     "extra": {
-        "class": "SilentZ\\Features\\Composer\\GenerateNamespaces",
         "laravel": {
             "aliases": {
                 "Features": "SilentZ\\Features\\Facades\\Features"
