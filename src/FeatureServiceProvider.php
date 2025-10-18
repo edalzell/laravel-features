@@ -45,8 +45,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $class = new \ReflectionClass(static::class);
         $pathParts = explode('/', Path::canonicalize($class->getFileName()));
 
-        // /.../app/Features/One/ServiceProvider.php
-        $name = $pathParts[count($pathParts) - 2];
+        // /.../app/Features/One/src/ServiceProvider.php
+        $name = $pathParts[count($pathParts) - 3];
 
         return new Feature($name);
     }
