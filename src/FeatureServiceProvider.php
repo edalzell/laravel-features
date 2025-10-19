@@ -2,42 +2,40 @@
 
 namespace SilentZ\Features;
 
-use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
-use SilentZ\Features\Concerns\Provider\SupportsConfiguration;
-use SilentZ\Features\Concerns\Provider\SupportsDatabase;
 use Spatie\Blink\Blink;
 use Symfony\Component\Filesystem\Path;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
-    use SupportsConfiguration, SupportsDatabase;
-
     public function boot()
     {
-        $this->bootConfiguration($this->feature());
+        $this->feature()->boot();
     }
 
     public function register()
     {
-        $this->registerConfiguration($this->feature());
-        $this->registerMigrations($this->feature());
+        $this->feature()->register();
     }
 
-    private function disk(): Filesystem
+    public function feature(): Feature
     {
-        return Storage::build([
-            'driver' => 'local',
-            'root' => app_path('Features/'.$this->feature()->name),
-        ]);
+        return (new Blink)->once('feature', fn () => $this->resolveFeature());
     }
 
-    private function feature(): Feature
+    public function loadMigrations(string $path): void
     {
-        $blink = new Blink;
+        $this->loadMigrationsFrom($path);
+    }
 
-        return $blink->once('feature', fn () => $this->resolveFeature());
+    public function mergeConfig(string $path, string $key): void
+    {
+        $this->mergeConfigFrom($path, $key);
+    }
+
+    public function publish(array $paths, ?string $tag = null): void
+    {
+        $this->publishes($paths, $tag);
     }
 
     private function resolveFeature(): Feature
@@ -48,6 +46,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         // /.../app/Features/One/src/ServiceProvider.php
         $name = $pathParts[count($pathParts) - 3];
 
-        return new Feature($name);
+        return new Feature($name, $this);
     }
 }

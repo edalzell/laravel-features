@@ -2,38 +2,40 @@
 
 namespace SilentZ\Features\Concerns\Features;
 
-use Illuminate\Contracts\Filesystem\Filesystem;
+use SilentZ\Features\FeatureServiceProvider;
 
 /**
  * @method bool exists(string $path)
+ * @method string path(string $path)
  *
- * @property Filesystem $disk
+ * @property FeatureServiceProvider $provider
  * @property string $slug
  */
 trait HasConfiguration
 {
-    public function hasConfig(): bool
+    public function bootConfig(): static
     {
-        return $this->exists($this->relativeConfigPath());
+        if ($this->exists($path = 'config/'.$this->configFile())) {
+            $this->provider->publish(
+                [$path => config_path($this->configFile())],
+                $this->slug.'-config'
+            );
+        }
+
+        return $this;
     }
 
-    public function absoluteConfigPath(): string
+    public function registerConfig(): static
     {
-        return $this->disk()->path('config/'.$this->configFile());
+        if ($this->exists($path = 'config/'.$this->configFile())) {
+            $this->provider->mergeConfig($this->path($path), $this->slug);
+        }
+
+        return $this;
     }
 
-    public function configFile(): string
+    private function configFile(): string
     {
         return $this->slug.'.php';
-    }
-
-    public function configTag(): string
-    {
-        return $this->slug.'-config';
-    }
-
-    public function relativeConfigPath(): string
-    {
-        return 'config/'.$this->configFile();
     }
 }
