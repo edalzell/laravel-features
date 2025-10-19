@@ -15,7 +15,7 @@ class Feature
 
     public readonly string $slug;
 
-    public function __construct(public string $name)
+    public function __construct(public string $name, private FeatureServiceProvider $provider)
     {
         $this->disk = Storage::build([
             'driver' => 'local',
@@ -25,13 +25,25 @@ class Feature
         $this->slug = str($name)->kebab()->toString();
     }
 
-    public function disk(): Filesystem
+    public function boot(): void
     {
-        return $this->disk;
+        $this->bootConfig();
     }
 
     public function exists(string $path): bool
     {
         return $this->disk->exists($path);
+    }
+
+    public function path(string $path): string
+    {
+        return $this->disk->path($path);
+    }
+
+    public function register(): void
+    {
+        $this
+            ->registerConfig($this)
+            ->registerDatabase();
     }
 }

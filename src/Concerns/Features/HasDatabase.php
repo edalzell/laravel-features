@@ -12,13 +12,12 @@ use Illuminate\Contracts\Filesystem\Filesystem;
  */
 trait HasDatabase
 {
-    public function hasMigrations(): bool
+    public function registerDatabase(): static
     {
-        return $this->exists('database/migrations');
-    }
+        if ($this->exists('database/migrations')) {
+            $this->provider->loadMigrations($this->disk->path('database/migrations'));
+        }
 
-    public function migrationsPath(): string
-    {
-        return $this->disk->path('database/migrations');
+        return $this;
     }
 }
