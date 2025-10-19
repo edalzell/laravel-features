@@ -19,14 +19,18 @@ class FeatureNamespaces
         }
 
         // Find all feature directories
-        $features = array_filter(glob($featuresDir.'/*'), 'is_dir');
+        $featurePaths = array_filter(glob($featuresDir.'/*'), 'is_dir');
 
-        foreach ($features as $featurePath) {
+        foreach ($featurePaths as $featurePath) {
             $featureName = basename($featurePath);
-            $namespace = "App\\Features\\{$featureName}\\";
-            $path = "app/Features/{$featureName}/src/";
+            $rootNamespace = "App\\Features\\{$featureName}\\";
+            $rootPath = "app/Features/{$featureName}/src/";
+            $dbNamespace = "Features\\{$featureName}\\Database\\";
+            $dbPath = "app/Features/{$featureName}/src/database/";
 
-            $autoload['psr-4'][$namespace] = $path;
+            $autoload['psr-4'][$rootNamespace] = $rootPath;
+            $autoload['psr-4'][$dbNamespace.'Seeders\\'] = $dbPath.'seeders/';
+            $autoload['psr-4'][$dbNamespace.'Factories\\'] = $dbPath.'factories/';
         }
 
         $package->setAutoload($autoload);
