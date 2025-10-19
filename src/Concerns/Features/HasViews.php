@@ -11,12 +11,12 @@ use SilentZ\Features\FeatureServiceProvider;
  * @property FeatureServiceProvider $provider
  * @property string $slug
  */
-trait HasDatabase
+trait HasViews
 {
-    public function registerDatabase(): static
+    public function registerViews(): static
     {
-        if ($this->exists('database/migrations')) {
-            $this->provider->loadMigrations($this->disk->path('database/migrations'));
+        if ($this->exists('resources/views')) {
+            $this->provider->loadViews($this->disk->path('views'), $this->slug);
         }
 
         return $this;

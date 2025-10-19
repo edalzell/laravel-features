@@ -28,6 +28,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this->loadMigrationsFrom($path);
     }
 
+    public function loadRoutes(string $path): void
+    {
+        $this->loadRoutesFrom($path);
+    }
+
+    public function loadViews(string $path, string $namespace): void
+    {
+        $this->loadViewsFrom($path, $namespace);
+    }
+
     public function mergeConfig(string $path, string $key): void
     {
         $this->mergeConfigFrom($path, $key);
