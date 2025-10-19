@@ -1,6 +1,6 @@
 <?php
 
-namespace SilentZ\Features\Composer;
+namespace Edalzell\Features\Composer;
 
 use Composer\Script\Event;
 

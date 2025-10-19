@@ -1,9 +1,9 @@
 {
-    "name": "silentz/laravel-features",
+    "name": "edalzell/laravel-features",
     "description": "This is my package laravel-features",
     "license": "MIT",
     "keywords": [
-        "Silent Z",
+        "Erin Dalzell",
         "laravel",
         "laravel-features"
     ],
@@ -14,7 +14,7 @@
             "role": "Developer"
         }
     ],
-    "homepage": "https://github.com/silentzco/laravel-features",
+    "homepage": "https://github.com/edalzell/laravel-features",
     "require": {
         "php": "^8.3",
         "composer/composer": "^2.8",
@@ -38,12 +38,12 @@
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "SilentZ\\Features\\": "src/"
+            "Edalzell\\Features\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "SilentZ\\Features\\Tests\\": "tests/"
+            "Edalzell\\Features\\Tests\\": "tests/"
         }
     },
     "config": {
@@ -56,10 +56,10 @@
     "extra": {
         "laravel": {
             "aliases": {
-                "Features": "SilentZ\\Features\\Facades\\Features"
+                "Features": "Edalzell\\Features\\Facades\\Features"
             },
             "providers": [
-                "SilentZ\\Features\\ServiceProvider"
+                "Edalzell\\Features\\ServiceProvider"
             ]
         }
     },
