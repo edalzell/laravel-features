@@ -1,10 +1,10 @@
 <?php
 
-namespace SilentZ\Features\Tests;
+namespace Edalzell\Features\Tests;
 
+use Edalzell\Features\ServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use SilentZ\Features\ServiceProvider;
 
 class TestCase extends Orchestra
 {
@@ -13,7 +13,7 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'SilentZ\\Features\\Database\\Factories\\'.class_basename($modelName).'Factory'
+            fn (string $modelName) => 'Edalzell\\Features\\Database\\Factories\\'.class_basename($modelName).'Factory'
         );
     }
 

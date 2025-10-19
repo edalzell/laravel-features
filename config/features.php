@@ -1,6 +1,6 @@
 <?php
 
-// config for SilentZ/Features
+// config for Edalzell/Features
 return [
 
 ];

@@ -1,6 +1,6 @@
 <?php
 
-use SilentZ\Features\Feature;
+use Edalzell\Features\Feature;
 
 it('checks for config file', function () {
     $localDisk = tap(mockOnDemandDisk('Features/One'))->put('config/one.php', '');

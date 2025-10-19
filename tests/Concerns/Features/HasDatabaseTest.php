@@ -1,6 +1,6 @@
 <?php
 
-use SilentZ\Features\Feature;
+use Edalzell\Features\Feature;
 
 it('checks for migrations', function () {
     $localDisk = tap(mockOnDemandDisk('Features/One'))->put('database/migrations/add_table.php', '');

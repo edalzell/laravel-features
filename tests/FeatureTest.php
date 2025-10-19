@@ -1,6 +1,6 @@
 <?php
 
-use SilentZ\Features\Feature;
+use Edalzell\Features\Feature;
 
 it('can check for file existence', function () {
     mockOnDemandDisk('Features/One')->put('foo/test.txt', 'contents');

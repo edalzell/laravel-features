@@ -1,6 +1,6 @@
 <?php
 
-namespace SilentZ\Features;
+namespace Edalzell\Features;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;

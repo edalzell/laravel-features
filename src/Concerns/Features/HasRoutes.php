@@ -1,8 +1,8 @@
 <?php
 
-namespace SilentZ\Features\Concerns\Features;
+namespace Edalzell\Features\Concerns\Features;
 
-use SilentZ\Features\FeatureServiceProvider;
+use Edalzell\Features\FeatureServiceProvider;
 
 /**
  * @method bool exists(string $path)

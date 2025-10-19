@@ -1,6 +1,6 @@
 <?php
 
-namespace SilentZ\Features;
+namespace Edalzell\Features;
 
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Spatie\Blink\Blink;

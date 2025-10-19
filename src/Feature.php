@@ -1,11 +1,11 @@
 <?php
 
-namespace SilentZ\Features;
+namespace Edalzell\Features;
 
+use Edalzell\Features\Concerns\Features\HasConfiguration;
+use Edalzell\Features\Concerns\Features\HasDatabase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
-use SilentZ\Features\Concerns\Features\HasConfiguration;
-use SilentZ\Features\Concerns\Features\HasDatabase;
 
 class Feature
 {

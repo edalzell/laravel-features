@@ -1,8 +1,8 @@
 <?php
 
+use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
-use SilentZ\Features\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);
 
