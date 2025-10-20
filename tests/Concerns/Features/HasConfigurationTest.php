@@ -1,14 +1,28 @@
 <?php
 
 use Edalzell\Features\Feature;
+use Edalzell\Features\FeatureServiceProvider;
 
-it('checks for config file', function () {
-    $localDisk = tap(mockOnDemandDisk('Features/One'))->put('config/one.php', '');
+beforeEach(function () {
+    $this->disk = tap(mockOnDemandDisk('Features/TwoWords'))->put('config/two-words.php', '');
+    $this->provider = mock(new class(mock()) extends FeatureServiceProvider {});
+});
 
-    expect(new Feature('One'))
-        ->hasConfig()->toBeTrue()
-        ->absoluteConfigPath()->toBe($localDisk->path('config/one.php'))
-        ->configFile()->toBe('one.php')
-        ->configTag()->toBe('one-config')
-        ->relativeConfigPath()->toBe('config/one.php');
+it('boots config', function () {
+
+    $this->provider->shouldReceive('publish')->once()->with(
+        ['config/two-words.php' => config_path('two-words.php')],
+        'two-words-config'
+    );
+
+    (new Feature('TwoWords', $this->provider))->bootConfig();
+});
+
+it('merges config', function () {
+    $this->provider
+        ->shouldReceive('mergeConfig')
+        ->once()
+        ->with($this->disk->path('config/two-words.php'), 'two-words');
+
+    (new Feature('TwoWords', $this->provider))->registerConfig();
 });
