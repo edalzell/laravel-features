@@ -1,0 +1,7 @@
+<?php
+
+namespace {{ namespace }};
+
+use Edalzell\Features\FeatureServiceProvider;
+
+class ServiceProvider extends FeatureServiceProvider {}
