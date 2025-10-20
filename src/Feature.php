@@ -45,7 +45,7 @@ class Feature
     public function register(): void
     {
         $this
-            ->registerConfig($this)
+            ->registerConfig()
             ->registerDatabase();
     }
 }
