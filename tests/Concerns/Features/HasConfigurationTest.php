@@ -9,11 +9,13 @@ beforeEach(function () {
 });
 
 it('boots config', function () {
-
-    $this->provider->shouldReceive('publish')->once()->with(
-        ['config/two-words.php' => config_path('two-words.php')],
-        'two-words-config'
-    );
+    $this->provider
+        ->shouldReceive('publish')
+        ->once()
+        ->with(
+            ['config/two-words.php' => config_path('two-words.php')],
+            'two-words-config'
+        );
 
     (new Feature('TwoWords', $this->provider))->bootConfig();
 });

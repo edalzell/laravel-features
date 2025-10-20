@@ -16,7 +16,7 @@ trait HasViews
     public function registerViews(): static
     {
         if ($this->exists('resources/views')) {
-            $this->provider->loadViews($this->disk->path('views'), $this->slug);
+            $this->provider->loadViews($this->disk->path('resources/views'), $this->slug);
         }
 
         return $this;
