@@ -52,6 +52,8 @@ class Make extends GeneratorCommand
 
     private function addPreAutoloadDumpScript(array $content): array
     {
+        // @todo check for array and merge in
+        // @todo skip if it already exists
         $content['scripts']['pre-autoload-dump'] = 'Edalzell\\Features\\Composer\\FeatureNamespaces::add';
 
         return $content;
