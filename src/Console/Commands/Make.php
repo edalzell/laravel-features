@@ -21,7 +21,10 @@ class Make extends GeneratorCommand
         $composer->setWorkingPath(base_path());
     }
 
-    public function handle(): void
+    /**
+     * @return bool|null
+     */
+    public function handle()
     {
         parent::handle();
 
