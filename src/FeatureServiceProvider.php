@@ -51,7 +51,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     private function resolveFeature(): Feature
     {
         $class = new \ReflectionClass(static::class);
-        $pathParts = explode('/', Path::canonicalize($class->getFileName()));
+        $pathParts = explode('/', Path::normalize($class->getFileName()));
 
         // /.../app/Features/One/src/ServiceProvider.php
         $name = $pathParts[count($pathParts) - 3];

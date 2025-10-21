@@ -46,6 +46,8 @@ class Feature
     {
         $this
             ->registerConfig()
-            ->registerDatabase();
+            ->registerDatabase()
+            ->registerRoutes()
+            ->registerViews();
     }
 }
