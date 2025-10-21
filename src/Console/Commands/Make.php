@@ -26,9 +26,11 @@ class Make extends GeneratorCommand
      */
     public function handle()
     {
-        parent::handle();
+        $return = parent::handle();
 
         $this->addComposerScript();
+
+        return $return;
     }
 
     protected function getPath($name)
