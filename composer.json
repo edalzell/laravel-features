@@ -55,9 +55,6 @@
     },
     "extra": {
         "laravel": {
-            "aliases": {
-                "Features": "Edalzell\\Features\\Facades\\Features"
-            },
             "providers": [
                 "Edalzell\\Features\\ServiceProvider"
             ]
