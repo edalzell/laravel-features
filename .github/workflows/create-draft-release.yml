@@ -1,0 +1,17 @@
+name: Release Drafter
+
+on:
+  pull_request:
+    types: [closed]
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    if: github.event.pull_request.merged == true
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v6.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
