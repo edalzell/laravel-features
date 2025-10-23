@@ -4,7 +4,7 @@ use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 
-uses(TestCase::class)->in(__DIR__);
+// uses(TestCase::class)->in(__DIR__);
 
 function mockOnDemandDisk(string $path): Filesystem
 {
