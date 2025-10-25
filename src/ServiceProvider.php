@@ -17,10 +17,11 @@ class ServiceProvider extends LaravelServiceProvider
 
     public function register()
     {
-        $disk = Storage::build([
-            'driver' => 'local',
-            'root' => app_path('Features'),
-        ]);
+        if (! file_exists($featuresDir = app_path('Features'))) {
+            return;
+        }
+
+        $disk = Storage::build(['driver' => 'local', 'root' => $featuresDir]);
 
         if (empty($features = $disk->directories())) {
             return;
