@@ -1,5 +1,3 @@
-# This is my package laravel-features
-
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/edalzell/laravel-features.svg?style=flat-square)](https://packagist.org/packages/edalzell/laravel-features)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/edalzell/laravel-features/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/edalzell/laravel-features/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/edalzell/laravel-features/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/edalzell/laravel-features/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
@@ -45,6 +43,15 @@ php artisan make:feature MyGreatFeature
 
 This will create an empty (but necessary) service provider that autoloads/registers migrations, routes, & views and properly namespaces your factories, seeders and code.
 
+If you want to add a feature manually, or convert something you already have into a feature:
+* create an `app/Features/YourFeature` folder
+* create a `ServiceProvider` that extends `FeatureServiceProvider`.
+* add a `pre-autoload-dump` script to your `composer.json`:
+```
+"pre-autoload-dump": [
+    "Edalzell\\Features\\Composer\\FeatureNamespaces::add"
+]
+```
 
 ## Testing
 
