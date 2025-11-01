@@ -26,7 +26,7 @@ jobs:
     needs: get_draft_release
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.0
       - name: Update Changelog
         id: update_changelog
         uses: stefanzweifel/changelog-updater-action@v1.12.0
@@ -34,7 +34,7 @@ jobs:
           latest-version: ${{ needs.get_draft_release.outputs.release_tag }}
           release-notes: ${{ needs.get_draft_release.outputs.release_body }}
       - name: Commit updated CHANGELOG
-        uses: stefanzweifel/git-auto-commit-action@v6.0.1
+        uses: stefanzweifel/git-auto-commit-action@v7.0.0
         with:
           branch: main
           commit_message: Update CHANGELOG
