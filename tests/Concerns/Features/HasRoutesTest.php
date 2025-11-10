@@ -4,7 +4,7 @@ use Edalzell\Features\Feature;
 use Edalzell\Features\FeatureServiceProvider;
 
 it('loads routes', function () {
-    $localDisk = tap(mockOnDemandDisk('Features/One'))->put('routes/web.php', '');
+    $localDisk = tap(mockOnDemandDisk('Features/One'))->put('routes'.DIRECTORY_SEPARATOR.'web.php', '');
     $provider = mock(new class(mock()) extends FeatureServiceProvider {});
 
     $provider
