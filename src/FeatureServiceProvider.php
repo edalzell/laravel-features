@@ -5,6 +5,8 @@ namespace Edalzell\Features;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Spatie\Blink\Blink;
 use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
@@ -30,7 +32,14 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     public function loadRoutes(string $path): void
     {
-        $this->loadRoutesFrom($path);
+        $finder = tap(new Finder)
+            ->files()
+            ->in($path)->name('*.php');
+
+        collect($finder)
+            ->map(fn (SplFileInfo $file) => $file->getRealPath())
+            ->filter()
+            ->each(fn (string $routePath) => $this->loadRoutesFrom($routePath));
     }
 
     public function loadViews(string $path, string $namespace): void
