@@ -10,7 +10,7 @@ it('loads routes', function () {
     $provider
         ->shouldReceive('loadRoutes')
         ->once()
-        ->with($localDisk->path('routes'));
+        ->with($localDisk->path('routes/web.php'));
 
     (new Feature('One', $provider))->registerRoutes();
 });
