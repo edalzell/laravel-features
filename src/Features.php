@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Features
 {
-    private static Collection $features;
+    public static Collection $features;
 
     public function __construct()
     {
@@ -40,8 +40,11 @@ class Features
         }
     }
 
-    // public function seed(): void
-    // {
-    //     static::$features->each->seed();
-    // }
+    public function seeders(): array
+    {
+        return static::$features
+            ->flatMap
+            ->seeders()
+            ->all();
+    }
 }
