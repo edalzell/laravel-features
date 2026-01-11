@@ -18,6 +18,8 @@ class FeatureNamespaces
             return;
         }
 
+        $autoload['exclude-from-classmap'] = ['app/Features/*/database/factories', 'app/Features/*/database/seeders'];
+
         // Find all feature directories
         $featurePaths = array_filter(glob($featuresDir.'/*'), 'is_dir');
 
@@ -25,12 +27,8 @@ class FeatureNamespaces
             $featureName = basename($featurePath);
             $rootNamespace = "App\\Features\\{$featureName}\\";
             $rootPath = "app/Features/{$featureName}/src/";
-            $dbNamespace = "Features\\{$featureName}\\Database\\";
-            $dbPath = "app/Features/{$featureName}/src/database/";
 
             $autoload['psr-4'][$rootNamespace] = $rootPath;
-            $autoload['psr-4'][$dbNamespace.'Seeders\\'] = $dbPath.'seeders/';
-            $autoload['psr-4'][$dbNamespace.'Factories\\'] = $dbPath.'factories/';
         }
 
         $package->setAutoload($autoload);
