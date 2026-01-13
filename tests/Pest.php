@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Storage;
 
 uses(TestCase::class)->in(__DIR__);
 
-function mockOnDemandDisk(string $path): Filesystem
+function mockOnDemandDisk(string $path = ''): Filesystem
 {
     $localDisk = Storage::fake('local');
 

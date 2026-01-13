@@ -29,60 +29,61 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     public function boot()
     {
-        $this
-            ->bootConfig();
+        $this->bootConfig();
     }
 
     public function register()
     {
         $this
             ->registerConfig()
-            ->registerDatabase()
+            ->registerMigrations()
             ->registerRoutes()
             ->registerViews();
     }
 
     private function bootConfig(): self
     {
+        if (! $this->app->runningInConsole()) {
+            return $this;
+        }
+
         $configFile = $this->slug().'.php';
-        if ($this->app->runningInConsole() && $this->disk->exists($path = 'config/'.$configFile)) {
-            $this->publishes(
-                [$path => config_path($configFile)],
-                $this->slug().'-config'
-            );
+
+        if (! $this->disk->exists($path = 'config/'.$configFile)) {
+            return $this;
         }
+
+        $this->publishes(
+            [$path => config_path($configFile)],
+            $this->slug().'-config'
+        );
 
         return $this;
     }
 
-    private function name(): string
+    protected function registerConfig(): self
     {
-        $class = new \ReflectionClass(static::class);
-        $pathParts = explode('/', Path::normalize($class->getFileName()));
-
-        // /.../app/Features/One/src/ServiceProvider.php
-        return $pathParts[count($pathParts) - 3];
-    }
-
-    public function registerConfig(): self
-    {
-        if ($this->disk->exists($path = 'config/'.$this->slug().'.php')) {
-            $this->mergeConfigFrom($this->disk->path($path), $this->slug());
+        if (! $this->disk->exists($path = 'config/'.$this->slug().'.php')) {
+            return $this;
         }
+
+        $this->mergeConfigFrom($this->disk->path($path), $this->slug());
 
         return $this;
     }
 
-    private function registerDatabase(): self
+    protected function registerMigrations(): self
     {
-        if ($this->disk->exists('database/migrations')) {
-            $this->loadMigrationsFrom($this->disk->path('database/migrations'));
+        if (! $this->disk->exists('database/migrations')) {
+            return $this;
         }
+
+        $this->loadMigrationsFrom($this->disk->path('database/migrations'));
 
         return $this;
     }
 
-    public function registerRoutes(): static
+    protected function registerRoutes(): self
     {
         if (! $this->disk->exists('routes')) {
             return $this;
@@ -96,11 +97,13 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $this;
     }
 
-    private function registerViews(): self
+    protected function registerViews(): self
     {
-        if ($this->disk->exists('resources/views')) {
-            $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
+        if (! $this->disk->exists('resources/views')) {
+            return $this;
         }
+
+        $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
 
         return $this;
     }
@@ -110,6 +113,15 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return tap(new Finder)
             ->files()
             ->in($this->disk->path($path))->name('*.php');
+    }
+
+    protected function name(): string
+    {
+        $class = new \ReflectionClass(static::class);
+        $pathParts = explode('/', Path::normalize($class->getFileName()));
+
+        // /.../app/Features/One/src/ServiceProvider.php
+        return $pathParts[count($pathParts) - 3];
     }
 
     private function slug(): string
