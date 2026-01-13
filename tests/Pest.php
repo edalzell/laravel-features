@@ -17,3 +17,8 @@ function mockOnDemandDisk(string $path = ''): Filesystem
 
     return $localDisk;
 }
+
+function tidy(string $path): string
+{
+    return str_replace('/', '\\', $path);
+}
