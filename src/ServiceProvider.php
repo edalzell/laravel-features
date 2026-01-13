@@ -3,7 +3,8 @@
 namespace Edalzell\Features;
 
 use Edalzell\Features\Console\Commands\Make;
-use Edalzell\Features\Facade as Features;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
 class ServiceProvider extends LaravelServiceProvider
@@ -17,6 +18,14 @@ class ServiceProvider extends LaravelServiceProvider
 
     public function register()
     {
-        Features::register($this->app);
+        if (! File::exists(app_path('Features'))) {
+            return;
+        }
+
+        $disk = Storage::build(['driver' => 'local', 'root' => app_path('Features')]);
+
+        collect($disk->directories())
+            ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
+            ->each(fn (string $name) => $this->app->register('App\\Features\\'.$name.'\\ServiceProvider'));
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use Edalzell\Features\Facade;
+use Edalzell\Features\ServiceProvider;
 use Illuminate\Contracts\Foundation\Application;
 
 it('registers feature', function () {
@@ -15,7 +15,7 @@ it('registers feature', function () {
         ->once()
         ->with('App\\Features\\TwoWords\\ServiceProvider');
 
-    Facade::register($app);
+    (new ServiceProvider($app))->register();
 });
 
 it('doesnt register feature when no provider', function () {
@@ -27,5 +27,5 @@ it('doesnt register feature when no provider', function () {
 
     $app->shouldNotReceive('register');
 
-    Facade::register($app);
+    (new ServiceProvider($app))->register();
 });
