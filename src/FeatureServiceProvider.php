@@ -2,60 +2,130 @@
 
 namespace Edalzell\Features;
 
+use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
-use Spatie\Blink\Blink;
 use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
+    private Filesystem $disk;
+
+    private string $name;
+
+    public function __construct($app)
+    {
+        parent::__construct($app);
+
+        $this->name = $this->name();
+
+        $this->disk = Storage::build([
+            'driver' => 'local',
+            'root' => app_path('Features/'.$this->name),
+        ]);
+    }
+
     public function boot()
     {
-        $this->feature()->boot();
+        $this->bootConfig();
     }
 
     public function register()
     {
-        $this->feature()->register();
+        $this
+            ->registerConfig()
+            ->registerMigrations()
+            ->registerRoutes()
+            ->registerViews();
     }
 
-    public function feature(): Feature
+    private function bootConfig(): self
     {
-        return (new Blink)->once('feature', fn () => $this->resolveFeature());
+        if (! $this->app->runningInConsole()) {
+            return $this;
+        }
+
+        $configFile = $this->slug().'.php';
+
+        if (! $this->disk->exists($path = 'config/'.$configFile)) {
+            return $this;
+        }
+
+        $this->publishes(
+            [$path => config_path($configFile)],
+            $this->slug().'-config'
+        );
+
+        return $this;
     }
 
-    public function loadMigrations(string $path): void
+    protected function registerConfig(): self
     {
-        $this->loadMigrationsFrom($path);
+        if (! $this->disk->exists($path = 'config/'.$this->slug().'.php')) {
+            return $this;
+        }
+
+        $this->mergeConfigFrom($this->disk->path($path), $this->slug());
+
+        return $this;
     }
 
-    public function loadRoutes(string $path): void
+    protected function registerMigrations(): self
     {
-        $this->loadRoutesFrom($path);
+        if (! $this->disk->exists('database/migrations')) {
+            return $this;
+        }
+
+        $this->loadMigrationsFrom($this->disk->path('database/migrations'));
+
+        return $this;
     }
 
-    public function loadViews(string $path, string $namespace): void
+    protected function registerRoutes(): self
     {
-        $this->loadViewsFrom($path, $namespace);
+        if (! $this->disk->exists('routes')) {
+            return $this;
+        }
+
+        collect($this->finder('routes'))
+            ->map(fn (SplFileInfo $file) => $file->getRealPath())
+            ->filter()
+            ->each(fn (string $routePath) => $this->loadRoutesFrom($routePath));
+
+        return $this;
     }
 
-    public function mergeConfig(string $path, string $key): void
+    protected function registerViews(): self
     {
-        $this->mergeConfigFrom($path, $key);
+        if (! $this->disk->exists('resources/views')) {
+            return $this;
+        }
+
+        $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
+
+        return $this;
     }
 
-    public function publish(array $paths, ?string $tag = null): void
+    private function finder(string $path): Finder
     {
-        $this->publishes($paths, $tag);
+        return tap(new Finder)
+            ->files()
+            ->in($this->disk->path($path))->name('*.php');
     }
 
-    private function resolveFeature(): Feature
+    protected function name(): string
     {
         $class = new \ReflectionClass(static::class);
         $pathParts = explode('/', Path::normalize($class->getFileName()));
 
         // /.../app/Features/One/src/ServiceProvider.php
-        $name = $pathParts[count($pathParts) - 3];
+        return $pathParts[count($pathParts) - 3];
+    }
 
-        return new Feature($name, $this);
+    private function slug(): string
+    {
+        return str($this->name)->kebab()->toString();
     }
 }
