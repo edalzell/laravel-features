@@ -16,16 +16,8 @@ class Features
 
         $disk = Storage::build(['driver' => 'local', 'root' => app_path('Features')]);
 
-        if (empty($features = $disk->directories())) {
-            return;
-        }
-
-        foreach ($features as $name) {
-            if (! $disk->exists($name.'/src/ServiceProvider.php')) {
-                continue;
-            }
-
-            $app->register('App\\Features\\'.$name.'\\ServiceProvider');
-        }
+        collect($disk->directories())
+            ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
+            ->each(fn (string $name) => $app->register('App\\Features\\'.$name.'\\ServiceProvider'));
     }
 }
