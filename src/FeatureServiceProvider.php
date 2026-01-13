@@ -11,6 +11,8 @@ use Symfony\Component\Finder\SplFileInfo;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
+    protected array $seeders = [];
+
     private Filesystem $disk;
 
     private string $name;
@@ -29,7 +31,9 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     public function boot()
     {
-        $this->bootConfig();
+        $this
+            ->bootConfig()
+            ->bootSeeders();
     }
 
     public function register()
@@ -57,6 +61,13 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             [$path => config_path($configFile)],
             $this->slug().'-config'
         );
+
+        return $this;
+    }
+
+    protected function bootSeeders(): self
+    {
+        Seeders::add($this->seeders);
 
         return $this;
     }
