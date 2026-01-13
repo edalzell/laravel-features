@@ -59,7 +59,7 @@ it('can load routes', function () {
     $provider
         ->shouldReceive('loadRoutesFrom')
         ->once()
-        ->with($disk->path('routes'.DIRECTORY_SEPARATOR.'web.php'));
+        ->with($disk->path(DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'web.php'));
 
     $provider->registerRoutes();
 });
