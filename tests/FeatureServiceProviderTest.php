@@ -53,13 +53,16 @@ it('wont load migrations if there arent any', function () {
 });
 
 it('can load routes', function () {
-    $disk = tap(mockOnDemandDisk('Features/TwoWords'))->put(DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'web.php', '');
+    $disk = tap(mockOnDemandDisk('Features/TwoWords'))->put('routes/web.php', '');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
     $provider
         ->shouldReceive('loadRoutesFrom')
         ->once()
-        ->with($disk->path('routes'.DIRECTORY_SEPARATOR.'web.php'));
+        // ->with($disk->path('routes/web.php'));
+        ->withArgs(function ($path) use ($disk) {
+            return str_replace('/', '\\', $path) == str_replace('/', '\\', $disk->path('routes/web.php'));
+        });
 
     $provider->registerRoutes();
 });
