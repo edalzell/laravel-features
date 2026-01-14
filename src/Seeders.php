@@ -4,15 +4,15 @@ namespace Edalzell\Features;
 
 class Seeders
 {
-    private static array $seeders = [];
+    private array $seeders = [];
 
-    public static function add(array $seeders): void
+    public function add(array $seeders): void
     {
-        static::$seeders = array_merge(static::$seeders, $seeders);
+        $this->seeders = array_merge($this->seeders, $seeders);
     }
 
-    public static function get(): array
+    public function get(): array
     {
-        return static::$seeders;
+        return $this->seeders;
     }
 }

@@ -67,7 +67,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function bootSeeders(): self
     {
-        Seeders::add($this->seeders);
+        SeedersFacade::add($this->seeders);
 
         return $this;
     }
