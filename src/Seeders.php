@@ -8,7 +8,7 @@ class Seeders
 
     public function add(array $seeders): void
     {
-        $this->seeders = array_merge($this->seeders, $seeders);
+        array_push($this->seeders, ...$seeders);
     }
 
     public function get(): array
