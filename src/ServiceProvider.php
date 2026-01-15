@@ -18,14 +18,14 @@ class ServiceProvider extends LaravelServiceProvider
 
     public function register()
     {
-        if (! File::exists(app_path('Features'))) {
+        if (! File::exists(base_path('features'))) {
             return;
         }
 
-        $disk = Storage::build(['driver' => 'local', 'root' => app_path('Features')]);
+        $disk = Storage::build(['driver' => 'local', 'root' => base_path('features')]);
 
         collect($disk->directories())
             ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
-            ->each(fn (string $name) => $this->app->register('App\\Features\\'.$name.'\\ServiceProvider'));
+            ->each(fn (string $name) => $this->app->register('Features\\'.$name.'\\ServiceProvider'));
     }
 }

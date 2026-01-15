@@ -12,23 +12,24 @@ class FeatureNamespaces
         $package = $composer->getPackage();
         $autoload = $package->getAutoload();
 
-        $featuresDir = getcwd().'/app/Features';
+        $featuresDir = getcwd().'/features';
 
         if (! is_dir($featuresDir)) {
             return;
         }
-
-        $autoload['exclude-from-classmap'] = ['app/Features/*/database/factories', 'app/Features/*/database/seeders'];
 
         // Find all feature directories
         $featurePaths = array_filter(glob($featuresDir.'/*'), 'is_dir');
 
         foreach ($featurePaths as $featurePath) {
             $featureName = basename($featurePath);
-            $rootNamespace = "App\\Features\\{$featureName}\\";
-            $rootPath = "app/Features/{$featureName}/src/";
+            $rootNamespace = "Features\\{$featureName}\\";
+            $rootPath = "features/{$featureName}/src/";
 
             $autoload['psr-4'][$rootNamespace] = $rootPath;
+            $autoload['classmap'][] = "features/{$featureName}/database/factories";
+            $autoload['classmap'][] = "features/{$featureName}/database/seeds";
+
         }
 
         $package->setAutoload($autoload);
