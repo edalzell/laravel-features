@@ -27,9 +27,17 @@ class FeatureNamespaces
             $rootPath = "features/{$featureName}/src/";
 
             $autoload['psr-4'][$rootNamespace] = $rootPath;
-            $autoload['classmap'][] = "features/{$featureName}/database/factories";
-            $autoload['classmap'][] = "features/{$featureName}/database/seeds";
 
+            $factoryPath = "features/{$featureName}/database/factories";
+            $seedersPath = "features/{$featureName}/database/seeds";
+
+            if (file_exists(getcwd()."/{$factoryPath}")) {
+                $autoload['classmap'][] = $factoryPath;
+            }
+
+            if (file_exists(getcwd()."/{$seedersPath}")) {
+                $autoload['classmap'][] = $seedersPath;
+            }
         }
 
         $package->setAutoload($autoload);
