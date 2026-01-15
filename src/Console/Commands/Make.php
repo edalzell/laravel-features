@@ -35,7 +35,7 @@ class Make extends GeneratorCommand
 
     protected function getPath($name)
     {
-        return app_path("Features/{$this->getNameInput()}/src/ServiceProvider.php");
+        return base_path("features/{$this->getNameInput()}/src/ServiceProvider.php");
     }
 
     protected function getStub()

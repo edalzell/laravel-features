@@ -3,7 +3,7 @@
 use Edalzell\Features\FeatureServiceProvider;
 
 it('merges config when it exists', function () {
-    $disk = tap(mockOnDemandDisk('Features/TwoWords'))->put('config/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
 
     $provider = mock(ServiceProvider::class, [mock()])
         ->shouldAllowMockingProtectedMethods()
@@ -18,7 +18,7 @@ it('merges config when it exists', function () {
 });
 
 it('wont merge config when it doesnt exist', function () {
-    $disk = mockOnDemandDisk('Features/TwoWords');
+    $disk = mockOnDemandDisk('features/TwoWords');
 
     $provider = mock(ServiceProvider::class, [mock()])
         ->shouldAllowMockingProtectedMethods()
@@ -30,7 +30,7 @@ it('wont merge config when it doesnt exist', function () {
 });
 
 it('can load migrations', function () {
-    $disk = tap(mockOnDemandDisk('Features/TwoWords'))->put('database/migrations/add_table.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('database/migrations/add_table.php', '');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
 
@@ -43,7 +43,7 @@ it('can load migrations', function () {
 });
 
 it('wont load migrations if there arent any', function () {
-    $disk = mockOnDemandDisk('Features/TwoWords');
+    $disk = mockOnDemandDisk('features/TwoWords');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
 
@@ -53,7 +53,7 @@ it('wont load migrations if there arent any', function () {
 });
 
 it('can load routes', function () {
-    $disk = tap(mockOnDemandDisk('Features/TwoWords'))->put('routes/web.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('routes/web.php', '');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
     $provider
@@ -65,7 +65,7 @@ it('can load routes', function () {
 });
 
 it('wont load routes if there arent any', function () {
-    $disk = mockOnDemandDisk('Features/TwoWords');
+    $disk = mockOnDemandDisk('features/TwoWords');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
 
@@ -75,7 +75,7 @@ it('wont load routes if there arent any', function () {
 });
 
 it('can load views', function () {
-    $disk = tap(mockOnDemandDisk('Features/TwoWords'))->put('resources/views/foo.blade.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('resources/views/foo.blade.php', '');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
     $provider
@@ -87,7 +87,7 @@ it('can load views', function () {
 });
 
 it('wont load views when there arent any', function () {
-    $disk = mockOnDemandDisk('Features/TwoWords');
+    $disk = mockOnDemandDisk('features/TwoWords');
 
     $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
 
