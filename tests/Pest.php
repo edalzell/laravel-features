@@ -12,7 +12,7 @@ function mockOnDemandDisk(string $path = ''): Filesystem
 
     Storage::shouldReceive('build')->with([
         'driver' => 'local',
-        'root' => app_path($path),
+        'root' => base_path($path),
     ])->andReturn($localDisk);
 
     return $localDisk;
