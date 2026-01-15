@@ -8,20 +8,19 @@ Add self-contained features to your Laravel app, including all resources/routes/
 ```bash
 .
 └── app/
-    ├── ...
-    ├── Features/
-    │   └── MyGreatFeature/
-    │       ├── database/
-    │       │   ├── factories
-    │       │   ├── migrations
-    │       │   └── seeders
-    │       ├── resources
-    │       ├── routes
-    │       └── src/
-    │           ├── Models
-    │           ├── ...
-    │           └── ServiceProvider.php
-    └── ...
+...
+└── features/
+  │   └── MyGreatFeature/
+  │       ├── database/
+  │       │   ├── factories
+  │       │   ├── migrations
+  │       │   └── seeders
+  │       ├── resources
+  │       ├── routes
+  │       └── src/
+  │           ├── Models
+  │           ├── ...
+  │           └── ServiceProvider.php
 ```
 
 ## Installation
@@ -44,7 +43,7 @@ php artisan make:feature MyGreatFeature
 This will create an empty (but necessary) service provider that autoloads/registers migrations, routes, & views and properly namespaces your factories, seeders and code.
 
 If you want to add a feature manually, or convert something you already have into a feature:
-* create an `app/Features/YourFeature` folder
+* create an `features/YourFeature` folder
 * create a `ServiceProvider` that extends `FeatureServiceProvider`.
 * add a `pre-autoload-dump` script to your `composer.json`:
 ```
