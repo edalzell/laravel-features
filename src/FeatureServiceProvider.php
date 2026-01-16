@@ -3,6 +3,8 @@
 namespace Edalzell\Features;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Foundation\Events\DiscoverEvents;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Symfony\Component\Filesystem\Path;
@@ -33,6 +35,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     {
         $this
             ->bootConfig()
+            ->bootListeners()
             ->bootSeeders();
     }
 
@@ -79,6 +82,25 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         }
 
         $this->mergeConfigFrom($this->disk->path($path), $this->slug());
+
+        return $this;
+    }
+
+    protected function bootListeners(): self
+    {
+        DiscoverEvents::guessClassNamesUsing(
+            fn (SplFileInfo $file) => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php')
+        );
+
+        $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
+
+        DiscoverEvents::$guessClassNamesUsingCallback = null;
+
+        foreach ($events as $event => $listeners) {
+            foreach (array_unique($listeners, SORT_REGULAR) as $listener) {
+                Event::listen($event, $listener);
+            }
+        }
 
         return $this;
     }
