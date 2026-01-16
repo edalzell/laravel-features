@@ -135,6 +135,10 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     private function discoverEvents(): array
     {
+        if (! $this->disk->exists('src/Listeners')) {
+            return [];
+        }
+
         DiscoverEvents::guessClassNamesUsing(
             fn (SplFileInfo $file, $ignored) => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
         );
