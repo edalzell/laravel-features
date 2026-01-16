@@ -68,6 +68,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $this;
     }
 
+    protected function bootListeners(): self
+    {
+        foreach ($this->discoverEvents() as $event => $listeners) {
+            foreach (array_unique($listeners, SORT_REGULAR) as $listener) {
+                Event::listen($event, $listener);
+            }
+        }
+
+        return $this;
+    }
+
     protected function bootSeeders(): self
     {
         SeedersFacade::add($this->seeders);
@@ -82,25 +93,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         }
 
         $this->mergeConfigFrom($this->disk->path($path), $this->slug());
-
-        return $this;
-    }
-
-    protected function bootListeners(): self
-    {
-        DiscoverEvents::guessClassNamesUsing(
-            fn (SplFileInfo $file) => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php')
-        );
-
-        $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
-
-        DiscoverEvents::$guessClassNamesUsingCallback = null;
-
-        foreach ($events as $event => $listeners) {
-            foreach (array_unique($listeners, SORT_REGULAR) as $listener) {
-                Event::listen($event, $listener);
-            }
-        }
 
         return $this;
     }
@@ -139,6 +131,19 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
 
         return $this;
+    }
+
+    private function discoverEvents(): array
+    {
+        DiscoverEvents::guessClassNamesUsing(
+            fn (SplFileInfo $file, $ignored) => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
+        );
+
+        $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
+
+        DiscoverEvents::$guessClassNamesUsingCallback = null;
+
+        return $events;
     }
 
     private function finder(string $path): Finder
