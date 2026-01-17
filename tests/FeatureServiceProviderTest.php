@@ -1,6 +1,7 @@
 <?php
 
 use Edalzell\Features\FeatureServiceProvider;
+use Illuminate\Support\Facades\Event;
 
 it('merges config when it exists', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
@@ -96,10 +97,41 @@ it('wont load views when there arent any', function () {
     $provider->registerViews();
 });
 
+it('wont register listeners if there arent any', function () {
+    $disk = mockOnDemandDisk('features/TwoWords');
+
+    $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
+
+    Event::partialMock()->shouldNotReceive('listen');
+
+    $provider->bootListeners();
+});
+
+it('register listeners', function () {
+    Event::fake();
+    mockOnDemandDisk('features/TwoWords')->put('src/Listeners/Bar.php', '');
+
+    $this->mock('alias:Illuminate\Foundation\Events\DiscoverEvents')
+        ->shouldReceive('guessClassNamesUsing')->andReturn()
+        ->shouldReceive('within')
+        ->andReturn(['the-event' => [Listener::class]]);
+
+    $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
+
+    $provider->bootListeners();
+
+    Event::assertListening('the-event', Listener::class);
+});
+
 class ServiceProvider extends FeatureServiceProvider
 {
     protected function name(): string
     {
         return 'TwoWords';
     }
+}
+
+class Listener
+{
+    public function handle(): void {}
 }
