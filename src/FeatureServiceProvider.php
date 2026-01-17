@@ -145,8 +145,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
 
-        DiscoverEvents::$guessClassNamesUsingCallback = null;
-
         return $events;
     }
 
