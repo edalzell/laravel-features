@@ -140,7 +140,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         }
 
         DiscoverEvents::guessClassNamesUsing(
-            fn (SplFileInfo $file, $ignored) => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
+            /** @return class-string */
+            fn (SplFileInfo $file, $ignored): string => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
         );
 
         $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
