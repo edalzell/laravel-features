@@ -1,6 +1,7 @@
 <?php
 
 use Edalzell\Features\FeatureServiceProvider;
+use Illuminate\Support\Facades\Event;
 
 it('merges config when it exists', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
@@ -94,6 +95,16 @@ it('wont load views when there arent any', function () {
     $provider->shouldNotReceive('loadViewsFrom');
 
     $provider->registerViews();
+});
+
+it('wont register listeners if there arent any', function () {
+    $disk = mockOnDemandDisk('features/TwoWords');
+
+    $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
+
+    Event::partialMock()->shouldNotReceive('listen');
+
+    $provider->bootListeners();
 });
 
 class ServiceProvider extends FeatureServiceProvider
