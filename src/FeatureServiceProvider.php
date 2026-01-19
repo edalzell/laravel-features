@@ -139,8 +139,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             return [];
         }
 
-        // @phpstan-ignore-next-line
         DiscoverEvents::guessClassNamesUsing(
+            // @phpstan-ignore-next-line
             fn (SplFileInfo $file, $ignored): string => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
         );
 
