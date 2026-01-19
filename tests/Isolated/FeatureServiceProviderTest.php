@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\FeatureServiceProvider;
 use Illuminate\Support\Facades\Event;
 
 it('register listeners', function () {
@@ -21,4 +22,12 @@ it('register listeners', function () {
 class Listener
 {
     public function handle(): void {}
+}
+
+class ServiceProvider extends FeatureServiceProvider
+{
+    protected function name(): string
+    {
+        return 'TwoWords';
+    }
 }

@@ -18,6 +18,7 @@
     <testsuites>
         <testsuite name="All">
             <directory>tests</directory>
+            <exclude>tests/Isolated</exclude>
         </testsuite>
         <testsuite name="Isolated">
             <directory>tests/Isolated</directory>
