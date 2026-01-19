@@ -3,6 +3,8 @@
 namespace Edalzell\Features;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Foundation\Events\DiscoverEvents;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use Symfony\Component\Filesystem\Path;
@@ -33,6 +35,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     {
         $this
             ->bootConfig()
+            ->bootListeners()
             ->bootSeeders();
     }
 
@@ -61,6 +64,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             [$path => config_path($configFile)],
             $this->slug().'-config'
         );
+
+        return $this;
+    }
+
+    protected function bootListeners(): self
+    {
+        foreach ($this->discoverEvents() as $event => $listeners) {
+            foreach (array_unique($listeners, SORT_REGULAR) as $listener) {
+                Event::listen($event, $listener);
+            }
+        }
 
         return $this;
     }
@@ -117,6 +131,22 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
 
         return $this;
+    }
+
+    private function discoverEvents(): array
+    {
+        if (! $this->disk->exists('src/Listeners')) {
+            return [];
+        }
+
+        DiscoverEvents::guessClassNamesUsing(
+            // @phpstan-ignore-next-line
+            fn (SplFileInfo $file, $ignored): string => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
+        );
+
+        $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
+
+        return $events;
     }
 
     private function finder(string $path): Finder
