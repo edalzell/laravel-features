@@ -30,14 +30,10 @@ class FeatureNamespaces
 
             $factoryPath = "features/{$featureName}/database/factories";
             $seedersPath = "features/{$featureName}/database/seeders";
+            $dbRootNamespace = $rootNamespace.'Database\\';
 
-            if (file_exists(getcwd()."/{$factoryPath}")) {
-                $autoload['classmap'][] = $factoryPath;
-            }
-
-            if (file_exists(getcwd()."/{$seedersPath}")) {
-                $autoload['classmap'][] = $seedersPath;
-            }
+            $autoload['psr-4'][$dbRootNamespace.'Factories\\'] = $factoryPath;
+            $autoload['psr-4'][$dbRootNamespace.'Seeders\\'] = $seedersPath;
         }
 
         $package->setAutoload($autoload);
