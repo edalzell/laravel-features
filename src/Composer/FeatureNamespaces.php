@@ -31,7 +31,7 @@ class FeatureNamespaces
             $autoload['psr-4'][$rootNamespace] = $rootPath;
 
             $factoryPath = "features/{$featureName}/database/factories";
-            $seedersPath = "features/{$featureName}/database/seeds";
+            $seedersPath = "features/{$featureName}/database/seeders";
 
             $autoload['psr-4'][$dbRootNamespace.'Factories\\'] = $factoryPath;
             $autoload['psr-4'][$dbRootNamespace.'Seeders\\'] = $seedersPath;
