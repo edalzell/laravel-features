@@ -11,6 +11,7 @@ class FeatureNamespaces
         $composer = $event->getComposer();
         $package = $composer->getPackage();
         $autoload = $package->getAutoload();
+        $autoloadDev = $package->getDevAutoload();
 
         $featuresDir = getcwd().'/features';
 
@@ -24,6 +25,7 @@ class FeatureNamespaces
         foreach ($featurePaths as $featurePath) {
             $featureName = basename($featurePath);
             $rootNamespace = "Features\\{$featureName}\\";
+            $dbRootNamespace = $rootNamespace.'Database\\';
             $rootPath = "features/{$featureName}/src/";
 
             $autoload['psr-4'][$rootNamespace] = $rootPath;
@@ -31,15 +33,14 @@ class FeatureNamespaces
             $factoryPath = "features/{$featureName}/database/factories";
             $seedersPath = "features/{$featureName}/database/seeds";
 
-            if (file_exists(getcwd()."/{$factoryPath}")) {
-                $autoload['classmap'][] = $factoryPath;
-            }
+            $autoload['psr-4'][$dbRootNamespace.'Factories\\'] = $factoryPath;
+            $autoload['psr-4'][$dbRootNamespace.'Seeders\\'] = $seedersPath;
 
-            if (file_exists(getcwd()."/{$seedersPath}")) {
-                $autoload['classmap'][] = $seedersPath;
-            }
+            $autoloadDev['psr-4'][$rootNamespace.'Tests\\'] = "features/{$featureName}/tests/";
         }
 
         $package->setAutoload($autoload);
+        $package->setDevAutoload($autoloadDev);
+
     }
 }
