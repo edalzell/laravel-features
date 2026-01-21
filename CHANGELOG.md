@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0 - 2026-01-21
+
+### 🚀 New
+
+- Register listeners [@edalzell](https://github.com/edalzell) (#16)
+
+### 🐛 Fixed
+
+- Add test namespaces [@edalzell](https://github.com/edalzell) (#19)
+- Improve database classes namespacing [@edalzell](https://github.com/edalzell) (#18)
+
+### 🧰 Maintenance
+
+- Blink is not used anymore [@edalzell](https://github.com/edalzell) (#17)
+
 ## v0.2.0 - 2026-01-15
 
 ### 🔥 Breaking
