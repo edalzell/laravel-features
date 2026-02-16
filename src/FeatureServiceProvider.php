@@ -125,6 +125,10 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function registerSeeders(): self
     {
+        /*
+            Make this a singleton so that when db seeders (in the app) call it,
+            it gets the same instance where the feature seeders were registered
+        */
         $this->app->singleton(Seeders::class, fn () => new Seeders);
 
         return $this;
