@@ -2,7 +2,9 @@
 
 namespace Edalzell\Features;
 
-class Seeders
+use Illuminate\Database\Seeder;
+
+class Seeders extends Seeder
 {
     private array $seeders = [];
 
@@ -11,8 +13,8 @@ class Seeders
         array_push($this->seeders, ...$seeders);
     }
 
-    public function get(): array
+    public function run(): void
     {
-        return $this->seeders;
+        $this->call($this->seeders);
     }
 }
