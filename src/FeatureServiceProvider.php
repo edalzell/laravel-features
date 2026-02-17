@@ -45,6 +45,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->registerConfig()
             ->registerMigrations()
             ->registerRoutes()
+            ->registerSeeders()
             ->registerViews();
     }
 
@@ -118,6 +119,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->map(fn (SplFileInfo $file) => $file->getRealPath())
             ->filter()
             ->each(fn (string $routePath) => $this->loadRoutesFrom($routePath));
+
+        return $this;
+    }
+
+    protected function registerSeeders(): self
+    {
+        /*
+            Make this a singleton so that when db seeders (in the app) call it,
+            it gets the same instance where the feature seeders were registered
+        */
+        $this->app->singleton(Seeders::class, fn () => new Seeders);
 
         return $this;
     }
