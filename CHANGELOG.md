@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.1 - 2026-02-17
+
+### 🐛 Fixed
+
+- Fix how seeders are called [@edalzell](https://github.com/edalzell) (https://github.com/edalzell/laravel-features/pull/24)
+
+### 🧰 Maintenance
+
+- Update GitHub Action Versions [@edalzell](https://github.com/edalzell) (#22)
+
 ## v0.3.0 - 2026-01-21
 
 ### 🚀 New
