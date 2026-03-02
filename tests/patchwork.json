@@ -1,6 +1,7 @@
 {
     "redefinable-internals": [
-        "glob"
+        "glob",
+        "is_dir"
     ],
      "blacklist": [
         "../vendor/"

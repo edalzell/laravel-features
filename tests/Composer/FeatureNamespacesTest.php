@@ -1,5 +1,6 @@
 <?php
 
+use Brain\Monkey\Functions;
 use Composer\Composer;
 use Composer\IO\NullIO;
 use Composer\Package\RootPackage;
@@ -12,13 +13,17 @@ it('adds feature classes to namespaces', function () {
     $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
     $composer = tap(new Composer)->setPackage($package);
 
-    when('glob')->justReturn(['foo' => 'bar']);
-    // set up package
-    // only needs `composer.json`
-
-    // set up package feature
-
+    when('is_dir')->justReturn(true);
+    $featuresDir = getcwd().'/features';
+    Functions\expect('glob')->once()->with($featuresDir.'/*')->andReturn([$featuresDir.'/One'])
+        ->andAlsoExpectIt()->once()->with(getcwd().'vendor/*/*/features/*')->andReturn([]);
     FeatureNamespaces::add(new Event('foo', $composer, new NullIO));
 
-    dd($composer->getPackage()->getAutoload());
+    expect($composer->getPackage()->getAutoload())->toBe([
+        'psr-4' => [
+            'Features\\One\\' => 'features/One/src/',
+            'Features\\One\\Database\\Factories\\' => 'features/One/database/factories',
+            'Features\\One\\Database\\Seeders\\' => 'features/One/database/seeders',
+        ],
+    ]);
 });

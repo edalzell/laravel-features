@@ -44,7 +44,6 @@ class FeatureNamespaces
 
     public static function autoloadPackageFeatures(array &$autoload, array &$autoloadDev): void
     {
-        dd(glob('foo'));
         $packageFeaturePaths = array_filter(glob(getcwd().'vendor/*/*/features/*'), 'is_dir');
 
         foreach ($packageFeaturePaths as $packageFeaturePath) {
