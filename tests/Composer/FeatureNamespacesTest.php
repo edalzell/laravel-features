@@ -10,6 +10,7 @@ use function Patchwork\redefine;
 use function Patchwork\restore;
 
 it('adds feature classes to namespaces', function () {
+    //
     $glob = redefine('glob', fn () => ['foo' => 'bar']);
     $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
     $composer = tap(new Composer)->setPackage($package);
@@ -21,6 +22,6 @@ it('adds feature classes to namespaces', function () {
 
     FeatureNamespaces::add(new Event('foo', $composer, new NullIO));
 
-    restore($glob);
+    //restore($glob);
     dd($composer->getPackage()->getAutoload());
 });
