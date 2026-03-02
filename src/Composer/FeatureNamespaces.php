@@ -13,14 +13,16 @@ class FeatureNamespaces
         $autoload = $package->getAutoload();
         $autoloadDev = $package->getDevAutoload();
 
-        $featuresDir = getcwd().'/features';
+        static::autoloadFeatures($autoload, $autoloadDev);
+        static::autoloadPackageFeatures($autoload, $autoloadDev);
 
-        if (! is_dir($featuresDir)) {
-            return;
-        }
+        $package->setAutoload($autoload);
+        $package->setDevAutoload($autoloadDev);
+    }
 
-        // Find all feature directories
-        $featurePaths = array_filter(glob($featuresDir.'/*'), 'is_dir');
+    public static function autoloadFeatures(array &$autoload, array &$autoloadDev): void
+    {
+        $featurePaths = array_filter(glob(getcwd().'/features/*'), 'is_dir');
 
         foreach ($featurePaths as $featurePath) {
             $featureName = basename($featurePath);
@@ -38,9 +40,16 @@ class FeatureNamespaces
 
             $autoloadDev['psr-4'][$rootNamespace.'Tests\\'] = "features/{$featureName}/tests/";
         }
+    }
 
-        $package->setAutoload($autoload);
-        $package->setDevAutoload($autoloadDev);
+    public static function autoloadPackageFeatures(array &$autoload, array &$autoloadDev): void
+    {
+        dd(glob('foo'));
+        $packageFeaturePaths = array_filter(glob(getcwd().'vendor/*/*/features/*'), 'is_dir');
+
+        foreach ($packageFeaturePaths as $packageFeaturePath) {
+            //
+        }
 
     }
 }
