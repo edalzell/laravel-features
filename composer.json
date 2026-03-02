@@ -21,7 +21,7 @@
         "illuminate/contracts": "^11.0 || ^12.0"
     },
     "require-dev": {
-        "antecedent/patchwork": "^2.2",
+        "brain/monkey": "^2.7",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
