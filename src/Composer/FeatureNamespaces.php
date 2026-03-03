@@ -20,9 +20,9 @@ class FeatureNamespaces
         $package->setDevAutoload($autoloadDev);
     }
 
-    public static function autoloadFeatures(array &$autoload, array &$autoloadDev): void
+    private static function autoloadFeatures(array &$autoload, array &$autoloadDev): void
     {
-        $featurePaths = array_filter(glob(getcwd().'/features/*'), 'is_dir');
+        $featurePaths = static::featurePaths('features');
 
         foreach ($featurePaths as $featurePath) {
             $featureName = basename($featurePath);
@@ -42,13 +42,21 @@ class FeatureNamespaces
         }
     }
 
-    public static function autoloadPackageFeatures(array &$autoload, array &$autoloadDev): void
+    private static function autoloadPackageFeatures(array &$autoload, array &$autoloadDev): void
     {
-        $packageFeaturePaths = array_filter(glob(getcwd().'vendor/*/*/features/*'), 'is_dir');
+        $packageFeaturePaths = static::featurePaths('vendor/*/*/features');
 
         foreach ($packageFeaturePaths as $packageFeaturePath) {
             //
         }
+    }
 
+    private static function featurePaths(string $path): array
+    {
+        if (empty($paths = glob(getcwd().DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR.'*'))) {
+            return [];
+        }
+
+        return array_filter($paths, 'is_dir');
     }
 }

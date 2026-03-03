@@ -16,7 +16,7 @@ it('adds feature classes to namespaces', function () {
     when('is_dir')->justReturn(true);
     $featuresDir = getcwd().'/features';
     Functions\expect('glob')->once()->with($featuresDir.'/*')->andReturn([$featuresDir.'/One'])
-        ->andAlsoExpectIt()->once()->with(getcwd().'vendor/*/*/features/*')->andReturn([]);
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([]);
 
     FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
 
