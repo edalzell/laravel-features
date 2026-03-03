@@ -17,13 +17,15 @@ it('adds feature classes to namespaces', function () {
     $featuresDir = getcwd().'/features';
     Functions\expect('glob')->once()->with($featuresDir.'/*')->andReturn([$featuresDir.'/One'])
         ->andAlsoExpectIt()->once()->with(getcwd().'vendor/*/*/features/*')->andReturn([]);
-    FeatureNamespaces::add(new Event('foo', $composer, new NullIO));
 
-    expect($composer->getPackage()->getAutoload())->toBe([
-        'psr-4' => [
+    FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
+
+    expect($package)
+        ->getAutoload()->toBe(['psr-4' => [
             'Features\\One\\' => 'features/One/src/',
             'Features\\One\\Database\\Factories\\' => 'features/One/database/factories',
             'Features\\One\\Database\\Seeders\\' => 'features/One/database/seeders',
-        ],
-    ]);
+        ]])->getDevAutoload()->toBe(['psr-4' => [
+            'Features\\One\\Tests\\' => 'features/One/tests',
+        ]]);
 });
