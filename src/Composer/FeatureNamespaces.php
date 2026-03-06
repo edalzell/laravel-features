@@ -20,7 +20,7 @@ class FeatureNamespaces
         $package->setDevAutoload($autoloadDev);
     }
 
-    private static function autoloadFeatures(array &$autoload, array &$autoloadDev): void
+    protected static function autoloadFeatures(array &$autoload, array &$autoloadDev): void
     {
         foreach (static::featurePaths('features') as $path) {
             $featureName = basename($path);
@@ -40,7 +40,7 @@ class FeatureNamespaces
         }
     }
 
-    private static function autoloadPackageFeatures(array &$autoload, array &$autoloadDev): void
+    protected static function autoloadPackageFeatures(array &$autoload, array &$autoloadDev): void
     {
         if (empty($featurePaths = static::featurePaths('vendor/*/*/features'))) {
             return;
@@ -67,7 +67,7 @@ class FeatureNamespaces
         }
     }
 
-    private static function featurePaths(string $path): array
+    protected static function featurePaths(string $path): array
     {
         if (empty($paths = glob(getcwd().DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR.'*'))) {
             return [];
@@ -76,7 +76,7 @@ class FeatureNamespaces
         return array_filter($paths, 'is_dir');
     }
 
-    private static function packageNamespace(array $featurePaths): string
+    protected static function packageNamespace(array $featurePaths): string
     {
         // grab the first one, pop off the last segment, that's the package path
         $segments = explode(DIRECTORY_SEPARATOR, $featurePaths[0]);
