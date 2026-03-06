@@ -1,5 +1,4 @@
 <?php
 
-arch()->preset()
-    ->php()
-    ->laravel();
+arch()->preset()->php();
+arch()->preset()->laravel();
