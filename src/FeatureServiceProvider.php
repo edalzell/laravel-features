@@ -25,7 +25,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $this->name = $this->name();
 
-        ray($this, $app);
         $this->disk = Storage::build([
             'driver' => 'local',
             'root' => base_path('features/'.$this->name),
