@@ -9,6 +9,10 @@ use Edalzell\Features\Composer\FeatureNamespaces;
 
 use function Brain\Monkey\Functions\when;
 
+afterEach(function () {
+    Brain\Monkey\tearDown();
+});
+
 it('adds feature classes to namespaces', function () {
     $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
     $composer = tap(new Composer)->setPackage($package);
