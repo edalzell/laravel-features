@@ -36,6 +36,7 @@ it('adds feature classes to namespaces', function () {
             'Features\\One\\Tests\\' => 'features/One/tests',
         ]]);
 });
+
 it('adds package feature classes to namespaces', function () {
     $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
     $composer = tap(new Composer)->setPackage($package);
