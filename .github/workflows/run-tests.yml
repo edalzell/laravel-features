@@ -56,7 +56,7 @@ jobs:
         run: composer show -D
 
       - name: Execute non-isolated tests
-        run: vendor/bin/pest --testsuite All
+        run: vendor/bin/pest --testsuite Default
 
       - name: Execute isolated tests
         run: vendor/bin/pest --testsuite Isolated
