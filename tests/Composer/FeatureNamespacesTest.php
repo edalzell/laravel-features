@@ -43,7 +43,7 @@ it('adds package feature classes to namespaces', function () {
     when('is_dir')->justReturn(true);
     when('file_get_contents')->justReturn($composerJson);
     Functions\expect('glob')->once()->with(getcwd().'/features/*')->andReturn([])
-        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([getcwd().'/vendor/edalzell/my-features/features/   One']);
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([getcwd().'/vendor/edalzell/my-features/features/One']);
 
     FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
 
