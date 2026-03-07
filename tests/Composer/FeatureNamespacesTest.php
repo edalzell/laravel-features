@@ -26,7 +26,7 @@ it('adds feature classes to namespaces', function () {
 
     expect($package)
         ->getAutoload()->toBe(['psr-4' => [
-            'Features\\One\\' => 'features/One/src/',
+            'Features\\One\\' => 'features/One/src',
             'Features\\One\\Database\\Factories\\' => 'features/One/database/factories',
             'Features\\One\\Database\\Seeders\\' => 'features/One/database/seeders',
         ]])->getDevAutoload()->toBe(['psr-4' => [
@@ -42,15 +42,14 @@ it('adds package feature classes to namespaces', function () {
 
     when('is_dir')->justReturn(true);
     when('file_get_contents')->justReturn($composerJson);
-    $featuresDir = getcwd().'/features';
-    Functions\expect('glob')->once()->with($featuresDir.'/*')->andReturn([])
-        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([$featuresDir.'/vendor/edalzell/my-features/One/']);
+    Functions\expect('glob')->once()->with(getcwd().'/features/*')->andReturn([])
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([getcwd().'/vendor/edalzell/my-features/features/   One']);
 
     FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
 
     expect($package)
         ->getAutoload()->toBe(['psr-4' => [
-            'Edalzell\\MyFeatures\\Features\\One\\' => 'vendor/edalzell/my-features/One/src/',
+            'Edalzell\\MyFeatures\\Features\\One\\' => 'vendor/edalzell/my-features/features/One/src',
             'Edalzell\\MyFeatures\\Features\\One\\Database\\Factories\\' => 'vendor/edalzell/my-features/features/One/database/factories',
             'Edalzell\\MyFeatures\\Features\\One\\Database\\Seeders\\' => 'vendor/edalzell/my-features/features/One/database/seeders',
         ]])->getDevAutoload()->toBe(['psr-4' => [
