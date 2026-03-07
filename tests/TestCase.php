@@ -6,8 +6,6 @@ use Edalzell\Features\ServiceProvider;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Orchestra\Testbench\TestCase as Orchestra;
 
-use function Brain\Monkey\tearDown as monkeyTearDown;
-
 class TestCase extends Orchestra
 {
     use MockeryPHPUnitIntegration;
@@ -15,11 +13,5 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [ServiceProvider::class];
-    }
-
-    protected function tearDown(): void
-    {
-        monkeyTearDown();
-        parent::tearDown();
     }
 }
