@@ -40,10 +40,7 @@ class FeatureNamespaces
             return $this;
         }
 
-        $this->generateNamespaces(
-            $this->appFeaturesNamespace(),
-            array_filter($featurePaths, 'is_dir')
-        );
+        $this->generateNamespaces($this->featuresNamespace(), $featurePaths);
 
         return $this;
     }
@@ -55,7 +52,7 @@ class FeatureNamespaces
         }
 
         $this->generateNamespaces(
-            $this->appFeaturesNamespace($featurePaths),
+            $this->featuresNamespace($featurePaths),
             $featurePaths
         );
 
@@ -75,31 +72,31 @@ class FeatureNamespaces
     {
         foreach ($featurePaths as $path) {
             $featureName = basename($path);
+            $featurePath = ltrim(str_replace(getcwd(), '', $path), DIRECTORY_SEPARATOR);
 
             $rootNamespace = "{$namespace}\\{$featureName}\\";
             $dbRootNamespace = $rootNamespace.'Database\\';
-            $rootPath = "features/{$featureName}/src/";
+            $rootPath = "{$featurePath}/src";
 
             $this->autoload['psr-4'][$rootNamespace] = $rootPath;
 
-            $factoryPath = "features/{$featureName}/database/factories";
-            $seedersPath = "features/{$featureName}/database/seeders";
+            $factoryPath = "{$featurePath}/database/factories";
+            $seedersPath = "{$featurePath}/database/seeders";
 
             $this->autoload['psr-4'][$dbRootNamespace.'Factories\\'] = $factoryPath;
             $this->autoload['psr-4'][$dbRootNamespace.'Seeders\\'] = $seedersPath;
 
-            $this->autoloadDev['psr-4'][$rootNamespace.'Tests\\'] = "features/{$featureName}/tests";
+            $this->autoloadDev['psr-4'][$rootNamespace.'Tests\\'] = "{$featurePath}/tests";
         }
 
     }
 
-    private function appFeaturesNamespace(): string
+    private function featuresNamespace(?array $featurePaths = null): string
     {
-        return 'Features';
-    }
+        if (is_null($featurePaths)) {
+            return 'Features';
+        }
 
-    private function packageFeaturesNamespace(array $featurePaths): string
-    {
         // grab the first one, pop off the last segment, that's the package path
         $segments = explode(DIRECTORY_SEPARATOR, $featurePaths[0]);
 
