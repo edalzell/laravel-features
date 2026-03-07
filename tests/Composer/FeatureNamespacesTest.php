@@ -51,9 +51,9 @@ it('adds package feature classes to namespaces', function () {
     expect($package)
         ->getAutoload()->toBe(['psr-4' => [
             'Edalzell\\MyFeatures\\Features\\One\\' => 'vendor/edalzell/my-features/One/src/',
-            'Edalzell\\MyFeatures\\Features\\One\\Database\\Factories\\' => 'vendor/edalzell/features/One/database/factories',
-            'Edalzell\\MyFeatures\\Features\\One\\Database\\Seeders\\' => 'vendor/edalzell/features/One/database/seeders',
+            'Edalzell\\MyFeatures\\Features\\One\\Database\\Factories\\' => 'vendor/edalzell/my-features/features/One/database/factories',
+            'Edalzell\\MyFeatures\\Features\\One\\Database\\Seeders\\' => 'vendor/edalzell/my-features/features/One/database/seeders',
         ]])->getDevAutoload()->toBe(['psr-4' => [
-            'Edalzell\\MyFeatures\\Features\\One\\Tests\\' => 'vendor/edalzell/features/One/tests',
+            'Edalzell\\MyFeatures\\Features\\One\\Tests\\' => 'vendor/edalzell/my-features/features/One/tests',
         ]]);
 });
