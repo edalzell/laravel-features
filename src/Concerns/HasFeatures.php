@@ -25,6 +25,6 @@ trait HasFeatures
 
         $this->providers = collect($disk->directories())
             ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
-            ->each(fn (string $name) => app()->register('Features\\'.$name.'\\ServiceProvider'));
+            ->each(fn (string $name) => $this->app->register('Features\\'.$name.'\\ServiceProvider'));
     }
 }

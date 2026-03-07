@@ -1,7 +1,8 @@
 <?php
 
-use Edalzell\Features\ServiceProvider;
+use Edalzell\Features\Concerns\HasFeatures;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 
 it('registers feature', function () {
     $featuresDisk = tap(mockOnDemandDisk('features'))->put('TwoWords/src/ServiceProvider.php', '');
@@ -13,9 +14,10 @@ it('registers feature', function () {
     $app
         ->shouldReceive('register')
         ->once()
-        ->with('Features\\TwoWords\\ServiceProvider');
+        ->with('Features\\TwoWords\\ServiceProvider')
+        ->andReturn();
 
-    (new ServiceProvider($app))->register();
+    provider($app)->register();
 });
 
 it('doesnt register feature when no provider', function () {
@@ -27,5 +29,23 @@ it('doesnt register feature when no provider', function () {
 
     $app->shouldNotReceive('register');
 
-    (new ServiceProvider($app))->register();
+    provider($app)->register();
 });
+
+function provider(Application $app): ServiceProvider
+{
+    return new class($app) extends ServiceProvider
+    {
+        use HasFeatures;
+
+        public function __construct($app)
+        {
+            parent::__construct($app);
+        }
+
+        public function register()
+        {
+            $this->registerFeatures();
+        }
+    };
+}
