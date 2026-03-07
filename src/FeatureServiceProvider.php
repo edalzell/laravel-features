@@ -13,11 +13,11 @@ use Symfony\Component\Finder\SplFileInfo;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
+    protected Filesystem $disk;
+
+    protected string $name;
+
     protected array $seeders = [];
-
-    private Filesystem $disk;
-
-    private string $name;
 
     public function __construct($app)
     {
@@ -27,7 +27,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $this->disk = Storage::build([
             'driver' => 'local',
-            'root' => base_path('features/'.$this->name),
+            'root' => $this->featuresPath(),
         ]);
     }
 
@@ -49,7 +49,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->registerViews();
     }
 
-    private function bootConfig(): self
+    protected function bootConfig(): self
     {
         if (! $this->app->runningInConsole()) {
             return $this;
@@ -85,6 +85,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         SeedersFacade::add($this->seeders);
 
         return $this;
+    }
+
+    protected function featuresPath(): string
+    {
+        return base_path('features/'.$this->name);
     }
 
     protected function registerConfig(): self

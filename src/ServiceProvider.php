@@ -3,11 +3,11 @@
 namespace Edalzell\Features;
 
 use Edalzell\Features\Console\Commands\Make;
+use Illuminate\Support\AggregateServiceProvider;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
-class ServiceProvider extends LaravelServiceProvider
+class ServiceProvider extends AggregateServiceProvider
 {
     public function boot()
     {
@@ -24,8 +24,10 @@ class ServiceProvider extends LaravelServiceProvider
 
         $disk = Storage::build(['driver' => 'local', 'root' => base_path('features')]);
 
-        collect($disk->directories())
+        $this->providers = collect($disk->directories())
             ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
-            ->each(fn (string $name) => $this->app->register('Features\\'.$name.'\\ServiceProvider'));
+            ->map(fn (string $name) => 'Features\\'.$name.'\\ServiceProvider');
+
+        parent::register();
     }
 }
