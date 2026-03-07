@@ -91,22 +91,27 @@ class FeatureNamespaces
 
     }
 
-    private function featuresNamespace(?array $featurePaths = null): string
+    private function featuresNamespace(array $featurePaths = []): string
     {
-        if (is_null($featurePaths)) {
+        if (empty($featurePaths)) {
             return 'Features';
         }
 
-        // grab the first one, pop off the last segment, that's the package path
-        $segments = explode(DIRECTORY_SEPARATOR, $featurePaths[0]);
-
-        // remove the `features` segment
-        array_pop($segments);
-        array_pop($segments);
-        $path = implode(DIRECTORY_SEPARATOR, $segments).DIRECTORY_SEPARATOR.'composer.json';
-
-        $composer = json_decode(file_get_contents($path), true);
+        $composerJson = file_get_contents($this->getComposerPath($featurePaths[0]));
+        $composer = json_decode($composerJson, true);
 
         return array_key_first($composer['autoload']['psr-4']).'Features';
+    }
+
+    private function getComposerPath(string $featurePath): string
+    {
+        // path looks like '/some/folder/site/vendor/edalzell/my-features/features/One'
+        // grab the first one, pop off the last 2 segments, that's the package path
+        $pathArray = explode(DIRECTORY_SEPARATOR, $featurePath);
+        $packagePath = implode(
+            DIRECTORY_SEPARATOR,
+            array_slice($pathArray, 0, count($pathArray) - 2));
+
+        return $packagePath.DIRECTORY_SEPARATOR.'composer.json';
     }
 }
