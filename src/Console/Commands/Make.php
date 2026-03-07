@@ -8,7 +8,7 @@ use Illuminate\Support\Composer;
 
 class Make extends GeneratorCommand
 {
-    protected $description = 'Add a new feature to the application';
+    protected $description = 'Create a new feature';
 
     protected $name = 'make:feature';
 

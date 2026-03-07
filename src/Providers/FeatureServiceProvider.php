@@ -1,12 +1,15 @@
 <?php
 
-namespace Edalzell\Features;
+namespace Edalzell\Features\Providers;
 
+use Edalzell\Features\Seeders;
+use Edalzell\Features\SeedersFacade;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use ReflectionClass;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
@@ -17,11 +20,15 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected string $name;
 
+    protected ReflectionClass $reflection;
+
     protected array $seeders = [];
 
     public function __construct($app)
     {
         parent::__construct($app);
+
+        $this->reflection = new ReflectionClass(static::class);
 
         $this->name = $this->name();
 
@@ -58,6 +65,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $configFile = $this->slug().'.php';
 
         if (! $this->disk->exists($path = 'config/'.$configFile)) {
+
             return $this;
         }
 
@@ -175,8 +183,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function name(): string
     {
-        $class = new \ReflectionClass(static::class);
-        $pathParts = explode('/', Path::normalize($class->getFileName()));
+        $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
 
         // /.../app/Features/One/src/ServiceProvider.php
         return $pathParts[count($pathParts) - 3];
