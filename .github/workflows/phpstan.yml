@@ -22,7 +22,7 @@ jobs:
           coverage: none
 
       - name: Install composer dependencies
-        uses: ramsey/composer-install@3.1.1
+        uses: ramsey/composer-install@4.0.0
 
       - name: Run PHPStan
         run: ./vendor/bin/phpstan --error-format=github
