@@ -1,15 +1,12 @@
 includes:
     - phpstan-baseline.neon
-    - vendor/larastan/larastan/extension.neon
 parameters:
     level: 5
     paths:
         - src
     ignoreErrors:
-        -
-          rawMessage: 'Trait Edalzell\Features\Concerns\HasFeatures is used zero times and is not analysed.'
-        -
-          rawMessage: 'Trait Edalzell\Features\Concerns\HasPackageFeatures is used zero times and is not analysed.'
+        - rawMessage: 'Trait Edalzell\Features\Concerns\HasFeatures is used zero times and is not analysed.'
+        - rawMessage: 'Trait Edalzell\Features\Concerns\HasPackageFeatures is used zero times and is not analysed.'
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
     checkModelProperties: true
