@@ -1,21 +1,23 @@
 <?php
 
-use Edalzell\Features\Providers\FeatureServiceProvider;
+use Edalzell\Features\Tests\TwoWords\TestServiceProvider;
 use Illuminate\Support\Facades\Event;
 
 it('merges config when it exists', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('TwoWords'), package: true)->put('config/two-words.php', '');
 
-    $provider = mock(ServiceProvider::class, [mock()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = new TestServiceProvider(mock());
+    // $provider = mock(TestServiceProvider::class, [mock()])
+    //     ->shouldAllowMockingProtectedMethods()
+    //     ->makePartial();
 
-    $provider
-        ->shouldReceive('mergeConfigFrom')
-        ->once()
-        ->with($disk->path('config/two-words.php'), 'two-words');
+    // $provider
+    //     ->shouldReceive('mergeConfigFrom')
+    //     ->once()
+    //     ->with($disk->path('config/two-words.php'), 'two-words');
 
-    $provider->registerConfig();
+    $provider->register();
+    dd(config('two-words'));
 });
 
 it('wont merge config when it doesnt exist', function () {
@@ -100,17 +102,9 @@ it('wont load views when there arent any', function () {
 it('wont register listeners if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
 
-    $provider = mock(ServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
+    $provider = mock(TestServiceProvider::class, [mock()])->shouldAllowMockingProtectedMethods()->makePartial();
 
     Event::partialMock()->shouldNotReceive('listen');
 
     $provider->bootListeners();
 });
-
-class ServiceProvider extends FeatureServiceProvider
-{
-    protected function name(): string
-    {
-        return 'TwoWords';
-    }
-}

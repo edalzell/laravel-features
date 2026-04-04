@@ -3,16 +3,19 @@
 use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Filesystem\Path;
 
 uses(TestCase::class)->in(__DIR__);
 
-function mockOnDemandDisk(string $path = ''): Filesystem
+function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
 {
     $localDisk = Storage::fake('local');
+    $root = $package ? Path::normalize(__DIR__.'__fixtures__/TwoWords') : base_path($path);
 
+    dd($root);
     Storage::shouldReceive('build')->with([
         'driver' => 'local',
-        'root' => base_path($path),
+        'root' => $path,
     ])->andReturn($localDisk);
 
     return $localDisk;

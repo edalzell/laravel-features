@@ -43,7 +43,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Edalzell\\Features\\Tests\\": "tests/"
+            "Edalzell\\Features\\Tests\\": "tests/",
+            "Edalzell\\Features\\Tests\\TwoWords\\": "tests/__fixtures__/TwoWords/src/"
         }
     },
     "config": {
