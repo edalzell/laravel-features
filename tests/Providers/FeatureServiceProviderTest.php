@@ -1,14 +1,10 @@
 <?php
 
-use Edalzell\Features\Providers\FeatureServiceProvider;
 use Illuminate\Support\Facades\Event;
 
 it('merges config when it exists', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider
         ->shouldReceive('mergeConfigFrom')
@@ -20,10 +16,7 @@ it('merges config when it exists', function () {
 
 it('wont merge config when it doesnt exist', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider->shouldNotReceive('mergeConfigFrom');
 
@@ -32,10 +25,7 @@ it('wont merge config when it doesnt exist', function () {
 
 it('can load migrations', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('database/migrations/add_table.php', '');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider
         ->shouldReceive('loadMigrationsFrom')
@@ -47,10 +37,7 @@ it('can load migrations', function () {
 
 it('wont load migrations if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider->shouldNotReceive('loadMigrationsFrom');
 
@@ -59,10 +46,7 @@ it('wont load migrations if there arent any', function () {
 
 it('can load routes', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('routes/web.php', '');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider
         ->shouldReceive('loadRoutesFrom')
@@ -74,10 +58,7 @@ it('can load routes', function () {
 
 it('wont load routes if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider->shouldNotReceive('loadRoutesFrom');
 
@@ -86,10 +67,7 @@ it('wont load routes if there arent any', function () {
 
 it('can load views', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('resources/views/foo.blade.php', '');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider
         ->shouldReceive('loadViewsFrom')
@@ -101,10 +79,7 @@ it('can load views', function () {
 
 it('wont load views when there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     $provider->shouldNotReceive('loadViewsFrom');
 
@@ -113,20 +88,9 @@ it('wont load views when there arent any', function () {
 
 it('wont register listeners if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-
-    $provider = mock(TestServiceProvider::class, [app()])
-        ->shouldAllowMockingProtectedMethods()
-        ->makePartial();
+    $provider = mockServiceProvider();
 
     Event::partialMock()->shouldNotReceive('listen');
 
     $provider->bootListeners();
 });
-
-class TestServiceProvider extends FeatureServiceProvider
-{
-    protected function name(): string
-    {
-        return 'TwoWords';
-    }
-}

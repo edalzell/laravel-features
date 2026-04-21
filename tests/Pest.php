@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
@@ -20,7 +21,22 @@ function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
     return $localDisk;
 }
 
+function mockServiceProvider()
+{
+    return mock(TestServiceProvider::class, [app()])
+        ->shouldAllowMockingProtectedMethods()
+        ->makePartial();
+}
+
 function tidy(string $path): string
 {
     return str_replace('/', '\\', $path);
+}
+
+class TestServiceProvider extends FeatureServiceProvider
+{
+    protected function name(): string
+    {
+        return 'TwoWords';
+    }
 }
