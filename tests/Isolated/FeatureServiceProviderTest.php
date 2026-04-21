@@ -1,6 +1,5 @@
 <?php
 
-use Edalzell\Features\Providers\FeatureServiceProvider;
 use Illuminate\Support\Facades\Event;
 
 it('register listeners', function () {
