@@ -32,6 +32,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $this->name = $this->name();
 
+        ray($this->name, $this->featuresPath());
         $this->disk = Storage::build([
             'driver' => 'local',
             'root' => $this->featuresPath(),
@@ -97,13 +98,18 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function featuresPath(): string
     {
-        // /.../app/Features/One/src/ServiceProvider.php
-        $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
+        return base_path('features/'.$this->name);
+        // // /.../app/Features/One/src/ServiceProvider.php
+        // $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
+        // $class = new ReflectionClass(static::class);
+        // $pathParts = explode('/', Path::normalize($class->getFileName()));
 
-        return implode(
-            DIRECTORY_SEPARATOR,
-            array_slice($pathParts, 0, count($pathParts) - 2)
-        );
+        // ray($pathParts);
+
+        // return implode(
+        //     DIRECTORY_SEPARATOR,
+        //     array_slice($pathParts, 0, count($pathParts) - 2)
+        // );
     }
 
     protected function registerConfig(): self
@@ -187,7 +193,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->in($this->disk->path($path))->name('*.php');
     }
 
-    private function name(): string
+    protected function name(): string
     {
         $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
 
