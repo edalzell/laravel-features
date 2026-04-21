@@ -12,10 +12,9 @@ function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
     $localDisk = Storage::fake('local');
     $root = $package ? Path::normalize(__DIR__.'__fixtures__/TwoWords') : base_path($path);
 
-    dd($root);
     Storage::shouldReceive('build')->with([
         'driver' => 'local',
-        'root' => $path,
+        'root' => $root,
     ])->andReturn($localDisk);
 
     return $localDisk;

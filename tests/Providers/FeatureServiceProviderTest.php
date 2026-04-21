@@ -4,7 +4,7 @@ use Edalzell\Features\Tests\TwoWords\TestServiceProvider;
 use Illuminate\Support\Facades\Event;
 
 it('merges config when it exists', function () {
-    $disk = tap(mockOnDemandDisk('TwoWords'), package: true)->put('config/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('TwoWords'))->put('config/two-words.php', '');
 
     $provider = new TestServiceProvider(mock());
     // $provider = mock(TestServiceProvider::class, [mock()])
@@ -17,7 +17,6 @@ it('merges config when it exists', function () {
     //     ->with($disk->path('config/two-words.php'), 'two-words');
 
     $provider->register();
-    dd(config('two-words'));
 });
 
 it('wont merge config when it doesnt exist', function () {
