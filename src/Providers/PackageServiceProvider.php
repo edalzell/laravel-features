@@ -12,6 +12,7 @@ abstract class PackageServiceProvider extends FeatureServiceProvider
 
         return implode(
             DIRECTORY_SEPARATOR,
-            array_slice($pathArray, 0, count($pathArray) - 2));
+            array_slice($pathArray, 0, count($pathArray) - 2)
+        );
     }
 }

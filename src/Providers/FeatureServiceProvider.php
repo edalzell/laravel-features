@@ -31,11 +31,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this->reflection = new ReflectionClass(static::class);
 
         $this->name = $this->name();
-
-        $this->disk = Storage::build([
-            'driver' => 'local',
-            'root' => $this->featuresPath(),
-        ]);
     }
 
     public function boot()
@@ -64,7 +59,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $configFile = $this->slug().'.php';
 
-        if (! $this->disk->exists($path = 'config/'.$configFile)) {
+        if (! $this->disk()->exists($path = 'config/'.$configFile)) {
 
             return $this;
         }
@@ -98,44 +93,33 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     protected function featuresPath(): string
     {
         return base_path('features/'.$this->name);
-        // // /.../app/Features/One/src/ServiceProvider.php
-        // $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
-        // $class = new ReflectionClass(static::class);
-        // $pathParts = explode('/', Path::normalize($class->getFileName()));
-
-        // ray($pathParts);
-
-        // return implode(
-        //     DIRECTORY_SEPARATOR,
-        //     array_slice($pathParts, 0, count($pathParts) - 2)
-        // );
     }
 
     protected function registerConfig(): self
     {
-        if (! $this->disk->exists($path = 'config/'.$this->slug().'.php')) {
+        if (! $this->disk()->exists($path = 'config/'.$this->slug().'.php')) {
             return $this;
         }
 
-        $this->mergeConfigFrom($this->disk->path($path), $this->slug());
+        $this->mergeConfigFrom($this->disk()->path($path), $this->slug());
 
         return $this;
     }
 
     protected function registerMigrations(): self
     {
-        if (! $this->disk->exists('database/migrations')) {
+        if (! $this->disk()->exists('database/migrations')) {
             return $this;
         }
 
-        $this->loadMigrationsFrom($this->disk->path('database/migrations'));
+        $this->loadMigrationsFrom($this->disk()->path('database/migrations'));
 
         return $this;
     }
 
     protected function registerRoutes(): self
     {
-        if (! $this->disk->exists('routes')) {
+        if (! $this->disk()->exists('routes')) {
             return $this;
         }
 
@@ -160,18 +144,18 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function registerViews(): self
     {
-        if (! $this->disk->exists('resources/views')) {
+        if (! $this->disk()->exists('resources/views')) {
             return $this;
         }
 
-        $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
+        $this->loadViewsFrom($this->disk()->path('resources/views'), $this->slug());
 
         return $this;
     }
 
     private function discoverEvents(): array
     {
-        if (! $this->disk->exists('src/Listeners')) {
+        if (! $this->disk()->exists('src/Listeners')) {
             return [];
         }
 
@@ -180,9 +164,21 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             fn (SplFileInfo $file, $ignored): string => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
         );
 
-        $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
+        $events = DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
 
         return $events;
+    }
+
+    private function disk(): Filesystem
+    {
+        if (! isset($this->disk)) {
+            $this->disk = Storage::build([
+                'driver' => 'local',
+                'root' => $this->featuresPath(),
+            ]);
+        }
+
+        return $this->disk;
     }
 
     private function finder(string $path): Finder
