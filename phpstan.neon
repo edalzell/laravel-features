@@ -5,7 +5,6 @@ parameters:
     paths:
         - src
     ignoreErrors:
-        - rawMessage: 'Trait Edalzell\Features\Concerns\HasFeatures is used zero times and is not analysed.'
         - rawMessage: 'Trait Edalzell\Features\Concerns\HasPackageFeatures is used zero times and is not analysed.'
     tmpDir: build/phpstan
     checkOctaneCompatibility: true
