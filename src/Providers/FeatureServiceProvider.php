@@ -174,7 +174,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         DiscoverEvents::guessClassNamesUsing(
             // @phpstan-ignore-next-line
-            fn (SplFileInfo $file, $ignored): string => ray()->pass("{$this->namespace()}\\Listeners\\".$file->getBasename('.php')),
+            fn (SplFileInfo $file, $ignored): string => "{$this->namespace()}\\Listeners\\".$file->getBasename('.php'),
         );
 
         $events = DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
