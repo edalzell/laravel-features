@@ -16,7 +16,7 @@ trait HasPackageFeatures
 
         $disk = Storage::build(['driver' => 'local', 'root' => $path]);
 
-        $this->providers = collect($disk->directories())
+        collect($disk->directories())
             ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
             ->each(fn (string $name) => app()->register($this->featureProviderNamespace($name)));
     }
