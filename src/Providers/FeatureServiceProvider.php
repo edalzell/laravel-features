@@ -95,6 +95,19 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return base_path('features/'.$this->name);
     }
 
+    protected function name(): string
+    {
+        $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
+
+        // /.../app/Features/One/src/ServiceProvider.php
+        return $pathParts[count($pathParts) - 3];
+    }
+
+    protected function namespace(): string
+    {
+        return str($this->reflection->getNamespaceName())->replaceEnd('\ServiceProvider', '');
+    }
+
     protected function registerConfig(): self
     {
         if (! $this->disk()->exists($path = 'config/'.$this->slug().'.php')) {
@@ -161,7 +174,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         DiscoverEvents::guessClassNamesUsing(
             // @phpstan-ignore-next-line
-            fn (SplFileInfo $file, $ignored): string => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
+            fn (SplFileInfo $file, $ignored): string => ray()->pass("{$this->namespace()}\\Listeners\\".$file->getBasename('.php')),
         );
 
         $events = DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
@@ -186,14 +199,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return tap(new Finder)
             ->files()
             ->in($this->disk->path($path))->name('*.php');
-    }
-
-    protected function name(): string
-    {
-        $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
-
-        // /.../app/Features/One/src/ServiceProvider.php
-        return $pathParts[count($pathParts) - 3];
     }
 
     private function slug(): string
