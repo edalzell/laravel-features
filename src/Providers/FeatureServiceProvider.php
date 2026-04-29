@@ -60,7 +60,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $configFile = $this->slug().'.php';
 
         if (! $this->disk()->exists($path = 'config/'.$configFile)) {
-
             return $this;
         }
 
