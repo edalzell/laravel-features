@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 
 it('merges config when it exists', function () {
@@ -21,6 +22,39 @@ it('wont merge config when it doesnt exist', function () {
     $provider->shouldNotReceive('mergeConfigFrom');
 
     $provider->registerConfig();
+});
+
+it('publishes config', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    $provider = mockServiceProvider();
+
+    $provider
+        ->shouldReceive('publishes')
+        ->once()
+        ->with(['config/two-words.php' => config_path('two-words.php')], 'two-words-config');
+
+    $provider->boot();
+});
+
+it('doesnt publish config when not running in console', function () {
+    $app = mock(Application::class)
+        ->makePartial()
+        ->shouldReceive('runningInConsole')->andReturn(false)
+        ->getMock();
+
+    $provider = mockServiceProvider($app);
+    $provider->shouldNotReceive('slug');
+    $provider->boot();
+});
+
+it('doesnt publish config when no config', function () {
+    $provider = mockServiceProvider();
+
+    $provider
+        ->shouldReceive('slug')->andReturn('two-words')
+        ->shouldNotReceive('publishes');
+
+    $provider->boot();
 });
 
 it('can load migrations', function () {

@@ -165,6 +165,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $this;
     }
 
+    protected function slug(): string
+    {
+        return str($this->name)->kebab()->toString();
+    }
+
     private function discoverEvents(): array
     {
         if (! $this->disk()->exists('src/Listeners')) {
@@ -198,10 +203,5 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return tap(new Finder)
             ->files()
             ->in($this->disk->path($path))->name('*.php');
-    }
-
-    private function slug(): string
-    {
-        return str($this->name)->kebab()->toString();
     }
 }

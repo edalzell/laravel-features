@@ -21,9 +21,9 @@ function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
     return $localDisk;
 }
 
-function mockServiceProvider()
+function mockServiceProvider($app = null)
 {
-    return mock(TestServiceProvider::class, [app()])
+    return mock(TestServiceProvider::class, [$app ?? app()])
         ->shouldAllowMockingProtectedMethods()
         ->makePartial();
 }
