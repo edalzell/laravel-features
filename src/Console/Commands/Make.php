@@ -45,11 +45,9 @@ class Make extends GeneratorCommand
 
     protected function getPath($name)
     {
-        if ($this->isPackageFeature()) {
-            return base_path("vendor/{$this->argument('package')}/features/{$this->getNameInput()}/src/ServiceProvider.php");
-        }
+        $prefix = $this->isPackageFeature() ? "vendor/{$this->argument('package')}/" : '';
 
-        return base_path("features/{$this->getNameInput()}/src/ServiceProvider.php");
+        return base_path("{$prefix}features/{$this->getNameInput()}/src/ServiceProvider.php");
     }
 
     protected function getStub()
