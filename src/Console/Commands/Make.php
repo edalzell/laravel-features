@@ -15,6 +15,8 @@ class Make extends GeneratorCommand
 
     protected $type = 'Feature';
 
+    private ?string $package;
+
     public function __construct(Filesystem $files, private Composer $composer)
     {
         parent::__construct($files);
@@ -27,6 +29,8 @@ class Make extends GeneratorCommand
      */
     public function handle()
     {
+        $this->package = $this->argument('package');
+
         $return = parent::handle();
 
         $this->addComposerScript();
@@ -45,7 +49,7 @@ class Make extends GeneratorCommand
 
     protected function getPath($name)
     {
-        $prefix = $this->isPackageFeature() ? "vendor/{$this->argument('package')}/" : '';
+        $prefix = $this->isPackageFeature() ? "vendor/{$this->package}/" : '';
 
         return base_path("{$prefix}features/{$this->getNameInput()}/src/ServiceProvider.php");
     }
@@ -64,7 +68,7 @@ class Make extends GeneratorCommand
     {
         if ($this->isPackageFeature()) {
             $composerJson = json_decode(
-                file_get_contents(base_path("vendor/{$this->argument('package')}/composer.json")),
+                file_get_contents(base_path("vendor/{$this->package}/composer.json")),
                 true
             );
 
@@ -93,6 +97,6 @@ class Make extends GeneratorCommand
 
     private function isPackageFeature(): bool
     {
-        return ! is_null($this->argument('package'));
+        return ! is_null($this->package);
     }
 }
