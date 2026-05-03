@@ -2,6 +2,7 @@
 
 namespace Edalzell\Features\Console\Commands;
 
+use Composer\Console\Input\InputArgument;
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Composer;
@@ -33,8 +34,21 @@ class Make extends GeneratorCommand
         return $return;
     }
 
+    protected function getArguments()
+    {
+        $args = parent::getArguments();
+
+        $args[] = ['package', InputArgument::OPTIONAL, 'Package to add '.strtolower($this->type).' to'];
+
+        return $args;
+    }
+
     protected function getPath($name)
     {
+        if ($this->isPackageFeature()) {
+            return base_path("vendor/{$this->argument('package')}/features/{$this->getNameInput()}/src/ServiceProvider.php");
+        }
+
         return base_path("features/{$this->getNameInput()}/src/ServiceProvider.php");
     }
 
@@ -46,6 +60,20 @@ class Make extends GeneratorCommand
     protected function getDefaultNamespace($rootNamespace)
     {
         return $rootNamespace."\Features\\{$this->getNameInput()}";
+    }
+
+    protected function rootNamespace()
+    {
+        if ($this->isPackageFeature()) {
+            $composerJson = json_decode(
+                file_get_contents(base_path("vendor/{$this->argument('package')}/composer.json")),
+                true
+            );
+
+            return rtrim(array_key_first($composerJson['autoload']['psr-4'] ?? []), '\\');
+        }
+
+        return parent::rootNamespace();
     }
 
     private function addComposerScript(): void
@@ -63,5 +91,10 @@ class Make extends GeneratorCommand
         $content['scripts']['pre-autoload-dump'] = array_unique($hooks);
 
         return $content;
+    }
+
+    private function isPackageFeature(): bool
+    {
+        return ! is_null($this->argument('package'));
     }
 }
