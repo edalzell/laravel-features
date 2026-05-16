@@ -23,6 +23,24 @@ it('generates a provider', function () {
     expect(file_exists($this->tempDir.'/features/MyFeature/src/ServiceProvider.php'))->toBeTrue();
 });
 
+it('uses the app feature service provider stub', function () {
+    $this->artisan('make:feature', ['name' => 'MyFeature'])->assertSuccessful();
+
+    $contents = file_get_contents($this->tempDir.'/features/MyFeature/src/ServiceProvider.php');
+
+    expect($contents)->toContain('use Edalzell\Features\Providers\FeatureServiceProvider;');
+});
+
+it('generates a provider for a multi-word feature name', function () {
+    $this->artisan('make:feature', ['name' => 'TwoWords'])->assertSuccessful();
+
+    expect(file_exists($this->tempDir.'/features/TwoWords/src/ServiceProvider.php'))->toBeTrue();
+
+    $contents = file_get_contents($this->tempDir.'/features/TwoWords/src/ServiceProvider.php');
+
+    expect($contents)->toContain('namespace App\Features\TwoWords;');
+});
+
 describe('package features', function () {
     beforeEach(function () {
         $this->packageDir = $this->tempDir.'/vendor/the-dev/the-package';
@@ -44,6 +62,28 @@ describe('package features', function () {
         $contents = file_get_contents($this->packageDir.'/features/MyFeature/src/ServiceProvider.php');
 
         expect($contents)->toContain('namespace TheDev\\ThePackage\\Features\\MyFeature;');
+    });
+
+    it('uses the package service provider stub', function () {
+        $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
+
+        $contents = file_get_contents($this->packageDir.'/features/MyFeature/src/ServiceProvider.php');
+
+        expect($contents)->toContain('use Edalzell\Features\Providers\PackageServiceProvider;');
+    });
+
+    it('adds pre-autoload-dump composer hook', function () {
+        $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
+
+        $composerJson = json_decode(file_get_contents($this->tempDir.'/composer.json'), true);
+
+        expect($composerJson)->toMatchArray([
+            'scripts' => [
+                'pre-autoload-dump' => [
+                    'Edalzell\Features\Composer\FeatureNamespaces::add',
+                ],
+            ],
+        ]);
     });
 });
 
