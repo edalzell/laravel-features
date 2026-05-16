@@ -8,21 +8,20 @@ use ReflectionClass;
 
 trait HasFeatures
 {
-    public function registerFeatures()
+    public function registerFeatures(?string $path = null, ?string $namespacePrefix = null): void
     {
         $reflection = new ReflectionClass($this);
-        $packagePath = packageRoot($reflection->getFileName());
+        $path ??= packageRoot($reflection->getFileName()).'/features';
+        $namespacePrefix ??= $reflection->getNamespaceName().'\\Features';
 
-        if (! File::exists($packagePath.'/features')) {
+        if (! File::exists($path)) {
             return;
         }
 
-        $namespace = $reflection->getNamespaceName();
-
-        $disk = Storage::build(['driver' => 'local', 'root' => $packagePath.'/features']);
+        $disk = Storage::build(['driver' => 'local', 'root' => $path]);
 
         collect($disk->directories())
             ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
-            ->each(fn (string $name) => $this->app->register($namespace.'\\Features\\'.$name.'\\ServiceProvider'));
+            ->each(fn (string $name) => $this->app->register($namespacePrefix.'\\'.$name.'\\ServiceProvider'));
     }
 }
