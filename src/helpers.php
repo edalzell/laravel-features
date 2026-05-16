@@ -23,14 +23,14 @@ if (! function_exists('addComposerScript')) {
             return;
         }
 
-        app(Composer::class)
-            ->setWorkingPath(base_path())
-            ->modify(function (array $content) use ($hook) {
+        $composer = tap(
+            app('composer'),
+            fn (Composer $composer) => $composer->modify(function (array $content) use ($hook) {
                 $hooks = (array) ($content['scripts']['pre-autoload-dump'] ?? []);
                 $hooks[] = $hook;
                 $content['scripts']['pre-autoload-dump'] = $hooks;
 
                 return $content;
-            })->dumpAutoloads();
+            }))->dumpAutoloads();
     }
 }
