@@ -39,7 +39,8 @@
     "autoload": {
         "psr-4": {
             "Edalzell\\Features\\": "src/"
-        }
+        },
+        "files": ["src/helpers.php"]
     },
     "autoload-dev": {
         "psr-4": {

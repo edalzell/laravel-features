@@ -105,13 +105,6 @@ class FeatureNamespaces
 
     private function getComposerPath(string $featurePath): string
     {
-        // path looks like '/some/folder/site/vendor/edalzell/my-features/features/One'
-        // grab the first one, pop off the last 2 segments, that's the package path
-        $pathArray = explode(DIRECTORY_SEPARATOR, $featurePath);
-        $packagePath = implode(
-            DIRECTORY_SEPARATOR,
-            array_slice($pathArray, 0, count($pathArray) - 2));
-
-        return $packagePath.DIRECTORY_SEPARATOR.'composer.json';
+        return packageRoot($featurePath).DIRECTORY_SEPARATOR.'composer.json';
     }
 }
