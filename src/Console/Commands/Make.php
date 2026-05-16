@@ -4,25 +4,18 @@ namespace Edalzell\Features\Console\Commands;
 
 use Composer\Console\Input\InputArgument;
 use Illuminate\Console\GeneratorCommand;
-use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Composer;
 
 class Make extends GeneratorCommand
 {
+    protected $aliases = 'make:feature';
+
     protected $description = 'Create a new feature';
 
-    protected $name = 'make:feature';
+    protected $name = 'feature:make';
 
     protected $type = 'Feature';
 
     private ?string $package;
-
-    public function __construct(Filesystem $files, private Composer $composer)
-    {
-        parent::__construct($files);
-
-        $composer->setWorkingPath(base_path());
-    }
 
     /**
      * @return bool|null
@@ -33,7 +26,7 @@ class Make extends GeneratorCommand
 
         $return = parent::handle();
 
-        $this->addComposerScript();
+        addComposerScript();
 
         return $return;
     }
@@ -56,6 +49,10 @@ class Make extends GeneratorCommand
 
     protected function getStub()
     {
+        if ($this->isPackageFeature()) {
+            return __DIR__.'/../../../stubs/package-provider.stub';
+        }
+
         return __DIR__.'/../../../stubs/provider.stub';
     }
 
@@ -76,23 +73,6 @@ class Make extends GeneratorCommand
         }
 
         return parent::rootNamespace();
-    }
-
-    private function addComposerScript(): void
-    {
-        tap($this->composer)
-            ->modify(fn (array $content) => $this->addPreAutoloadDumpScript($content))
-            ->dumpAutoloads();
-    }
-
-    private function addPreAutoloadDumpScript(array $content): array
-    {
-        $hooks = (array) ($content['scripts']['pre-autoload-dump'] ?? []);
-        $hooks[] = 'Edalzell\\Features\\Composer\\FeatureNamespaces::add';
-
-        $content['scripts']['pre-autoload-dump'] = array_unique($hooks);
-
-        return $content;
     }
 
     private function isPackageFeature(): bool

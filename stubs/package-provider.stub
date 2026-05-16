@@ -1,0 +1,7 @@
+<?php
+
+namespace {{ namespace }};
+
+use Edalzell\Features\Providers\PackageServiceProvider;
+
+class ServiceProvider extends PackageServiceProvider {}
