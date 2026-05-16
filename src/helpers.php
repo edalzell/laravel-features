@@ -14,13 +14,21 @@ if (! function_exists('packageRoot')) {
 if (! function_exists('addComposerScript')) {
     function addComposerScript(): void
     {
+        $hook = 'Edalzell\\Features\\Composer\\FeatureNamespaces::add';
+
+        $composerJson = json_decode(file_get_contents(base_path('composer.json')), true);
+        $hooks = (array) ($composerJson['scripts']['pre-autoload-dump'] ?? []);
+
+        if (in_array($hook, $hooks)) {
+            return;
+        }
+
         app(Composer::class)
             ->setWorkingPath(base_path())
-            ->modify(function (array $content) {
+            ->modify(function (array $content) use ($hook) {
                 $hooks = (array) ($content['scripts']['pre-autoload-dump'] ?? []);
-                $hooks[] = 'Edalzell\\Features\\Composer\\FeatureNamespaces::add';
-
-                $content['scripts']['pre-autoload-dump'] = array_unique($hooks);
+                $hooks[] = $hook;
+                $content['scripts']['pre-autoload-dump'] = $hooks;
 
                 return $content;
             })->dumpAutoloads();
