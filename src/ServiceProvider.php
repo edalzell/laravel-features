@@ -3,7 +3,6 @@
 namespace Edalzell\Features;
 
 use Edalzell\Features\Concerns\HasFeatures;
-use Edalzell\Features\Console\Commands\Load;
 use Edalzell\Features\Console\Commands\Make;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
