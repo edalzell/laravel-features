@@ -5,9 +5,10 @@ use Illuminate\Support\Composer;
 if (! function_exists('packageRoot')) {
     function packageRoot(string $path): string
     {
-        $segments = explode(DIRECTORY_SEPARATOR, $path);
+        $normalized = str_replace('\\', '/', $path);
+        $segments = explode('/', $normalized);
 
-        return implode(DIRECTORY_SEPARATOR, array_slice($segments, 0, count($segments) - 2));
+        return implode('/', array_slice($segments, 0, count($segments) - 2));
     }
 }
 
