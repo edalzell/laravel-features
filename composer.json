@@ -18,14 +18,14 @@
     "require": {
         "php": "^8.3",
         "composer/composer": "^2.8",
-        "illuminate/contracts": "^11.0 || ^12.0"
+        "illuminate/contracts": "^12.0 || ^13.0"
     },
     "require-dev": {
         "brain/monkey": "^2.7",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
-        "orchestra/testbench": "^9.0.0 || ^10.0.0",
+        "orchestra/testbench": "^10.0 || ^11.0",
         "pestphp/pest": "^4.0",
         "pestphp/pest-plugin-arch": "^4.0",
         "pestphp/pest-plugin-laravel": "^4.0",
