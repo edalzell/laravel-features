@@ -7,7 +7,7 @@ use Illuminate\Console\GeneratorCommand;
 
 class Make extends GeneratorCommand
 {
-    protected $aliases = 'make:feature';
+    protected $aliases = ['make:feature'];
 
     protected $description = 'Create a new feature';
 
