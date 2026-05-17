@@ -2,45 +2,114 @@
 
 namespace Edalzell\Features\Composer;
 
+use Composer\Package\RootPackageInterface;
 use Composer\Script\Event;
 
 class FeatureNamespaces
 {
-    public static function add(Event $event)
+    /** @var array<string, array<string>|string> */
+    private array $autoload = [];
+
+    /** @var array<string, array<string>|string> */
+    private array $autoloadDev = [];
+
+    public static function add(Event $event): void
     {
-        $composer = $event->getComposer();
-        $package = $composer->getPackage();
-        $autoload = $package->getAutoload();
-        $autoloadDev = $package->getDevAutoload();
+        $package = $event->getComposer()->getPackage();
 
-        $featuresDir = getcwd().'/features';
+        (new self($package))->setAutoloads();
+    }
 
-        if (! is_dir($featuresDir)) {
-            return;
+    private function __construct(private RootPackageInterface $package)
+    {
+        $this->autoload = $this->package->getAutoload();
+        $this->autoloadDev = $this->package->getDevAutoload();
+    }
+
+    public function setAutoloads(): void
+    {
+        $this
+            ->autoloadFeatures()
+            ->autoloadPackageFeatures();
+
+        $this->package->setAutoload($this->autoload);
+        $this->package->setDevAutoload($this->autoloadDev);
+    }
+
+    private function autoloadFeatures(): self
+    {
+        if (empty($featurePaths = $this->featurePaths('features'))) {
+            return $this;
         }
 
-        // Find all feature directories
-        $featurePaths = array_filter(glob($featuresDir.'/*'), 'is_dir');
+        $this->generateNamespaces($this->featuresNamespace(), $featurePaths);
 
-        foreach ($featurePaths as $featurePath) {
-            $featureName = basename($featurePath);
-            $rootNamespace = "Features\\{$featureName}\\";
+        return $this;
+    }
+
+    private function autoloadPackageFeatures(): self
+    {
+        if (empty($featurePaths = $this->featurePaths('vendor/*/*/features'))) {
+            return $this;
+        }
+
+        $this->generateNamespaces(
+            $this->featuresNamespace($featurePaths),
+            $featurePaths
+        );
+
+        return $this;
+    }
+
+    /** @return array<int, string> */
+    private function featurePaths(string $path): array
+    {
+        if (empty($paths = glob(getcwd().DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR.'*'))) {
+            return [];
+        }
+
+        return array_filter($paths, 'is_dir');
+    }
+
+    /** @param array<int, string> $featurePaths */
+    private function generateNamespaces(string $namespace, array $featurePaths): void
+    {
+        foreach ($featurePaths as $path) {
+            $featureName = basename($path);
+            $featurePath = ltrim(str_replace(getcwd(), '', $path), DIRECTORY_SEPARATOR);
+
+            $rootNamespace = "{$namespace}\\{$featureName}\\";
             $dbRootNamespace = $rootNamespace.'Database\\';
-            $rootPath = "features/{$featureName}/src/";
+            $rootPath = "{$featurePath}/src";
 
-            $autoload['psr-4'][$rootNamespace] = $rootPath;
+            $this->autoload['psr-4'][$rootNamespace] = $rootPath;
 
-            $factoryPath = "features/{$featureName}/database/factories";
-            $seedersPath = "features/{$featureName}/database/seeders";
+            $factoryPath = "{$featurePath}/database/factories";
+            $seedersPath = "{$featurePath}/database/seeders";
 
-            $autoload['psr-4'][$dbRootNamespace.'Factories\\'] = $factoryPath;
-            $autoload['psr-4'][$dbRootNamespace.'Seeders\\'] = $seedersPath;
+            $this->autoload['psr-4'][$dbRootNamespace.'Factories\\'] = $factoryPath;
+            $this->autoload['psr-4'][$dbRootNamespace.'Seeders\\'] = $seedersPath;
 
-            $autoloadDev['psr-4'][$rootNamespace.'Tests\\'] = "features/{$featureName}/tests/";
+            $this->autoloadDev['psr-4'][$rootNamespace.'Tests\\'] = "{$featurePath}/tests";
         }
 
-        $package->setAutoload($autoload);
-        $package->setDevAutoload($autoloadDev);
+    }
 
+    /** @param array<int, string> $featurePaths */
+    private function featuresNamespace(array $featurePaths = []): string
+    {
+        if (empty($featurePaths)) {
+            return 'Features';
+        }
+
+        $composerJson = file_get_contents($this->getComposerPath($featurePaths[0]));
+        $composer = json_decode($composerJson, true);
+
+        return array_key_first($composer['autoload']['psr-4']).'Features';
+    }
+
+    private function getComposerPath(string $featurePath): string
+    {
+        return packageRoot($featurePath).DIRECTORY_SEPARATOR.'composer.json';
     }
 }

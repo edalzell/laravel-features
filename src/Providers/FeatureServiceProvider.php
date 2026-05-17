@@ -1,37 +1,41 @@
 <?php
 
-namespace Edalzell\Features;
+namespace Edalzell\Features\Providers;
 
+use Edalzell\Features\Seeders;
+use Edalzell\Features\SeedersFacade;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use ReflectionClass;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
+    protected Filesystem $disk;
+
+    protected string $name;
+
+    /** @var ReflectionClass<static> */
+    protected ReflectionClass $reflection;
+
+    /** @var array<int, string> */
     protected array $seeders = [];
-
-    private Filesystem $disk;
-
-    private string $name;
 
     public function __construct($app)
     {
         parent::__construct($app);
 
-        $this->name = $this->name();
+        $this->reflection = new ReflectionClass(static::class);
 
-        $this->disk = Storage::build([
-            'driver' => 'local',
-            'root' => base_path('features/'.$this->name),
-        ]);
+        $this->name = $this->name();
     }
 
-    public function boot()
+    public function boot(): void
     {
         $this
             ->bootConfig()
@@ -49,7 +53,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->registerViews();
     }
 
-    private function bootConfig(): self
+    protected function bootConfig(): self
     {
         if (! $this->app->runningInConsole()) {
             return $this;
@@ -57,7 +61,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $configFile = $this->slug().'.php';
 
-        if (! $this->disk->exists($path = 'config/'.$configFile)) {
+        if (! $this->disk()->exists($path = 'config/'.$configFile)) {
             return $this;
         }
 
@@ -87,31 +91,49 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $this;
     }
 
+    protected function featuresPath(): string
+    {
+        return base_path('features/'.$this->name);
+    }
+
+    protected function name(): string
+    {
+        $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
+
+        // /.../app/Features/One/src/ServiceProvider.php
+        return $pathParts[count($pathParts) - 3];
+    }
+
+    protected function namespace(): string
+    {
+        return str($this->reflection->getNamespaceName())->replaceEnd('\ServiceProvider', '');
+    }
+
     protected function registerConfig(): self
     {
-        if (! $this->disk->exists($path = 'config/'.$this->slug().'.php')) {
+        if (! $this->disk()->exists($path = 'config/'.$this->slug().'.php')) {
             return $this;
         }
 
-        $this->mergeConfigFrom($this->disk->path($path), $this->slug());
+        $this->mergeConfigFrom($this->disk()->path($path), $this->slug());
 
         return $this;
     }
 
     protected function registerMigrations(): self
     {
-        if (! $this->disk->exists('database/migrations')) {
+        if (! $this->disk()->exists('database/migrations')) {
             return $this;
         }
 
-        $this->loadMigrationsFrom($this->disk->path('database/migrations'));
+        $this->loadMigrationsFrom($this->disk()->path('database/migrations'));
 
         return $this;
     }
 
     protected function registerRoutes(): self
     {
-        if (! $this->disk->exists('routes')) {
+        if (! $this->disk()->exists('routes')) {
             return $this;
         }
 
@@ -136,29 +158,47 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function registerViews(): self
     {
-        if (! $this->disk->exists('resources/views')) {
+        if (! $this->disk()->exists('resources/views')) {
             return $this;
         }
 
-        $this->loadViewsFrom($this->disk->path('resources/views'), $this->slug());
+        $this->loadViewsFrom($this->disk()->path('resources/views'), $this->slug());
 
         return $this;
     }
 
+    protected function slug(): string
+    {
+        return str($this->name)->kebab()->toString();
+    }
+
+    /** @return array<string, array<string>> */
     private function discoverEvents(): array
     {
-        if (! $this->disk->exists('src/Listeners')) {
+        if (! $this->disk()->exists('src/Listeners')) {
             return [];
         }
 
         DiscoverEvents::guessClassNamesUsing(
             // @phpstan-ignore-next-line
-            fn (SplFileInfo $file, $ignored): string => "Features\\{$this->name}\\Listeners\\".$file->getBasename('.php'),
+            fn (SplFileInfo $file, $ignored): string => "{$this->namespace()}\\Listeners\\".$file->getBasename('.php'),
         );
 
-        $events = DiscoverEvents::within($this->disk->path('src/Listeners'), '');
+        $events = DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
 
         return $events;
+    }
+
+    private function disk(): Filesystem
+    {
+        if (! isset($this->disk)) {
+            $this->disk = Storage::build([
+                'driver' => 'local',
+                'root' => $this->featuresPath(),
+            ]);
+        }
+
+        return $this->disk;
     }
 
     private function finder(string $path): Finder
@@ -166,19 +206,5 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return tap(new Finder)
             ->files()
             ->in($this->disk->path($path))->name('*.php');
-    }
-
-    protected function name(): string
-    {
-        $class = new \ReflectionClass(static::class);
-        $pathParts = explode('/', Path::normalize($class->getFileName()));
-
-        // /.../app/Features/One/src/ServiceProvider.php
-        return $pathParts[count($pathParts) - 3];
-    }
-
-    private function slug(): string
-    {
-        return str($this->name)->kebab()->toString();
     }
 }

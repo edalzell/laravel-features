@@ -16,7 +16,7 @@
     backupStaticProperties="false"
 >
     <testsuites>
-        <testsuite name="All">
+        <testsuite name="Default">
             <directory>tests</directory>
             <exclude>tests/Isolated</exclude>
         </testsuite>

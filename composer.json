@@ -21,6 +21,7 @@
         "illuminate/contracts": "^11.0 || ^12.0"
     },
     "require-dev": {
+        "brain/monkey": "^2.7",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
@@ -38,11 +39,13 @@
     "autoload": {
         "psr-4": {
             "Edalzell\\Features\\": "src/"
-        }
+        },
+        "files": ["src/helpers.php"]
     },
     "autoload-dev": {
         "psr-4": {
-            "Edalzell\\Features\\Tests\\": "tests/"
+            "Edalzell\\Features\\Tests\\": "tests/",
+            "Edalzell\\Features\\Tests\\TwoWords\\": "tests/__fixtures__/TwoWords/src/"
         }
     },
     "config": {

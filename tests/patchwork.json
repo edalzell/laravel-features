@@ -1,0 +1,10 @@
+{
+    "redefinable-internals": [
+        "file_get_contents",
+        "glob",
+        "is_dir"
+    ],
+     "blacklist": [
+        "../vendor/"
+    ]
+}
