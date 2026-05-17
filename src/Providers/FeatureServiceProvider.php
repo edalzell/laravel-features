@@ -20,8 +20,10 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected string $name;
 
+    /** @var ReflectionClass<static> */
     protected ReflectionClass $reflection;
 
+    /** @var array<int, string> */
     protected array $seeders = [];
 
     public function __construct($app)
@@ -33,7 +35,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this->name = $this->name();
     }
 
-    public function boot()
+    public function boot(): void
     {
         $this
             ->bootConfig()
@@ -170,6 +172,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return str($this->name)->kebab()->toString();
     }
 
+    /** @return array<string, array<string>> */
     private function discoverEvents(): array
     {
         if (! $this->disk()->exists('src/Listeners')) {

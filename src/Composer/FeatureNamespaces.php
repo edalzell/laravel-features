@@ -7,11 +7,13 @@ use Composer\Script\Event;
 
 class FeatureNamespaces
 {
+    /** @var array<string, array<string>|string> */
     private array $autoload = [];
 
+    /** @var array<string, array<string>|string> */
     private array $autoloadDev = [];
 
-    public static function add(Event $event)
+    public static function add(Event $event): void
     {
         $package = $event->getComposer()->getPackage();
 
@@ -59,6 +61,7 @@ class FeatureNamespaces
         return $this;
     }
 
+    /** @return array<int, string> */
     private function featurePaths(string $path): array
     {
         if (empty($paths = glob(getcwd().DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR.'*'))) {
@@ -68,6 +71,7 @@ class FeatureNamespaces
         return array_filter($paths, 'is_dir');
     }
 
+    /** @param array<int, string> $featurePaths */
     private function generateNamespaces(string $namespace, array $featurePaths): void
     {
         foreach ($featurePaths as $path) {
@@ -91,6 +95,7 @@ class FeatureNamespaces
 
     }
 
+    /** @param array<int, string> $featurePaths */
     private function featuresNamespace(array $featurePaths = []): string
     {
         if (empty($featurePaths)) {
