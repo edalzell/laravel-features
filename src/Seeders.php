@@ -6,8 +6,10 @@ use Illuminate\Database\Seeder;
 
 class Seeders extends Seeder
 {
+    /** @var array<int, string> */
     private array $seeders = [];
 
+    /** @param array<int, string> $seeders */
     public function add(array $seeders): void
     {
         array_push($this->seeders, ...$seeders);

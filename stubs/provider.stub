@@ -2,6 +2,6 @@
 
 namespace {{ namespace }};
 
-use Edalzell\Features\FeatureServiceProvider;
+use Edalzell\Features\Providers\FeatureServiceProvider;
 
 class ServiceProvider extends FeatureServiceProvider {}

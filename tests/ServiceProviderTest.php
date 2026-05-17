@@ -13,7 +13,8 @@ it('registers feature', function () {
     $app
         ->shouldReceive('register')
         ->once()
-        ->with('Features\\TwoWords\\ServiceProvider');
+        ->with('Features\\TwoWords\\ServiceProvider')
+        ->andReturn();
 
     (new ServiceProvider($app))->register();
 });
