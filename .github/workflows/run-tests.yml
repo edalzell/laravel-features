@@ -24,6 +24,10 @@ jobs:
         laravel: [13.*, 12.*]
         stability: [prefer-stable]
         include:
+          - laravel: 12.*
+            testbench: 10.*
+          - laravel: 13.*
+            testbench: 11.*
           - os: windows-latest
             php: 8.5
             laravel: 12.*
