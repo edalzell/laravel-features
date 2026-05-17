@@ -16,7 +16,7 @@
     ],
     "homepage": "https://github.com/edalzell/laravel-features",
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "composer/composer": "^2.8",
         "illuminate/contracts": "^12.0 || ^13.0"
     },
