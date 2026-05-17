@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.4.0 - 2026-05-17
+
+### 🚀 New
+
+- Support package features [@edalzell](https://github.com/edalzell) (#26)
+- Drop Laravel 11, add Laravel 13 support [@edalzell](https://github.com/edalzell) (#36)
+- Support Windows [@edalzell](https://github.com/edalzell) (#35)
+
+### 🧰 Maintenance
+
+- Update GitHub Action Versions [@edalzell](https://github.com/edalzell) (#33)
+
 ## v0.3.1 - 2026-02-17
 
 ### 🐛 Fixed
