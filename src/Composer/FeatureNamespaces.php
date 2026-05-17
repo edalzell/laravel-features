@@ -64,7 +64,7 @@ class FeatureNamespaces
     /** @return array<int, string> */
     private function featurePaths(string $path): array
     {
-        if (empty($paths = glob(getcwd().DIRECTORY_SEPARATOR.$path.DIRECTORY_SEPARATOR.'*'))) {
+        if (empty($paths = glob(getcwd().'/'.$path.'/*'))) {
             return [];
         }
 
@@ -74,9 +74,12 @@ class FeatureNamespaces
     /** @param array<int, string> $featurePaths */
     private function generateNamespaces(string $namespace, array $featurePaths): void
     {
+        $cwd = str_replace('\\', '/', getcwd());
+
         foreach ($featurePaths as $path) {
-            $featureName = basename($path);
-            $featurePath = ltrim(str_replace(getcwd(), '', $path), DIRECTORY_SEPARATOR);
+            $normalizedPath = str_replace('\\', '/', $path);
+            $featureName = basename($normalizedPath);
+            $featurePath = ltrim(str_replace($cwd, '', $normalizedPath), '/');
 
             $rootNamespace = "{$namespace}\\{$featureName}\\";
             $dbRootNamespace = $rootNamespace.'Database\\';
@@ -110,6 +113,6 @@ class FeatureNamespaces
 
     private function getComposerPath(string $featurePath): string
     {
-        return packageRoot($featurePath).DIRECTORY_SEPARATOR.'composer.json';
+        return packageRoot($featurePath).'/composer.json';
     }
 }
