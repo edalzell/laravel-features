@@ -13,7 +13,7 @@ jobs:
       release_upload_url: ${{ steps.latest_draft_release.outputs.upload_url }}
     steps:
       - name: Get Draft Release
-        uses: cardinalby/git-get-release-action@1.2.4
+        uses: cardinalby/git-get-release-action@1.2.5
         id: latest_draft_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
