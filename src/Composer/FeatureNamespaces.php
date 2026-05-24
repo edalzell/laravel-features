@@ -4,6 +4,7 @@ namespace Edalzell\Features\Composer;
 
 use Composer\Package\RootPackageInterface;
 use Composer\Script\Event;
+use Exception;
 
 class FeatureNamespaces
 {
@@ -108,15 +109,17 @@ class FeatureNamespaces
         $composerPath = $this->getComposerPath($featurePaths[0]);
         $contents = file_get_contents($composerPath);
 
-        if ($contents === false) {
-            throw new \RuntimeException("Cannot read composer.json at {$composerPath}");
-        }
+        throw_if(
+            $contents === false,
+            new Exception("Cannot read composer.json at {$composerPath}")
+        );
 
         $composer = json_decode($contents, true);
 
-        if (! is_array($composer) || ! isset($composer['autoload']['psr-4'])) {
-            throw new \RuntimeException("composer.json at {$composerPath} is missing autoload.psr-4");
-        }
+        throw_if(
+            ! is_array($composer) || ! isset($composer['autoload']['psr-4']),
+            new Exception("composer.json at {$composerPath} is missing autoload.psr-4")
+        );
 
         return array_key_first($composer['autoload']['psr-4']).'Features';
     }
