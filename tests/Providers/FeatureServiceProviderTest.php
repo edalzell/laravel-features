@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 
 it('merges config when it exists', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
@@ -127,4 +128,25 @@ it('wont register listeners if there arent any', function () {
     Event::partialMock()->shouldNotReceive('listen');
 
     $provider->bootListeners();
+});
+
+it('wont register policies if there arent any', function () {
+    mockOnDemandDisk('features/TwoWords');
+    $provider = mockServiceProvider();
+
+    Gate::partialMock()->shouldNotReceive('policy');
+
+    $provider->bootPolicies();
+});
+
+it('can register policies', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('src/Policies/FooPolicy.php', '');
+    $provider = mockServiceProvider();
+    $provider->shouldReceive('namespace')->andReturn('Features\TwoWords');
+
+    Gate::shouldReceive('policy')
+        ->once()
+        ->with('Features\TwoWords\Models\Foo', 'Features\TwoWords\Policies\FooPolicy');
+
+    $provider->bootPolicies();
 });
