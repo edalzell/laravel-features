@@ -69,7 +69,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         }
 
         $this->publishes(
-            [$path => config_path($configFile)],
+            [$this->disk()->path($path) => config_path($configFile)],
             $this->slug().'-config'
         );
 
