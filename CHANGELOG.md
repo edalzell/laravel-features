@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.5.0 - 2026-05-24
+
+### 🚀 New
+
+- Auto-register policies [@edalzell](https://github.com/edalzell) (#39)
+
+### 🧰 Maintenance
+
+- Simplify namespace() by removing no-op [@edalzell](https://github.com/edalzell) (#47)
+- Replace Storage disk with File::directories() [@edalzell](https://github.com/edalzell) (#46)
+- Simplify seeders singleton [@edalzell](https://github.com/edalzell) (#45)
+- Don't add composer hook unless it's needed [@edalzell](https://github.com/edalzell) (#44)
+- Improve namespaces error handling [@edalzell](https://github.com/edalzell) (#43)
+- Replace placeholder description in composer.json [@edalzell](https://github.com/edalzell) (#42)
+- Fix bootConfig() publishing a relative source path [@edalzell](https://github.com/edalzell) (#41)
+- Document the global side-effect of guessClassNamesUsing() [@edalzell](https://github.com/edalzell) (#40)
+- Bump shivammathur/setup-php from 2.37.0 to 2.37.1 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#37)
+- Update Get Release action [@edalzell](https://github.com/edalzell) (#38)
+
 ## v0.4.0 - 2026-05-17
 
 ### 🚀 New
