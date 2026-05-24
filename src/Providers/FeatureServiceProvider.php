@@ -6,6 +6,7 @@ use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Events\DiscoverEvents;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -88,9 +89,9 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function bootPolicies(): self
     {
-        foreach ($this->discoverPolicies() as $model => $policy) {
-            Gate::policy($model, $policy);
-        }
+        $this
+            ->discoverPolicies()
+            ->each(fn (string $policy, string $model) => Gate::policy($model, $policy));
 
         return $this;
     }
@@ -183,22 +184,24 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return str($this->name)->kebab()->toString();
     }
 
-    /** @return array<string, string> */
-    private function discoverPolicies(): array
+    /** @return Collection<string, string> */
+    private function discoverPolicies(): Collection
     {
         if (! $this->disk()->exists('src/Policies')) {
-            return [];
+            return collect();
         }
 
-        $policies = [];
+        return collect($this->finder('src/Policies'))
+            ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
+    }
 
-        foreach ($this->finder('src/Policies') as $file) {
-            $policyClass = "{$this->namespace()}\\Policies\\".$file->getBasename('.php');
-            $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
-            $policies["{$this->namespace()}\\Models\\{$modelName}"] = $policyClass;
-        }
+    /** @return array<string, string> */
+    private function policyMap(SplFileInfo $file): array
+    {
+        $policyClass = "{$this->namespace()}\\Policies\\".$file->getBasename('.php');
+        $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
 
-        return $policies;
+        return ["{$this->namespace()}\\Models\\{$modelName}" => $policyClass];
     }
 
     /** @return array<string, array<string>> */
