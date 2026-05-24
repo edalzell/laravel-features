@@ -24,13 +24,11 @@ class Make extends GeneratorCommand
     {
         $this->package = $this->argument('package');
 
-        $return = parent::handle();
-
-        if ($return !== false) {
-            addComposerScript();
+        if (parent::handle() === false) {
+            return false;
         }
 
-        return $return;
+        addComposerScript();
     }
 
     protected function getArguments()
