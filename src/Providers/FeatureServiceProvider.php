@@ -118,7 +118,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function namespace(): string
     {
-        return str($this->reflection->getNamespaceName())->replaceEnd('\ServiceProvider', '');
+        return $this->reflection->getNamespaceName();
     }
 
     protected function registerConfig(): self
