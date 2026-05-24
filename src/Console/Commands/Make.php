@@ -29,6 +29,8 @@ class Make extends GeneratorCommand
         }
 
         addComposerScript();
+
+        return null;
     }
 
     protected function getArguments()
