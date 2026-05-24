@@ -32,7 +32,7 @@ it('publishes config', function () {
     $provider
         ->shouldReceive('publishes')
         ->once()
-        ->with(['config/two-words.php' => config_path('two-words.php')], 'two-words-config');
+        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
 
     $provider->boot();
 });
