@@ -16,12 +16,12 @@
     backupStaticProperties="false"
 >
     <testsuites>
+        <testsuite name="Isolated">
+            <directory>tests/Isolated</directory>
+        </testsuite>
         <testsuite name="Default">
             <directory>tests</directory>
             <exclude>tests/Isolated</exclude>
-        </testsuite>
-        <testsuite name="Isolated">
-            <directory>tests/Isolated</directory>
         </testsuite>
     </testsuites>
     <logging>
