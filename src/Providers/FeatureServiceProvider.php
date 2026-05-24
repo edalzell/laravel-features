@@ -6,7 +6,9 @@ use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Foundation\Events\DiscoverEvents;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use ReflectionClass;
@@ -40,6 +42,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this
             ->bootConfig()
             ->bootListeners()
+            ->bootPolicies()
             ->bootSeeders();
     }
 
@@ -80,6 +83,15 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
                 Event::listen($event, $listener);
             }
         }
+
+        return $this;
+    }
+
+    protected function bootPolicies(): self
+    {
+        $this
+            ->discoverPolicies()
+            ->each(fn (string $policy, string $model) => Gate::policy($model, $policy));
 
         return $this;
     }
@@ -189,6 +201,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $events;
     }
 
+    /** @return Collection<string, string> */
+    private function discoverPolicies(): Collection
+    {
+        if (! $this->disk()->exists('src/Policies')) {
+            return collect();
+        }
+
+        return collect($this->finder('src/Policies'))
+            ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
+    }
+
     private function disk(): Filesystem
     {
         if (! isset($this->disk)) {
@@ -206,5 +229,14 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return tap(new Finder)
             ->files()
             ->in($this->disk->path($path))->name('*.php');
+    }
+
+    /** @return array<string, string> */
+    private function policyMap(SplFileInfo $file): array
+    {
+        $policyClass = "{$this->namespace()}\\Policies\\".$file->getBasename('.php');
+        $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
+
+        return ["{$this->namespace()}\\Models\\{$modelName}" => $policyClass];
     }
 }
