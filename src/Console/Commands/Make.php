@@ -26,7 +26,9 @@ class Make extends GeneratorCommand
 
         $return = parent::handle();
 
-        addComposerScript();
+        if ($return !== false) {
+            addComposerScript();
+        }
 
         return $return;
     }
