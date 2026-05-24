@@ -1,6 +1,6 @@
 {
     "name": "edalzell/laravel-features",
-    "description": "This is my package laravel-features",
+    "description": "Self-contained feature modules for Laravel with auto-registration of routes, migrations, views, events, and seeders",
     "license": "MIT",
     "keywords": [
         "Erin Dalzell",
