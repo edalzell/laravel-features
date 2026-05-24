@@ -191,6 +191,9 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             return [];
         }
 
+        // guessClassNamesUsing() sets a static callback on DiscoverEvents. This is safe
+        // because within() is called immediately after, before any other feature's
+        // bootListeners() runs. Do not move these two calls apart.
         DiscoverEvents::guessClassNamesUsing(
             // @phpstan-ignore-next-line
             fn (SplFileInfo $file, $ignored): string => "{$this->namespace()}\\Listeners\\".$file->getBasename('.php'),
