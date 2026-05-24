@@ -3,7 +3,6 @@
 namespace Edalzell\Features\Concerns;
 
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use ReflectionClass;
 
 trait HasFeatures
@@ -18,10 +17,8 @@ trait HasFeatures
             return;
         }
 
-        $disk = Storage::build(['driver' => 'local', 'root' => $path]);
-
-        collect($disk->directories())
-            ->filter(fn (string $name) => $disk->exists($name.'/src/ServiceProvider.php'))
-            ->each(fn (string $name) => $this->app->register($namespacePrefix.'\\'.$name.'\\ServiceProvider'));
+        collect(File::directories($path))
+            ->filter(fn (string $dir) => File::exists($dir.'/src/ServiceProvider.php'))
+            ->each(fn (string $dir) => $this->app->register($namespacePrefix.'\\'.basename($dir).'\\ServiceProvider'));
     }
 }
