@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.5.1 - 2026-06-11
+
+### 🐛 Fixed
+
+- Don’t use helper for composer hooks [@edalzell](https://github.com/edalzell) (#56)
+- Fix package feature loading [@edalzell](https://github.com/edalzell) (#57)
+- Fix stub namespace [@edalzell](https://github.com/edalzell) (#55)
+
+### 🧰 Maintenance
+
+- Bump release-drafter/release-drafter from 7.3.0 to 7.3.1 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#49)
+  
+- Bump cardinalby/git-get-release-action from 1.2.5 to 1.2.6 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#50)
+  
+- Bump actions/checkout from 6.0.2 to 6.0.3 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#51)
+  
+- Ensure whole test suite can be run [@edalzell](https://github.com/edalzell) (#48)
+  
+
 ## v0.5.0 - 2026-05-24
 
 ### 🚀 New
