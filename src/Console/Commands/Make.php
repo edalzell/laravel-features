@@ -2,8 +2,10 @@
 
 namespace Edalzell\Features\Console\Commands;
 
+use Closure;
 use Composer\Console\Input\InputArgument;
 use Illuminate\Console\GeneratorCommand;
+use Illuminate\Support\Facades\Pipeline;
 
 class Make extends GeneratorCommand
 {
@@ -106,7 +108,20 @@ class Make extends GeneratorCommand
             return;
         }
 
-        // Add import after last existing use statement (or after namespace if none)
+        $content = Pipeline::send($content)
+            ->through([
+                $this->addHasFeaturesImport(...),
+                $this->addHasFeaturesTrait(...),
+                $this->addRegisterFeaturesCall(...),
+            ])->thenReturn();
+
+        file_put_contents($path, $content);
+
+        $this->components->info("Added <comment>HasFeatures</comment> to [{$path}].");
+    }
+
+    private function addHasFeaturesImport(string $content, Closure $next): string
+    {
         if (preg_match('/^use [^\n]+;$/m', $content)) {
             $content = preg_replace(
                 '/((?:^use [^\n]+;\n)+)/m',
@@ -123,7 +138,11 @@ class Make extends GeneratorCommand
             );
         }
 
-        // Add trait use after the class opening brace
+        return $next($content);
+    }
+
+    private function addHasFeaturesTrait(string $content, Closure $next): string
+    {
         $content = preg_replace(
             '/(class [^\n]+\n\{)/s',
             '$1'.PHP_EOL.'    use HasFeatures;'.PHP_EOL,
@@ -131,7 +150,11 @@ class Make extends GeneratorCommand
             1
         );
 
-        // Add registerFeatures() to the register() method, or create it
+        return $next($content);
+    }
+
+    private function addRegisterFeaturesCall(string $content, Closure $next): string
+    {
         if (str_contains($content, 'function register(')) {
             $content = preg_replace(
                 '/(function register\([^)]*\)[^{]*\{)/',
@@ -144,13 +167,11 @@ class Make extends GeneratorCommand
                 .PHP_EOL.'    {'
                 .PHP_EOL.'        $this->registerFeatures();'
                 .PHP_EOL.'    }';
-            $lastBrace = strrpos($content, '}');
-            $content = substr_replace($content, $method.PHP_EOL, $lastBrace, 0);
+
+            $content = substr_replace($content, $method.PHP_EOL, strrpos($content, '}'), 0);
         }
 
-        file_put_contents($path, $content);
-
-        $this->components->info("Added <comment>HasFeatures</comment> to [{$path}].");
+        return $next($content);
     }
 
     private function findPackageServiceProviderPath(): ?string
