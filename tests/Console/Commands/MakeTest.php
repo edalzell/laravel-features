@@ -85,6 +85,95 @@ describe('package features', function () {
             ],
         ]);
     });
+
+    describe('adding HasFeatures to package service provider', function () {
+        beforeEach(function () {
+            file_put_contents($this->packageDir.'/composer.json', json_encode([
+                'autoload' => ['psr-4' => ['TheDev\\ThePackage\\' => 'src/']],
+                'extra' => ['laravel' => ['providers' => ['TheDev\\ThePackage\\ServiceProvider']]],
+            ]));
+        });
+
+        it('adds HasFeatures when the service provider has no register method', function () {
+            file_put_contents($this->packageDir.'/src/ServiceProvider.php', <<<'PHP'
+<?php
+
+namespace TheDev\ThePackage;
+
+use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+
+class ServiceProvider extends LaravelServiceProvider
+{
+    public function boot(): void {}
+}
+PHP);
+
+            $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
+
+            $contents = file_get_contents($this->packageDir.'/src/ServiceProvider.php');
+
+            expect($contents)
+                ->toContain('use Edalzell\Features\Concerns\HasFeatures;')
+                ->toContain('use HasFeatures;')
+                ->toContain('public function register(): void')
+                ->toContain('$this->registerFeatures();');
+        });
+
+        it('inserts registerFeatures into an existing register method', function () {
+            file_put_contents($this->packageDir.'/src/ServiceProvider.php', <<<'PHP'
+<?php
+
+namespace TheDev\ThePackage;
+
+use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+
+class ServiceProvider extends LaravelServiceProvider
+{
+    public function register(): void
+    {
+        parent::register();
+    }
+}
+PHP);
+
+            $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
+
+            $contents = file_get_contents($this->packageDir.'/src/ServiceProvider.php');
+
+            expect($contents)
+                ->toContain('use Edalzell\Features\Concerns\HasFeatures;')
+                ->toContain('use HasFeatures;')
+                ->toContain('$this->registerFeatures();')
+                ->toContain('parent::register();');
+        });
+
+        it('does not add HasFeatures if already present', function () {
+            file_put_contents($this->packageDir.'/src/ServiceProvider.php', <<<'PHP'
+<?php
+
+namespace TheDev\ThePackage;
+
+use Edalzell\Features\Concerns\HasFeatures;
+use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+
+class ServiceProvider extends LaravelServiceProvider
+{
+    use HasFeatures;
+
+    public function register(): void
+    {
+        $this->registerFeatures();
+    }
+}
+PHP);
+
+            $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
+
+            $contents = file_get_contents($this->packageDir.'/src/ServiceProvider.php');
+
+            expect(substr_count($contents, 'HasFeatures'))->toBe(2);
+        });
+    });
 });
 
 it('adds pre-autoload-dump composer hook', function () {
