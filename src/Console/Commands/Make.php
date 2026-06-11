@@ -123,26 +123,31 @@ class Make extends GeneratorCommand
     private function addHasFeaturesImport(string $content, Closure $next): string
     {
         if (preg_match('/^use [^\n]+;$/m', $content)) {
+            // append after the last existing import statement
             $content = preg_replace(
                 '/((?:^use [^\n]+;\n)+)/m',
                 '$1use Edalzell\\Features\\Concerns\\HasFeatures;'.PHP_EOL,
                 $content,
                 1
             );
-        } else {
-            $content = preg_replace(
-                '/^(namespace [^;]+;)/m',
-                '$1'.PHP_EOL.PHP_EOL.'use Edalzell\\Features\\Concerns\\HasFeatures;',
-                $content,
-                1
-            );
+
+            return $next($content);
         }
+
+        // no imports exist — insert after the namespace declaration
+        $content = preg_replace(
+            '/^(namespace [^;]+;)/m',
+            '$1'.PHP_EOL.PHP_EOL.'use Edalzell\\Features\\Concerns\\HasFeatures;',
+            $content,
+            1
+        );
 
         return $next($content);
     }
 
     private function addHasFeaturesTrait(string $content, Closure $next): string
     {
+        // insert the trait use as the first line inside the class body
         $content = preg_replace(
             '/(class [^\n]+\n\{)/s',
             '$1'.PHP_EOL.'    use HasFeatures;'.PHP_EOL,
@@ -156,20 +161,23 @@ class Make extends GeneratorCommand
     private function addRegisterFeaturesCall(string $content, Closure $next): string
     {
         if (str_contains($content, 'function register(')) {
+            // insert registerFeatures() as the first line of the existing method body
             $content = preg_replace(
                 '/(function register\([^)]*\)[^{]*\{)/',
                 '$1'.PHP_EOL.'        $this->registerFeatures();',
                 $content,
                 1
             );
-        } else {
-            $method = PHP_EOL.'    public function register(): void'
-                .PHP_EOL.'    {'
-                .PHP_EOL.'        $this->registerFeatures();'
-                .PHP_EOL.'    }';
 
-            $content = substr_replace($content, $method.PHP_EOL, strrpos($content, '}'), 0);
+            return $next($content);
         }
+
+        $method = PHP_EOL.'    public function register(): void'
+            .PHP_EOL.'    {'
+            .PHP_EOL.'        $this->registerFeatures();'
+            .PHP_EOL.'    }';
+
+        $content = substr_replace($content, $method.PHP_EOL, strrpos($content, '}'), 0);
 
         return $next($content);
     }
