@@ -34,6 +34,49 @@ it('adds feature classes to namespaces', function () {
         ]]);
 });
 
+it('does nothing when no features are found', function () {
+    $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
+    $composer = tap(new Composer)->setPackage($package);
+
+    Functions\expect('glob')
+        ->once()->with(getcwd().'/features/*')->andReturn([])
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([]);
+
+    FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
+
+    expect($package)
+        ->getAutoload()->toBe([])
+        ->getDevAutoload()->toBe([]);
+});
+
+it('throws when the package composer.json cannot be read', function () {
+    $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
+    $composer = tap(new Composer)->setPackage($package);
+
+    when('is_dir')->justReturn(true);
+    when('file_get_contents')->justReturn(false);
+    Functions\expect('glob')
+        ->once()->with(getcwd().'/features/*')->andReturn([])
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')
+        ->andReturn([getcwd().'/vendor/edalzell/my-features/features/One']);
+
+    FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
+})->throws(Exception::class, 'Cannot read composer.json');
+
+it('throws when the package composer.json is missing psr-4 autoload', function () {
+    $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
+    $composer = tap(new Composer)->setPackage($package);
+
+    when('is_dir')->justReturn(true);
+    when('file_get_contents')->justReturn(json_encode(['name' => 'edalzell/my-features']));
+    Functions\expect('glob')
+        ->once()->with(getcwd().'/features/*')->andReturn([])
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')
+        ->andReturn([getcwd().'/vendor/edalzell/my-features/features/One']);
+
+    FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
+})->throws(Exception::class, 'missing autoload.psr-4');
+
 it('adds package feature classes to namespaces', function () {
     $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
     $composer = tap(new Composer)->setPackage($package);

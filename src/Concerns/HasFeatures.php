@@ -10,7 +10,7 @@ trait HasFeatures
     public function registerFeatures(?string $path = null, ?string $namespacePrefix = null): void
     {
         $reflection = new ReflectionClass($this);
-        $path ??= packageRoot($reflection->getFileName()).'/features';
+        $path ??= dirname($reflection->getFileName(), 2).'/features';
         $namespacePrefix ??= $reflection->getNamespaceName().'\\Features';
 
         if (! File::exists($path)) {
