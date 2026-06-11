@@ -2,16 +2,6 @@
 
 use Illuminate\Support\Composer;
 
-if (! function_exists('packageRoot')) {
-    function packageRoot(string $path): string
-    {
-        $normalized = str_replace('\\', '/', $path);
-        $segments = explode('/', $normalized);
-
-        return implode('/', array_slice($segments, 0, count($segments) - 2));
-    }
-}
-
 if (! function_exists('addComposerScript')) {
     function addComposerScript(): void
     {
