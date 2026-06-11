@@ -38,7 +38,7 @@ it('generates a provider for a multi-word feature name', function () {
 
     $contents = file_get_contents($this->tempDir.'/features/TwoWords/src/ServiceProvider.php');
 
-    expect($contents)->toContain('namespace App\Features\TwoWords;');
+    expect($contents)->toContain('namespace Features\TwoWords;');
 });
 
 describe('package features', function () {
