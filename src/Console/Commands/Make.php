@@ -60,7 +60,11 @@ class Make extends GeneratorCommand
 
     protected function getDefaultNamespace($rootNamespace)
     {
-        return $rootNamespace."\Features\\{$this->getNameInput()}";
+        if ($this->isPackageFeature()) {
+            return $rootNamespace."\Features\\{$this->getNameInput()}";
+        }
+
+        return $rootNamespace."\\{$this->getNameInput()}";
     }
 
     protected function rootNamespace()
@@ -74,7 +78,7 @@ class Make extends GeneratorCommand
             return rtrim(array_key_first($composerJson['autoload']['psr-4'] ?? []), '\\');
         }
 
-        return parent::rootNamespace();
+        return 'Features\\';
     }
 
     private function isPackageFeature(): bool
