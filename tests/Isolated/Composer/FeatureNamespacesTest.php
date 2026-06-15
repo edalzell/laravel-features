@@ -77,6 +77,52 @@ it('throws when the package composer.json is missing psr-4 autoload', function (
     FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
 })->throws(Exception::class, 'missing autoload.psr-4');
 
+it('uses package namespace for local features when root is not an app', function () {
+    $package = new RootPackage('myvendor/my-package', '1.0', 'v1.0');
+    $package->setAutoload(['psr-4' => ['MyVendor\\MyPackage\\' => 'src/']]);
+    $composer = tap(new Composer)->setPackage($package);
+    $featuresDir = getcwd().'/features';
+
+    when('is_dir')->justReturn(true);
+    Functions\expect('glob')->once()->with($featuresDir.'/*')->andReturn([$featuresDir.'/One'])
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([]);
+
+    FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
+
+    expect($package)
+        ->getAutoload()->toBe(['psr-4' => [
+            'MyVendor\\MyPackage\\' => 'src/',
+            'MyVendor\\MyPackage\\Features\\One\\' => 'features/One/src',
+            'MyVendor\\MyPackage\\Features\\One\\Database\\Factories\\' => 'features/One/database/factories',
+            'MyVendor\\MyPackage\\Features\\One\\Database\\Seeders\\' => 'features/One/database/seeders',
+        ]])->getDevAutoload()->toBe(['psr-4' => [
+            'MyVendor\\MyPackage\\Features\\One\\Tests\\' => 'features/One/tests',
+        ]]);
+});
+
+it('uses plain Features namespace for local features when root is a Laravel app', function () {
+    $package = new RootPackage('myapp/app', '1.0', 'v1.0');
+    $package->setAutoload(['psr-4' => ['App\\' => 'app/']]);
+    $composer = tap(new Composer)->setPackage($package);
+    $featuresDir = getcwd().'/features';
+
+    when('is_dir')->justReturn(true);
+    Functions\expect('glob')->once()->with($featuresDir.'/*')->andReturn([$featuresDir.'/One'])
+        ->andAlsoExpectIt()->once()->with(getcwd().'/vendor/*/*/features/*')->andReturn([]);
+
+    FeatureNamespaces::add(new Event('pre-autoload-dump', $composer, new NullIO));
+
+    expect($package)
+        ->getAutoload()->toBe(['psr-4' => [
+            'App\\' => 'app/',
+            'Features\\One\\' => 'features/One/src',
+            'Features\\One\\Database\\Factories\\' => 'features/One/database/factories',
+            'Features\\One\\Database\\Seeders\\' => 'features/One/database/seeders',
+        ]])->getDevAutoload()->toBe(['psr-4' => [
+            'Features\\One\\Tests\\' => 'features/One/tests',
+        ]]);
+});
+
 it('adds package feature classes to namespaces', function () {
     $package = new RootPackage('edalzell/my-features', '1.0', 'v1.1');
     $composer = tap(new Composer)->setPackage($package);
