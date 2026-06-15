@@ -103,6 +103,15 @@ class FeatureNamespaces
     private function featuresNamespace(array $featurePaths = []): string
     {
         if (empty($featurePaths)) {
+            // When the root package has its own PSR-4 namespace (i.e. it's a package,
+            // not a Laravel app), prefix Features with that namespace so local feature
+            // classes resolve correctly during package development.
+            $rootPsr4 = array_key_first($this->autoload['psr-4'] ?? []);
+
+            if ($rootPsr4 && $rootPsr4 !== 'App\\') {
+                return rtrim($rootPsr4, '\\').'\\Features';
+            }
+
             return 'Features';
         }
 
