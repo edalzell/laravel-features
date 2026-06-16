@@ -18,6 +18,7 @@
     "require": {
         "php": "^8.3",
         "composer/composer": "^2.8",
+        "edalzell/laravel-features-plugin": "*",
         "illuminate/contracts": "^12.0 || ^13.0"
     },
     "require-dev": {
