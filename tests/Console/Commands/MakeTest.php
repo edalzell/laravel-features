@@ -72,20 +72,6 @@ describe('package features', function () {
         expect($contents)->toContain('use Edalzell\Features\Providers\PackageServiceProvider;');
     });
 
-    it('adds pre-autoload-dump composer hook', function () {
-        $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
-
-        $composerJson = json_decode(file_get_contents($this->tempDir.'/composer.json'), true);
-
-        expect($composerJson)->toMatchArray([
-            'scripts' => [
-                'pre-autoload-dump' => [
-                    'Edalzell\Features\Composer\FeatureNamespaces::add',
-                ],
-            ],
-        ]);
-    });
-
     describe('adding HasFeatures to package service provider', function () {
         beforeEach(function () {
             file_put_contents($this->packageDir.'/composer.json', json_encode([
@@ -174,18 +160,4 @@ PHP);
             expect(substr_count($contents, 'HasFeatures'))->toBe(2);
         });
     });
-});
-
-it('adds pre-autoload-dump composer hook', function () {
-    $this->artisan('make:feature', ['name' => 'MyFeature'])->assertSuccessful();
-
-    $composerJson = json_decode(file_get_contents($this->tempDir.'/composer.json'), true);
-
-    expect($composerJson)->toMatchArray([
-        'scripts' => [
-            'pre-autoload-dump' => [
-                'Edalzell\Features\Composer\FeatureNamespaces::add',
-            ],
-        ],
-    ]);
 });

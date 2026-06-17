@@ -18,6 +18,7 @@
     "require": {
         "php": "^8.3",
         "composer/composer": "^2.8",
+        "edalzell/laravel-features-plugin": "^0.1",
         "illuminate/contracts": "^12.0 || ^13.0"
     },
     "require-dev": {
@@ -39,17 +40,16 @@
     "autoload": {
         "psr-4": {
             "Edalzell\\Features\\": "src/"
-        },
-        "files": ["src/helpers.php"]
+        }
     },
     "autoload-dev": {
         "psr-4": {
-            "Edalzell\\Features\\Tests\\": "tests/",
-            "Edalzell\\Features\\Tests\\TwoWords\\": "tests/__fixtures__/TwoWords/src/"
+            "Edalzell\\Features\\Tests\\": "tests/"
         }
     },
     "config": {
         "allow-plugins": {
+            "edalzell/laravel-features-plugin": true,
             "pestphp/pest-plugin": true,
             "phpstan/extension-installer": true
         },
