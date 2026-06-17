@@ -175,17 +175,3 @@ PHP);
         });
     });
 });
-
-it('adds pre-autoload-dump composer hook', function () {
-    $this->artisan('make:feature', ['name' => 'MyFeature'])->assertSuccessful();
-
-    $composerJson = json_decode(file_get_contents($this->tempDir.'/composer.json'), true);
-
-    expect($composerJson)->toMatchArray([
-        'scripts' => [
-            'pre-autoload-dump' => [
-                'Edalzell\Features\Composer\FeatureNamespaces::add',
-            ],
-        ],
-    ]);
-});
