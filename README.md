@@ -12,7 +12,7 @@ Add self-contained features to your Laravel app or package, including all resour
 └── features/
   │   └── MyGreatFeature/
   │       ├── config/
-  │       │   └── feature.php
+  │       │   └── my-great-feature.php
   │       ├── database/
   │       │   ├── factories
   │       │   ├── migrations
