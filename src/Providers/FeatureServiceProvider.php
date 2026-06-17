@@ -62,7 +62,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             return $this;
         }
 
-        $configFile = $this->slug().'.php';
+        $configFile = $this->configFileName().'.php';
 
         if (! $this->disk()->exists($path = 'config/'.$configFile)) {
             return $this;
@@ -70,7 +70,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $this->publishes(
             [$this->disk()->path($path) => config_path($configFile)],
-            $this->slug().'-config'
+            $this->configFileName().'-config'
         );
 
         return $this;
@@ -103,6 +103,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $this;
     }
 
+    protected function configFileName(): string
+    {
+        return str($this->name)->kebab()->toString();
+    }
+
     protected function featuresPath(): string
     {
         return base_path('features/'.$this->name);
@@ -123,11 +128,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function registerConfig(): self
     {
-        if (! $this->disk()->exists($path = 'config/'.$this->slug().'.php')) {
+        if (! $this->disk()->exists($path = 'config/'.$this->configFileName().'.php')) {
             return $this;
         }
 
-        $this->mergeConfigFrom($this->disk()->path($path), $this->slug());
+        $this->mergeConfigFrom($this->disk()->path($path), $this->configFileName());
 
         return $this;
     }
