@@ -30,7 +30,7 @@ class Make extends GeneratorCommand
             return false;
         }
 
-        addComposerScript();
+        app('composer')->dumpAutoloads();
 
         if ($this->isPackageFeature()) {
             $this->ensureServiceProviderHasFeatures();
