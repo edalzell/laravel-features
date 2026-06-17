@@ -11,6 +11,8 @@ Add self-contained features to your Laravel app or package, including all resour
 ...
 └── features/
   │   └── MyGreatFeature/
+  │       ├── config/
+  │       │   └── feature.php
   │       ├── database/
   │       │   ├── factories
   │       │   ├── migrations
@@ -45,7 +47,9 @@ To add a feature to your package:
 php artisan make:feature MyGreatFeature the-dev/my-package
 ```
 
-This will create an empty (but necessary) service provider that autoloads/registers migrations, routes, & views and properly namespaces your factories, seeders and code.
+This will create an empty (but necessary) service provider that autoloads/registers config, migrations, routes, & views and properly namespaces your factories, seeders and code.
+
+By default the config is available at the slugified version of the feature name, i.e. 'TwoWords' becomes `two-words.php`. If you want a different name, override the `configFilename` method in your feature's service provider.
 
 If you want to add a feature manually, or convert something you already have into a feature:
 * create an `features/YourFeature` folder
