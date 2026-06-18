@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Gate;
 it('register listeners', function () {
     Event::fake();
     mockOnDemandDisk('features/TwoWords')->put('src/Listeners/Bar.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $this->mock('alias:Illuminate\Foundation\Events\DiscoverEvents')
         ->shouldReceive('guessClassNamesUsing')->andReturn()
@@ -20,7 +20,7 @@ it('register listeners', function () {
 
 it('registers policies', function () {
     mockOnDemandDisk('features/TwoWords')->put('src/Policies/PostPolicy.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
     $provider->shouldReceive('namespace')->andReturn('Features\TwoWords');
 
     Gate::shouldReceive('policy')

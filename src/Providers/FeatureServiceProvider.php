@@ -20,6 +20,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
     protected Filesystem $disk;
 
+    protected ?string $group = null;
+
     protected string $name;
 
     /** @var ReflectionClass<static> */
@@ -64,13 +66,13 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $configFile = $this->configFileName().'.php';
 
-        if (! $this->disk()->exists($path = 'config/'.$configFile)) {
+        if (! $this->disk()->exists($path = 'config/'.$this->prefix('/').$configFile)) {
             return $this;
         }
 
         $this->publishes(
-            [$this->disk()->path($path) => config_path($configFile)],
-            $this->configFileName().'-config'
+            [$this->disk()->path($path) => config_path($this->prefix('/').$configFile)],
+            $this->prefix('-').$this->configFileName().'-config'
         );
 
         return $this;
@@ -128,7 +130,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function registerConfig(): self
     {
-        if (! $this->disk()->exists($path = 'config/'.$this->configFileName().'.php')) {
+        if (! $this->disk()->exists($path = 'config/'.$this->prefix('/').$this->configFileName().'.php')) {
             return $this;
         }
 
@@ -248,5 +250,10 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
 
         return ["{$this->namespace()}\\Models\\{$modelName}" => $policyClass];
+    }
+
+    private function prefix(string $suffix): string
+    {
+        return $this->group ? $this->group.$suffix : '';
     }
 }
