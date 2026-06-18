@@ -32,6 +32,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     {
         parent::__construct($app);
 
+        $this->feature = new Feature($app);
+
         $this->reflection = new ReflectionClass(static::class);
 
         $this->name = $this->name();
@@ -39,6 +41,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     public function boot(): void
     {
+        $this->feature->boot()
         $this
             ->bootConfig()
             ->bootListeners()
@@ -48,6 +51,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     public function register()
     {
+
         $this
             ->registerConfig()
             ->registerMigrations()
