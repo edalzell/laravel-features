@@ -153,7 +153,7 @@ it('can register policies', function () {
 });
 
 it('merges config when it exists in group directory', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/admin/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     $provider = mockServiceProvider(TestGroupedServiceProvider::class);
 
     $provider
@@ -165,7 +165,7 @@ it('merges config when it exists in group directory', function () {
 });
 
 it('wont merge config when group directory config does not exist', function () {
-    tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    tap(mockOnDemandDisk('features/TwoWords'))->put('config/foo/two-words.php', '');
     $provider = mockServiceProvider(TestGroupedServiceProvider::class);
 
     $provider->shouldNotReceive('mergeConfigFrom');
@@ -174,7 +174,7 @@ it('wont merge config when group directory config does not exist', function () {
 });
 
 it('publishes config to group directory when group is set', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/admin/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     $provider = mockServiceProvider(TestGroupedServiceProvider::class);
 
     $provider

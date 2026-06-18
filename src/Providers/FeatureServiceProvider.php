@@ -66,9 +66,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $configFile = $this->configFileName().'.php';
 
-        if (! $this->disk()->exists($path = 'config/'.$this->prefix('/').$configFile)) {
+        if (! $this->disk()->exists('config/'.$configFile)) {
             return $this;
         }
+
+        $path = 'config/'.$this->prefix('/').$configFile;
 
         $this->publishes(
             [$this->disk()->path($path) => config_path($this->prefix('/').$configFile)],
@@ -130,9 +132,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function registerConfig(): self
     {
-        if (! $this->disk()->exists($path = 'config/'.$this->prefix('/').$this->configFileName().'.php')) {
+        if (! $this->disk()->exists($path = 'config/'.$this->configFileName().'.php')) {
             return $this;
         }
+
+        $path = 'config/'.$this->prefix('/').$this->configFileName().'.php';
 
         $this->mergeConfigFrom($this->disk()->path($path), $this->configFileName());
 
