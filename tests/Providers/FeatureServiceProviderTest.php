@@ -1,12 +1,13 @@
 <?php
 
+use Edalzell\Features\Providers\FeatureServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
 it('merges config when it exists', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('mergeConfigFrom')
@@ -18,7 +19,7 @@ it('merges config when it exists', function () {
 
 it('wont merge config when it doesnt exist', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider->shouldNotReceive('mergeConfigFrom');
 
@@ -27,7 +28,7 @@ it('wont merge config when it doesnt exist', function () {
 
 it('publishes config', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('publishes')
@@ -43,13 +44,13 @@ it('doesnt publish config when not running in console', function () {
         ->shouldReceive('runningInConsole')->andReturn(false)
         ->getMock();
 
-    $provider = mockServiceProvider($app);
+    $provider = mockServiceProvider(TestServiceProvider::class, $app);
     $provider->shouldNotReceive('slug');
     $provider->boot();
 });
 
 it('doesnt publish config when no config', function () {
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('slug')->andReturn('two-words')
@@ -60,7 +61,7 @@ it('doesnt publish config when no config', function () {
 
 it('can load migrations', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('database/migrations/add_table.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('loadMigrationsFrom')
@@ -72,7 +73,7 @@ it('can load migrations', function () {
 
 it('wont load migrations if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider->shouldNotReceive('loadMigrationsFrom');
 
@@ -81,7 +82,7 @@ it('wont load migrations if there arent any', function () {
 
 it('can load routes', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('routes/web.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('loadRoutesFrom')
@@ -93,7 +94,7 @@ it('can load routes', function () {
 
 it('wont load routes if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider->shouldNotReceive('loadRoutesFrom');
 
@@ -102,7 +103,7 @@ it('wont load routes if there arent any', function () {
 
 it('can load views', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('resources/views/foo.blade.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('loadViewsFrom')
@@ -114,7 +115,7 @@ it('can load views', function () {
 
 it('wont load views when there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider->shouldNotReceive('loadViewsFrom');
 
@@ -123,7 +124,7 @@ it('wont load views when there arent any', function () {
 
 it('wont register listeners if there arent any', function () {
     $disk = mockOnDemandDisk('features/TwoWords');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     Event::partialMock()->shouldNotReceive('listen');
 
@@ -132,7 +133,7 @@ it('wont register listeners if there arent any', function () {
 
 it('wont register policies if there arent any', function () {
     mockOnDemandDisk('features/TwoWords');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     Gate::partialMock()->shouldNotReceive('policy');
 
@@ -141,7 +142,7 @@ it('wont register policies if there arent any', function () {
 
 it('can register policies', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('src/Policies/FooPolicy.php', '');
-    $provider = mockServiceProvider();
+    $provider = mockServiceProvider(TestServiceProvider::class);
     $provider->shouldReceive('namespace')->andReturn('Features\TwoWords');
 
     Gate::shouldReceive('policy')
@@ -150,3 +151,57 @@ it('can register policies', function () {
 
     $provider->bootPolicies();
 });
+
+it('merges config when it exists in group directory', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    $provider = mockServiceProvider(TestGroupedServiceProvider::class);
+
+    $provider
+        ->shouldReceive('mergeConfigFrom')
+        ->once()
+        ->with($disk->path('config/admin/two-words.php'), 'two-words');
+
+    $provider->register();
+});
+
+it('wont merge config when group directory config does not exist', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))->put('config/foo/two-words.php', '');
+    $provider = mockServiceProvider(TestGroupedServiceProvider::class);
+
+    $provider->shouldNotReceive('mergeConfigFrom');
+
+    $provider->registerConfig();
+});
+
+it('publishes config to group directory when group is set', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    $provider = mockServiceProvider(TestGroupedServiceProvider::class);
+
+    $provider
+        ->shouldReceive('publishes')
+        ->once()
+        ->with(
+            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
+            'admin-two-words-config'
+        );
+
+    $provider->boot();
+});
+
+class TestGroupedServiceProvider extends FeatureServiceProvider
+{
+    protected function configGroup(): string
+    {
+        return 'admin';
+    }
+
+    protected function configPublishHandle(): string
+    {
+        return 'admin-two-words';
+    }
+
+    protected function name(): string
+    {
+        return 'TwoWords';
+    }
+}
