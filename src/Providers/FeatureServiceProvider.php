@@ -20,8 +20,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
     protected Filesystem $disk;
 
-    protected ?string $group = null;
-
     protected string $name;
 
     /** @var ReflectionClass<static> */
@@ -66,15 +64,13 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
         $configFile = $this->configFileName().'.php';
 
-        if (! $this->disk()->exists('config/'.$configFile)) {
+        if (! $this->disk()->exists($path = 'config/'.$configFile)) {
             return $this;
         }
 
-        $path = 'config/'.$this->prefix('/').$configFile;
-
         $this->publishes(
-            [$this->disk()->path($path) => config_path($this->prefix('/').$configFile)],
-            $this->prefix('-').$this->configFileName().'-config'
+            [$this->disk()->path($path) => config_path($this->configGroup().'/'.$configFile)],
+            $this->join('-', $this->configPublishHandle(), 'config')
         );
 
         return $this;
@@ -109,7 +105,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function configFileName(): string
     {
-        return str($this->name)->kebab()->toString();
+        return $this->slug();
+    }
+
+    protected function configGroup(): string
+    {
+        return '';
+    }
+
+    protected function configPublishHandle(): string
+    {
+        return $this->slug();
     }
 
     protected function featuresPath(): string
@@ -136,7 +142,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             return $this;
         }
 
-        $path = 'config/'.$this->prefix('/').$this->configFileName().'.php';
+        $path = $this->join('/', 'config', $this->configGroup(), $this->configFileName().'.php');
 
         $this->mergeConfigFrom($this->disk()->path($path), $this->configFileName());
 
@@ -247,6 +253,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->in($this->disk->path($path))->name('*.php');
     }
 
+    private function join(string $separator, string ...$parts): string
+    {
+        return implode($separator, array_filter($parts));
+    }
+
     /** @return array<string, string> */
     private function policyMap(SplFileInfo $file): array
     {
@@ -254,10 +265,5 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
 
         return ["{$this->namespace()}\\Models\\{$modelName}" => $policyClass];
-    }
-
-    private function prefix(string $suffix): string
-    {
-        return $this->group ? $this->group.$suffix : '';
     }
 }
