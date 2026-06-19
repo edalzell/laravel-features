@@ -181,7 +181,7 @@ it('publishes config to group directory when group is set', function () {
         ->shouldReceive('publishes')
         ->once()
         ->with(
-            [$disk->path('config/admin/two-words.php') => config_path('admin/two-words.php')],
+            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
             'admin-two-words-config'
         );
 
@@ -190,7 +190,15 @@ it('publishes config to group directory when group is set', function () {
 
 class TestGroupedServiceProvider extends FeatureServiceProvider
 {
-    protected ?string $group = 'admin';
+    protected function configGroup(): string
+    {
+        return 'admin';
+    }
+
+    protected function configPublishHandle(): string
+    {
+        return 'admin-two-words';
+    }
 
     protected function name(): string
     {
