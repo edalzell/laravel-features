@@ -69,7 +69,7 @@ describe('package features', function () {
 
         $contents = file_get_contents($this->packageDir.'/features/MyFeature/src/ServiceProvider.php');
 
-        expect($contents)->toContain('use Edalzell\Features\Providers\PackageServiceProvider;');
+        expect($contents)->toContain('use Edalzell\Features\Providers\FeatureServiceProvider;');
     });
 
     describe('adding HasFeatures to package service provider', function () {

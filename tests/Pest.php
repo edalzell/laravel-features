@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\Features;
 use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -21,11 +22,29 @@ function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
     return $localDisk;
 }
 
-function mockServiceProvider(string $class, $app = null)
+function mockServiceProvider(string $class, mixed $app = null)
 {
     return mock($class, [$app ?? app()])
         ->shouldAllowMockingProtectedMethods()
         ->makePartial();
+}
+
+/**
+ * Creates a Features instance bound to a mock provider, with path, name, and
+ * namespace set from the given feature directory (relative to base_path).
+ *
+ * @return array{0: Features, 1: mixed}
+ */
+function mockFeatures(string $featurePath = 'features/TwoWords', ?string $providerClass = null, mixed $app = null): array
+{
+    $provider = mockServiceProvider($providerClass ?? TestServiceProvider::class, $app);
+    $name = basename($featurePath);
+    $features = (new Features($provider))
+        ->path(base_path($featurePath))
+        ->name($name)
+        ->namespace('Features\\'.$name);
+
+    return [$features, $provider];
 }
 
 function tidy(string $path): string
