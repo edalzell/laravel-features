@@ -12,27 +12,29 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     /** @var array<int, string> */
     protected array $seeders = [];
 
-    protected string $name;
-
-    /** @var ReflectionClass<static> */
-    protected ReflectionClass $reflection;
+    private Features $features;
 
     public function __construct(Application $app)
     {
         parent::__construct($app);
 
-        $this->reflection = new ReflectionClass(static::class);
-        $this->name = $this->name();
+        $this->features = (new Features($this))
+            ->path($this->featuresPath())
+            ->name($this->name())
+            ->configFileName($this->configFileName())
+            ->configGroup($this->configGroup())
+            ->configPublishHandle($this->configPublishHandle())
+            ->seeders($this->seeders);
     }
 
     public function boot(): void
     {
-        $this->makeFeatures()->bootFeature();
+        $this->features->bootFeature();
     }
 
     public function register(): void
     {
-        $this->makeFeatures()->registerFeature();
+        $this->features->registerFeature();
     }
 
     protected function configFileName(): string
@@ -52,27 +54,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function featuresPath(): string
     {
-        return base_path('features/'.$this->name);
+        return base_path('features/'.$this->name());
     }
 
     protected function name(): string
     {
-        return basename(dirname($this->reflection->getFileName(), 2));
+        return basename(dirname((new ReflectionClass(static::class))->getFileName(), 2));
     }
 
     protected function slug(): string
     {
-        return str($this->name)->kebab()->toString();
-    }
-
-    private function makeFeatures(): Features
-    {
-        return (new Features($this))
-            ->path($this->featuresPath())
-            ->name($this->name)
-            ->configFileName($this->configFileName())
-            ->configGroup($this->configGroup())
-            ->configPublishHandle($this->configPublishHandle())
-            ->seeders($this->seeders);
+        return str($this->name())->kebab()->toString();
     }
 }

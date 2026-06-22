@@ -5,6 +5,7 @@ use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
+use Mockery\MockInterface;
 use Symfony\Component\Filesystem\Path;
 
 uses(TestCase::class)->in(__DIR__);
@@ -22,6 +23,12 @@ function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
     return $localDisk;
 }
 
+/**
+ * @template T of \Illuminate\Support\ServiceProvider
+ *
+ * @param  class-string<T>  $class
+ * @return T&MockInterface
+ */
 function mockServiceProvider(string $class, mixed $app = null)
 {
     return mock($class, [$app ?? app()])
