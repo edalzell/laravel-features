@@ -1,5 +1,8 @@
 <?php
 
+use Edalzell\Features\Seeders;
+use Edalzell\Features\SeedersFacade;
+use Edalzell\Features\Tests\Fixtures\TestSeeder;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -162,4 +165,80 @@ it('doesnt publish config when not running in console', function () {
     $provider->shouldNotReceive('publishes');
 
     $features->bootConfig();
+});
+
+it('wont publish config when no config file exists', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldNotReceive('publishes');
+
+    $features->bootConfig();
+});
+
+it('publishes config with a custom publish handle', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    [$features, $provider] = mockFeatures();
+    $features->configPublishHandle('custom');
+
+    $provider
+        ->shouldReceive('publishes')
+        ->once()
+        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'custom-config');
+
+    $features->bootConfig();
+});
+
+it('loads all route files', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))
+        ->put('routes/web.php', '')
+        ->put('routes/api.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('loadRoutesFrom')->twice();
+
+    $features->registerRoutes();
+});
+
+it('registers the seeders singleton', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features] = mockFeatures();
+
+    expect(app()->bound(Seeders::class))->toBeFalse();
+
+    $features->registerSeeders();
+
+    expect(app()->bound(Seeders::class))->toBeTrue();
+});
+
+it('does not rebind the seeders singleton if already registered', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features] = mockFeatures();
+
+    $features->registerSeeders();
+    $first = app(Seeders::class);
+
+    $features->registerSeeders();
+
+    expect(app(Seeders::class))->toBe($first);
+});
+
+it('adds no seeders when database/seeders directory does not exist', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features] = mockFeatures();
+
+    SeedersFacade::shouldReceive('add')->once()->with([]);
+
+    $features->bootSeeders();
+});
+
+it('discovers and boots seeders', function () {
+    $content = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Database\Seeder; class TestSeeder extends Seeder { public function run(): void {} }';
+
+    tap(mockOnDemandDisk('features/TwoWords'))->put('database/seeders/TestSeeder.php', $content);
+    [$features] = mockFeatures();
+
+    SeedersFacade::shouldReceive('add')->once()->with([TestSeeder::class]);
+
+    $features->bootSeeders();
 });
