@@ -4,6 +4,7 @@ namespace Edalzell\Features;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\Seeder;
 use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
@@ -27,8 +28,6 @@ class Features
     private string $configGroup = '';
 
     private string $configPublishHandle;
-
-    private array $seeders = [];
 
     private ?Filesystem $disk = null;
 
@@ -89,13 +88,6 @@ class Features
     public function configPublishHandle(string $handle): static
     {
         $this->configPublishHandle = $handle;
-
-        return $this;
-    }
-
-    public function seeders(array $seeders): static
-    {
-        $this->seeders = $seeders;
 
         return $this;
     }
@@ -162,7 +154,9 @@ class Features
 
     public function bootSeeders(): static
     {
-        SeedersFacade::add($this->seeders);
+        $seeders = $this->discoverSeeders();
+
+        SeedersFacade::add($seeders);
 
         return $this;
     }
@@ -225,9 +219,9 @@ class Features
         return $this;
     }
 
-    private function slug(): string
+    private function callProtected(string $method, mixed ...$args): mixed
     {
-        return str($this->name)->kebab()->toString();
+        return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
     }
 
     /** @return array<string, array<string>> */
@@ -259,6 +253,19 @@ class Features
             ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
     }
 
+    private function discoverSeeders(): array
+    {
+        if (! $this->disk()->exists('database/seeders')) {
+            return [];
+        }
+
+        return collect($this->finder('database/seeders'))
+            ->keys()
+            ->map(fn (string $path) => $this->getClassNameFromFile($path))
+            ->filter(fn (string $class) => is_subclass_of($class, Seeder::class))
+            ->all();
+    }
+
     private function disk(): Filesystem
     {
         return $this->disk ??= Storage::build([
@@ -272,6 +279,30 @@ class Features
         return tap(new Finder)
             ->files()
             ->in($this->disk()->path($path))->name('*.php');
+    }
+
+    private function getClassNameFromFile(string $filePath): ?string
+    {
+        $tokens = token_get_all(file_get_contents($filePath));
+        $namespace = '';
+
+        for ($i = 0; $i < count($tokens); $i++) {
+            if ($tokens[$i][0] === T_NAMESPACE) {
+                $i += 2; // skip whitespace
+                while (isset($tokens[$i]) && is_array($tokens[$i])) {
+                    $namespace .= $tokens[$i][1];
+                    $i++;
+                }
+            }
+
+            if ($tokens[$i][0] === T_CLASS) {
+                $i += 2; // skip whitespace
+
+                return $namespace ? $namespace.'\\'.$tokens[$i][1] : $tokens[$i][1];
+            }
+        }
+
+        return null;
     }
 
     private function join(string $separator, string ...$parts): string
@@ -288,8 +319,8 @@ class Features
         return ["{$this->namespace}\\Models\\{$modelName}" => $policyClass];
     }
 
-    private function callProtected(string $method, mixed ...$args): mixed
+    private function slug(): string
     {
-        return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
+        return str($this->name)->kebab()->toString();
     }
 }

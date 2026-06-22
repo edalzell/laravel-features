@@ -9,9 +9,6 @@ use ReflectionClass;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
-    /** @var array<int, string> */
-    protected array $seeders = [];
-
     private Features $features;
 
     public function __construct(Application $app)
@@ -23,8 +20,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->name($this->name())
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
-            ->configPublishHandle($this->configPublishHandle())
-            ->seeders($this->seeders);
+            ->configPublishHandle($this->configPublishHandle());
     }
 
     public function boot(): void
