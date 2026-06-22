@@ -59,6 +59,8 @@ Preferences:
 * fluent options instead of large constructors
 * tests for every code path
 * closures should be reduced to only one line, making methods if required, whenever possible
+* methods in classes should be grouped, public, then protected, then private. Within each group, the methods should be sorted alpabetically
+* class properties should be grouped public, then protected, then private and within each group, sorted alpabetically.
 
 # Testing
 * test directory structure mirrors the code directory structure

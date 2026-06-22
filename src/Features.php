@@ -21,8 +21,6 @@ class Features
 {
     private readonly Application $app;
 
-    private string $name;
-
     private string $configFileName;
 
     private string $configGroup = '';
@@ -31,9 +29,11 @@ class Features
 
     private ?Filesystem $disk = null;
 
-    private string $path;
+    private string $name;
 
     private string $namespace;
+
+    private string $path;
 
     public function __construct(private readonly ServiceProvider $provider)
     {
@@ -45,70 +45,6 @@ class Features
         $this->name = basename($this->path);
         $this->configFileName = $this->slug();
         $this->configPublishHandle = $this->slug();
-    }
-
-    public function path(string $path): static
-    {
-        $this->path = $path;
-        $this->disk = null;
-
-        return $this;
-    }
-
-    public function name(string $name): static
-    {
-        $this->name = $name;
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
-
-        return $this;
-    }
-
-    public function namespace(string $namespace): static
-    {
-        $this->namespace = $namespace;
-
-        return $this;
-    }
-
-    public function configFileName(string $name): static
-    {
-        $this->configFileName = $name;
-
-        return $this;
-    }
-
-    public function configGroup(string $group): static
-    {
-        $this->configGroup = $group;
-
-        return $this;
-    }
-
-    public function configPublishHandle(string $handle): static
-    {
-        $this->configPublishHandle = $handle;
-
-        return $this;
-    }
-
-    public function bootFeature(): void
-    {
-        $this
-            ->bootConfig()
-            ->bootListeners()
-            ->bootPolicies()
-            ->bootSeeders();
-    }
-
-    public function registerFeature(): void
-    {
-        $this
-            ->registerConfig()
-            ->registerMigrations()
-            ->registerRoutes()
-            ->registerSeeders()
-            ->registerViews();
     }
 
     public function bootConfig(): static
@@ -130,6 +66,15 @@ class Features
         );
 
         return $this;
+    }
+
+    public function bootFeature(): void
+    {
+        $this
+            ->bootConfig()
+            ->bootListeners()
+            ->bootPolicies()
+            ->bootSeeders();
     }
 
     public function bootListeners(): static
@@ -161,6 +106,51 @@ class Features
         return $this;
     }
 
+    public function configFileName(string $name): static
+    {
+        $this->configFileName = $name;
+
+        return $this;
+    }
+
+    public function configGroup(string $group): static
+    {
+        $this->configGroup = $group;
+
+        return $this;
+    }
+
+    public function configPublishHandle(string $handle): static
+    {
+        $this->configPublishHandle = $handle;
+
+        return $this;
+    }
+
+    public function name(string $name): static
+    {
+        $this->name = $name;
+        $this->configFileName = $this->slug();
+        $this->configPublishHandle = $this->slug();
+
+        return $this;
+    }
+
+    public function namespace(string $namespace): static
+    {
+        $this->namespace = $namespace;
+
+        return $this;
+    }
+
+    public function path(string $path): static
+    {
+        $this->path = $path;
+        $this->disk = null;
+
+        return $this;
+    }
+
     public function registerConfig(): static
     {
         if (! $this->disk()->exists('config/'.$this->configFileName.'.php')) {
@@ -172,6 +162,16 @@ class Features
         $this->callProtected('mergeConfigFrom', $this->disk()->path($path), $this->configFileName);
 
         return $this;
+    }
+
+    public function registerFeature(): void
+    {
+        $this
+            ->registerConfig()
+            ->registerMigrations()
+            ->registerRoutes()
+            ->registerSeeders()
+            ->registerViews();
     }
 
     public function registerMigrations(): static
