@@ -69,8 +69,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         }
 
         $this->publishes(
-            [$this->disk()->path($path) => config_path($configFile)],
-            $this->configFileName().'-config'
+            [$this->disk()->path($path) => config_path($this->join('/', $this->configGroup(), $configFile))],
+            $this->join('-', $this->configPublishHandle(), 'config')
         );
 
         return $this;
@@ -105,7 +105,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function configFileName(): string
     {
-        return str($this->name)->kebab()->toString();
+        return $this->slug();
+    }
+
+    protected function configGroup(): string
+    {
+        return '';
+    }
+
+    protected function configPublishHandle(): string
+    {
+        return $this->slug();
     }
 
     protected function featuresPath(): string
@@ -131,6 +141,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         if (! $this->disk()->exists($path = 'config/'.$this->configFileName().'.php')) {
             return $this;
         }
+
+        $path = $this->join('/', 'config', $this->configGroup(), $this->configFileName().'.php');
 
         $this->mergeConfigFrom($this->disk()->path($path), $this->configFileName());
 
@@ -239,6 +251,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return tap(new Finder)
             ->files()
             ->in($this->disk->path($path))->name('*.php');
+    }
+
+    private function join(string $separator, string ...$parts): string
+    {
+        return implode($separator, array_filter($parts));
     }
 
     /** @return array<string, string> */
