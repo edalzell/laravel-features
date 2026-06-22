@@ -253,6 +253,7 @@ class Features
             ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
     }
 
+    /** @return array<int, string> */
     private function discoverSeeders(): array
     {
         if (! $this->disk()->exists('database/seeders')) {
