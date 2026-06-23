@@ -113,9 +113,25 @@ class MyServiceProvider extends SomeOtherProvider
 
 `Features` derives the path, namespace, and app from your provider via reflection. You only need to call the fluent setters when overriding the defaults.
 
-### Auto-discovering features in a package
+### Auto-discovering features
 
-Use the `HasFeatures` trait in your package's main service provider to automatically register all features from a directory:
+Use the `HasFeatures` trait in any service provider to automatically register all features from a directory. In your app, add it to `AppServiceProvider`:
+
+```php
+use Edalzell\Features\Concerns\HasFeatures;
+
+class AppServiceProvider extends ServiceProvider
+{
+    use HasFeatures;
+
+    public function register(): void
+    {
+        $this->registerFeatures(app_path('../features'), 'App\\Features');
+    }
+}
+```
+
+For a package, add it to your package's main service provider:
 
 ```php
 use Edalzell\Features\Concerns\HasFeatures;
@@ -131,10 +147,10 @@ class MyPackageServiceProvider extends ServiceProvider
 }
 ```
 
-By default it looks for features in `<package-root>/features/` and expects providers at `YourPackage\Features\FeatureName\ServiceProvider`. Pass explicit arguments to override:
+In a package, `registerFeatures()` defaults to looking in `<package-root>/features/` and registering providers under `YourPackage\Features\FeatureName\ServiceProvider`. Pass explicit arguments to override either default:
 
 ```php
-$this->registerFeatures('/path/to/features', 'My\\App\\Features');
+$this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 ```
 
 ## Testing
