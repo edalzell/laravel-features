@@ -25,6 +25,13 @@ Add self-contained features to your Laravel app or package, including all resour
   │           └── ServiceProvider.php
 ```
 
+Each feature behaves like a mini Laravel app. The following are auto-registered and booted:
+
+| Phase | What |
+|---|---|
+| Register | Config, Migrations, Routes, Seeders, Views |
+| Boot | Config publishing, Listeners, Policies, Seeders |
+
 ## Installation
 
 You can install the package via composer:
@@ -33,32 +40,117 @@ You can install the package via composer:
 composer require edalzell/laravel-features
 ```
 
-
 ## Usage
 
-To add a feature to your app:
+To add a new feature in your app:
 
 ```bash
 php artisan make:feature MyGreatFeature
 ```
 
-To add a feature to your package:
+To add feature to a package:
+
 ```bash
 php artisan make:feature MyGreatFeature the-dev/my-package
 ```
 
-This will create an empty (but necessary) service provider that autoloads/registers config, migrations, routes, & views and properly namespaces your factories, seeders and code.
+This creates a `ServiceProvider` that extends `FeatureServiceProvider` — everything is auto-registered with no further code required.
 
-By default the config is available at the slugified version of the feature name, i.e. 'TwoWords' becomes `two-words.php`. If you want a different name, override the `configFilename` method in your feature's service provider.
+### Option 1: Extend `FeatureServiceProvider`
 
-If you want to add a feature manually, or convert something you already have into a feature:
-* create an `features/YourFeature` folder
-* create a `ServiceProvider` that extends `FeatureServiceProvider` (or `PackageServiceProvider` for a package feature).
-* add a `pre-autoload-dump` script to your `composer.json`:
+The zero-friction path. Your provider gets `boot()` and `register()` for free:
+
+```php
+class MyGreatFeatureServiceProvider extends FeatureServiceProvider
+{
+    // nothing needed — everything is auto-registered
+}
 ```
-"pre-autoload-dump": [
-    "Edalzell\\Features\\Composer\\FeatureNamespaces::add"
-]
+
+Override any of these protected methods to customise behaviour:
+
+```php
+protected function configFileName(): string      // default: kebab-cased feature name
+protected function configGroup(): string         // default: '' (no subdirectory)
+protected function configPublishHandle(): string // default: kebab-cased feature name
+protected function featuresPath(): string        // default: base_path('features/FeatureName')
+```
+
+### Option 2: Standalone `Features` object
+
+When your provider already extends another class, wire up `Features` directly:
+
+```php
+use Edalzell\Features\Features;
+
+class MyServiceProvider extends SomeOtherProvider
+{
+    private Features $features;
+
+    public function __construct(Application $app)
+    {
+        parent::__construct($app);
+
+        $this->features = (new Features($this))
+            ->path($this->featuresPath())
+            ->name($this->name())
+            ->configFileName($this->configFileName())
+            ->configGroup($this->configGroup())
+            ->configPublishHandle($this->configPublishHandle());
+    }
+
+    public function boot(): void
+    {
+        $this->features->bootFeature();
+    }
+
+    public function register(): void
+    {
+        $this->features->registerFeature();
+    }
+}
+```
+
+`Features` derives the path, namespace, and app from your provider via reflection. You only need to call the fluent setters when overriding the defaults.
+
+### Auto-discovering features
+
+Use the `HasFeatures` trait in any service provider to automatically register all features from a directory. In your app, add it to `AppServiceProvider`:
+
+```php
+use Edalzell\Features\Concerns\HasFeatures;
+
+class AppServiceProvider extends ServiceProvider
+{
+    use HasFeatures;
+
+    public function register(): void
+    {
+        $this->registerFeatures(app_path('../features'), 'App\\Features');
+    }
+}
+```
+
+For a package, add it to your package's main service provider:
+
+```php
+use Edalzell\Features\Concerns\HasFeatures;
+
+class MyPackageServiceProvider extends ServiceProvider
+{
+    use HasFeatures;
+
+    public function register(): void
+    {
+        $this->registerFeatures();
+    }
+}
+```
+
+In a package, `registerFeatures()` defaults to looking in `<package-root>/features/` and registering providers under `YourPackage\Features\FeatureName\ServiceProvider`. Pass explicit arguments to override either default:
+
+```php
+$this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 ```
 
 ## Testing
