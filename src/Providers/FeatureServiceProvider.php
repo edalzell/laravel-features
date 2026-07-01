@@ -2,105 +2,35 @@
 
 namespace Edalzell\Features\Providers;
 
-use Edalzell\Features\Seeders;
-use Edalzell\Features\SeedersFacade;
-use Illuminate\Contracts\Filesystem\Filesystem;
-use Illuminate\Foundation\Events\DiscoverEvents;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
+use Edalzell\Features\Features;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 use ReflectionClass;
-use Symfony\Component\Filesystem\Path;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\Finder\SplFileInfo;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
-    protected Filesystem $disk;
+    private Features $features;
 
-    protected string $name;
-
-    /** @var ReflectionClass<static> */
-    protected ReflectionClass $reflection;
-
-    /** @var array<int, string> */
-    protected array $seeders = [];
-
-    public function __construct($app)
+    public function __construct(Application $app)
     {
         parent::__construct($app);
 
-        $this->reflection = new ReflectionClass(static::class);
-
-        $this->name = $this->name();
+        $this->features = (new Features($this))
+            ->path($this->featuresPath())
+            ->name($this->name())
+            ->configFileName($this->configFileName())
+            ->configGroup($this->configGroup())
+            ->configPublishHandle($this->configPublishHandle());
     }
 
     public function boot(): void
     {
-        $this
-            ->bootConfig()
-            ->bootListeners()
-            ->bootPolicies()
-            ->bootSeeders();
+        $this->features->bootFeature();
     }
 
-    public function register()
+    public function register(): void
     {
-        $this
-            ->registerConfig()
-            ->registerMigrations()
-            ->registerRoutes()
-            ->registerSeeders()
-            ->registerViews();
-    }
-
-    protected function bootConfig(): self
-    {
-        if (! $this->app->runningInConsole()) {
-            return $this;
-        }
-
-        $configFile = $this->configFileName().'.php';
-
-        if (! $this->disk()->exists($path = 'config/'.$configFile)) {
-            return $this;
-        }
-
-        $this->publishes(
-            [$this->disk()->path($path) => config_path($this->join('/', $this->configGroup(), $configFile))],
-            $this->join('-', $this->configPublishHandle(), 'config')
-        );
-
-        return $this;
-    }
-
-    protected function bootListeners(): self
-    {
-        foreach ($this->discoverEvents() as $event => $listeners) {
-            foreach (array_unique($listeners, SORT_REGULAR) as $listener) {
-                Event::listen($event, $listener);
-            }
-        }
-
-        return $this;
-    }
-
-    protected function bootPolicies(): self
-    {
-        $this
-            ->discoverPolicies()
-            ->each(fn (string $policy, string $model) => Gate::policy($model, $policy));
-
-        return $this;
-    }
-
-    protected function bootSeeders(): self
-    {
-        SeedersFacade::add($this->seeders);
-
-        return $this;
+        $this->features->registerFeature();
     }
 
     protected function configFileName(): string
@@ -120,150 +50,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function featuresPath(): string
     {
-        return base_path('features/'.$this->name);
+        return base_path('features/'.$this->name());
     }
 
     protected function name(): string
     {
-        $pathParts = explode('/', Path::normalize($this->reflection->getFileName()));
-
-        // /.../app/Features/One/src/ServiceProvider.php
-        return $pathParts[count($pathParts) - 3];
-    }
-
-    protected function namespace(): string
-    {
-        return $this->reflection->getNamespaceName();
-    }
-
-    protected function registerConfig(): self
-    {
-        if (! $this->disk()->exists($path = 'config/'.$this->configFileName().'.php')) {
-            return $this;
-        }
-
-        $path = $this->join('/', 'config', $this->configGroup(), $this->configFileName().'.php');
-
-        $this->mergeConfigFrom($this->disk()->path($path), $this->configFileName());
-
-        return $this;
-    }
-
-    protected function registerMigrations(): self
-    {
-        if (! $this->disk()->exists('database/migrations')) {
-            return $this;
-        }
-
-        $this->loadMigrationsFrom($this->disk()->path('database/migrations'));
-
-        return $this;
-    }
-
-    protected function registerRoutes(): self
-    {
-        if (! $this->disk()->exists('routes')) {
-            return $this;
-        }
-
-        collect($this->finder('routes'))
-            ->map(fn (SplFileInfo $file) => $file->getRealPath())
-            ->filter()
-            ->each(fn (string $routePath) => $this->loadRoutesFrom($routePath));
-
-        return $this;
-    }
-
-    protected function registerSeeders(): self
-    {
-        /*
-            Make this a singleton so that when db seeders (in the app) call it,
-            it gets the same instance where the feature seeders were registered
-        */
-        if (! $this->app->bound(Seeders::class)) {
-            $this->app->singleton(Seeders::class, fn () => new Seeders);
-        }
-
-        return $this;
-    }
-
-    protected function registerViews(): self
-    {
-        if (! $this->disk()->exists('resources/views')) {
-            return $this;
-        }
-
-        $this->loadViewsFrom($this->disk()->path('resources/views'), $this->slug());
-
-        return $this;
+        return basename(dirname((new ReflectionClass(static::class))->getFileName(), 2));
     }
 
     protected function slug(): string
     {
-        return str($this->name)->kebab()->toString();
-    }
-
-    /** @return array<string, array<string>> */
-    private function discoverEvents(): array
-    {
-        if (! $this->disk()->exists('src/Listeners')) {
-            return [];
-        }
-
-        // guessClassNamesUsing() sets a static callback on DiscoverEvents. This is safe
-        // because within() is called immediately after, before any other feature's
-        // bootListeners() runs. Do not move these two calls apart.
-        DiscoverEvents::guessClassNamesUsing(
-            // @phpstan-ignore-next-line
-            fn (SplFileInfo $file, $ignored): string => "{$this->namespace()}\\Listeners\\".$file->getBasename('.php'),
-        );
-
-        $events = DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
-
-        return $events;
-    }
-
-    /** @return Collection<string, string> */
-    private function discoverPolicies(): Collection
-    {
-        if (! $this->disk()->exists('src/Policies')) {
-            return collect();
-        }
-
-        return collect($this->finder('src/Policies'))
-            ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
-    }
-
-    private function disk(): Filesystem
-    {
-        if (! isset($this->disk)) {
-            $this->disk = Storage::build([
-                'driver' => 'local',
-                'root' => $this->featuresPath(),
-            ]);
-        }
-
-        return $this->disk;
-    }
-
-    private function finder(string $path): Finder
-    {
-        return tap(new Finder)
-            ->files()
-            ->in($this->disk->path($path))->name('*.php');
-    }
-
-    private function join(string $separator, string ...$parts): string
-    {
-        return implode($separator, array_filter($parts));
-    }
-
-    /** @return array<string, string> */
-    private function policyMap(SplFileInfo $file): array
-    {
-        $policyClass = "{$this->namespace()}\\Policies\\".$file->getBasename('.php');
-        $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
-
-        return ["{$this->namespace()}\\Models\\{$modelName}" => $policyClass];
+        return str($this->name())->kebab()->toString();
     }
 }

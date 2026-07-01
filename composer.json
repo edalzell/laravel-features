@@ -44,7 +44,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Edalzell\\Features\\Tests\\": "tests/"
+            "Edalzell\\Features\\Tests\\": "tests/",
+            "Edalzell\\Features\\Tests\\Fixtures\\": "tests/__fixtures__/"
         }
     },
     "config": {
@@ -67,7 +68,12 @@
         "analyse": "vendor/bin/phpstan analyse",
         "format": "vendor/bin/pint",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
-        "test": "vendor/bin/pest",
+        "test": [
+            "@composer run test:isolated",
+            "@composer run test:default"
+        ],
+        "test:isolated": "vendor/bin/pest --testsuite=Isolated",
+        "test:default": "vendor/bin/pest --testsuite=Default",
         "test-coverage": "vendor/bin/pest --coverage"
     }
 }
