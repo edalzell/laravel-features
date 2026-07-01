@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.6.0 - 2026-07-01
+
+### 🚀 New
+
+- Allow providers to have features [@edalzell](https://github.com/edalzell) (#70)
+- Support config groups [@edalzell](https://github.com/edalzell) (#68)
+- Customizable  config filename [@edalzell](https://github.com/edalzell) (#67)
+
+### 🐛 Fixed
+
+- Improve feature namespace autoloading [@edalzell](https://github.com/edalzell) (#62)
+- Fix local feature namespace when used inside a package [@marcorieser](https://github.com/marcorieser) (#59)
+
+### 🧰 Maintenance
+
+- Bump stefanzweifel/git-auto-commit-action from 7.1.0 to 7.2.0 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#74)
+- Bump release-drafter/release-drafter from 7.4.0 to 7.5.1 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#73)
+- Bump actions/checkout from 6.0.3 to 7.0.0 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#72)
+- Bump release-drafter/release-drafter from 7.3.1 to 7.4.0 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#71)
+- Add write permission to release drafter action [@edalzell](https://github.com/edalzell) (#61)
+- Bump shivammathur/setup-php from 2.37.1 to 2.37.2 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#58)
+- Allow fork PRs to get labelled [@edalzell](https://github.com/edalzell) (#60)
+
 ## v0.5.1 - 2026-06-11
 
 ### 🐛 Fixed
