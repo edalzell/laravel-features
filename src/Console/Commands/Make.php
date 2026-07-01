@@ -57,10 +57,6 @@ class Make extends GeneratorCommand
 
     protected function getStub()
     {
-        if ($this->isPackageFeature()) {
-            return __DIR__.'/../../../stubs/package-provider.stub';
-        }
-
         return __DIR__.'/../../../stubs/provider.stub';
     }
 
