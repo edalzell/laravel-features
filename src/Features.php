@@ -35,6 +35,7 @@ class Features
 
     public function __construct(private readonly ServiceProvider $provider)
     {
+        // @phpstan-ignore property.protected (invade() bypasses visibility at runtime; phpstan's mixin resolution doesn't know that)
         $this->app = invade($provider)->app;
         $this->namespace = Str::beforeLast(get_class($provider), '\\');
         $this->configFileName = $this->slug();
