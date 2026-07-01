@@ -8,7 +8,9 @@ it('accumulates seeders across multiple add calls', function () {
     $seeders->add(['SeederA', 'SeederB']);
     $seeders->add(['SeederC']);
 
-    expect(invade($seeders)->seeders)->toBe(['SeederA', 'SeederB', 'SeederC']);
+    $prop = new ReflectionProperty($seeders, 'seeders');
+
+    expect($prop->getValue($seeders))->toBe(['SeederA', 'SeederB', 'SeederC']);
 });
 
 it('calls each registered seeder when run', function () {

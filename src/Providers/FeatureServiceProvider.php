@@ -5,6 +5,7 @@ namespace Edalzell\Features\Providers;
 use Edalzell\Features\Features;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use ReflectionClass;
 
 abstract class FeatureServiceProvider extends LaravelServiceProvider
 {
@@ -54,9 +55,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function name(): string
     {
-        $parts = explode('\\', static::class);
-
-        return $parts[array_key_last($parts) - 1];
+        return basename(dirname((new ReflectionClass(static::class))->getFileName(), 2));
     }
 
     protected function slug(): string

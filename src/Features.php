@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Str;
+use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -27,16 +29,20 @@ class Features
 
     private ?Filesystem $disk = null;
 
-    private string $name = '';
+    private string $name;
 
     private string $namespace;
 
-    private string $path = '';
+    private string $path;
 
     public function __construct(private readonly ServiceProvider $provider)
     {
-        $this->app = invade($provider)->app;
-        $this->namespace = Str::beforeLast(get_class($provider), '\\');
+        $reflection = new ReflectionClass($provider);
+
+        $this->app = (new ReflectionProperty($provider, 'app'))->getValue($provider);
+        $this->path = dirname($reflection->getFileName(), 2);
+        $this->namespace = $reflection->getNamespaceName();
+        $this->name = basename($this->path);
         $this->configFileName = $this->slug();
         $this->configPublishHandle = $this->slug();
     }
@@ -215,7 +221,7 @@ class Features
 
     private function callProtected(string $method, mixed ...$args): mixed
     {
-        return invade($this->provider)->{$method}(...$args);
+        return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
     }
 
     /** @return array<string, array<string>> */

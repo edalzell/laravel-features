@@ -3,14 +3,15 @@
 namespace Edalzell\Features\Concerns;
 
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
+use ReflectionClass;
 
 trait HasFeatures
 {
     public function registerFeatures(?string $path = null, ?string $namespacePrefix = null): void
     {
-        $path ??= base_path('features');
-        $namespacePrefix ??= Str::beforeLast(get_class($this), '\\').'\\Features';
+        $reflection = new ReflectionClass($this);
+        $path ??= dirname($reflection->getFileName(), 2).'/features';
+        $namespacePrefix ??= $reflection->getNamespaceName().'\\Features';
 
         if (! File::exists($path)) {
             return;
