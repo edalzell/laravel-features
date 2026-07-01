@@ -19,7 +19,8 @@
         "php": "^8.3",
         "composer/composer": "^2.8",
         "edalzell/laravel-features-plugin": "^0.1",
-        "illuminate/contracts": "^12.0 || ^13.0"
+        "illuminate/contracts": "^12.0 || ^13.0",
+        "spatie/invade": "^2.1"
     },
     "require-dev": {
         "brain/monkey": "^2.7",
