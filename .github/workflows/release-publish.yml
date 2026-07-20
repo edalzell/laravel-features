@@ -1,0 +1,14 @@
+name: Release Publish
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  publish:
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    uses: edalzell/github-workflows/.github/workflows/release-publish.yml@eb649b567a33522b9098823ab130d4405f6e7041 # v1
+    permissions:
+      contents: write
