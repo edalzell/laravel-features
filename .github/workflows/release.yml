@@ -13,7 +13,7 @@ jobs:
       release_upload_url: ${{ steps.latest_draft_release.outputs.upload_url }}
     steps:
       - name: Get Draft Release
-        uses: cardinalby/git-get-release-action@1.2.6
+        uses: cardinalby/git-get-release-action@2ab178299eecb253f820dcf2cce11f62be1178f7 # 1.2.6
         id: latest_draft_release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,20 +26,20 @@ jobs:
     needs: get_draft_release
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7.0.0
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Update Changelog
         id: update_changelog
-        uses: stefanzweifel/changelog-updater-action@v1.12.0
+        uses: stefanzweifel/changelog-updater-action@a938690fad7edf25368f37e43a1ed1b34303eb36 # v1.12.0
         with:
           latest-version: ${{ needs.get_draft_release.outputs.release_tag }}
           release-notes: ${{ needs.get_draft_release.outputs.release_body }}
       - name: Commit updated CHANGELOG
-        uses: stefanzweifel/git-auto-commit-action@v7.2.0
+        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7.2.0
         with:
           branch: main
           commit_message: Update CHANGELOG
           file_pattern: CHANGELOG.md
-      - uses: eregon/publish-release@v1.0.6
+      - uses: eregon/publish-release@01df127f5e9a3c26935118e22e738d95b59d10ce # v1.0.6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
