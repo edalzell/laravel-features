@@ -8,6 +8,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
 
@@ -15,5 +19,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      composer:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
