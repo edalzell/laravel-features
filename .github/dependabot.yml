@@ -8,12 +8,20 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
     labels:
-      - "dependencies"
+      - "chore"
 
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      composer:
+        patterns:
+          - "*"
     labels:
-      - "dependencies"
+      - "chore"
