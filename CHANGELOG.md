@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.1 - 2026-07-27
+
+- Bump release-drafter/release-drafter from 7.5.1 to 7.6.0 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#75)
+
+### 🐛 Fixed
+
+- Adopt github-workflows v1.1.2 (branch-based release PR) [@edalzell](https://github.com/edalzell) (#79)
+
+### 🧰 Maintenance
+
+- Migrate release to shared v1.1.0 workflows (PR-gated) [@edalzell](https://github.com/edalzell) (#77)
+- Pin actions [@edalzell](https://github.com/edalzell) (#76)
+
 ## v0.6.0 - 2026-07-01
 
 ### 🚀 New
