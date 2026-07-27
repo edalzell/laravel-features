@@ -1,7 +1,5 @@
 name-template: 'v$RESOLVED_VERSION'
 tag-template: 'v$RESOLVED_VERSION'
-exclude-labels:
-  - 'release'
 categories:
   - title: '🚀 New'
     labels:

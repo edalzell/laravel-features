@@ -6,7 +6,7 @@ on:
 
 jobs:
   draft:
-    uses: edalzell/github-workflows/.github/workflows/release-draft.yml@f6f95441899dd87addad89818061ce0100b22862 # v1.1.0
+    uses: edalzell/github-workflows/.github/workflows/release-draft.yml@0ccc48350b3c3e6a02c626526468e905dd0b59d0 # v1.1.2
     permissions:
       contents: write
       pull-requests: write
