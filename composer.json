@@ -45,7 +45,8 @@
     "autoload-dev": {
         "psr-4": {
             "Edalzell\\Features\\Tests\\": "tests/",
-            "Edalzell\\Features\\Tests\\Fixtures\\": "tests/__fixtures__/"
+            "Edalzell\\Features\\Tests\\Fixtures\\": "tests/__fixtures__/",
+            "Edalzell\\Features\\Tests\\Fixtures\\Sibling\\": "tests/__fixtures__/Sibling/src"
         }
     },
     "config": {

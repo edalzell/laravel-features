@@ -2,6 +2,7 @@
 
 use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\SeedersFacade;
+use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
 
 it('publishes config', function () {
@@ -120,8 +121,31 @@ it('adds seeders via boot', function () {
     $provider->boot();
 });
 
+it('loads migrations for a feature outside the app features directory', function () {
+    (new SiblingServiceProvider(app()))->register();
+
+    expect(array_map(tidy(...), app('migrator')->paths()))
+        ->toContain(tidy(fixturePath('Sibling/database/migrations')));
+});
+
+it('derives the feature name and slug from the provider location', function () {
+    (new SiblingServiceProvider(app()))->register();
+
+    $hints = view()->getFinder()->getHints();
+
+    expect($hints)
+        ->toHaveKey('sibling')
+        ->and(array_map(tidy(...), $hints['sibling']))
+        ->toContain(tidy(fixturePath('Sibling/resources/views')));
+});
+
 class TestGroupedServiceProvider extends FeatureServiceProvider
 {
+    protected function featuresPath(): string
+    {
+        return base_path('features/TwoWords');
+    }
+
     protected function configGroup(): string
     {
         return 'admin';
