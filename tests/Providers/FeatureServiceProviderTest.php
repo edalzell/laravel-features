@@ -124,16 +124,19 @@ it('adds seeders via boot', function () {
 it('loads migrations for a feature outside the app features directory', function () {
     (new SiblingServiceProvider(app()))->register();
 
-    expect(app('migrator')->paths())->toContain(fixturePath('Sibling/database/migrations'));
+    expect(array_map(tidy(...), app('migrator')->paths()))
+        ->toContain(tidy(fixturePath('Sibling/database/migrations')));
 });
 
 it('derives the feature name and slug from the provider location', function () {
     (new SiblingServiceProvider(app()))->register();
 
-    expect(view()->getFinder()->getHints())
+    $hints = view()->getFinder()->getHints();
+
+    expect($hints)
         ->toHaveKey('sibling')
-        ->and(view()->getFinder()->getHints()['sibling'])
-        ->toContain(fixturePath('Sibling/resources/views'));
+        ->and(array_map(tidy(...), $hints['sibling']))
+        ->toContain(tidy(fixturePath('Sibling/resources/views')));
 });
 
 class TestGroupedServiceProvider extends FeatureServiceProvider
