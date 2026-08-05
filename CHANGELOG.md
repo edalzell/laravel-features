@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.6.2 - 2026-08-05
+
+### 🐛 Fixed
+
+- Derive the feature path from the provider's own location [@edalzell](https://github.com/edalzell) (#81)
+
+### 🧰 Maintenance
+
+- Bump actions/checkout from 7.0.0 to 7.0.1 in the github-actions group [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#78)
+
 ## v0.6.1 - 2026-07-27
 
 - Bump release-drafter/release-drafter from 7.5.1 to 7.6.0 [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#75)
