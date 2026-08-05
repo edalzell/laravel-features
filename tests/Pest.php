@@ -59,8 +59,18 @@ function tidy(string $path): string
     return str_replace('/', '\\', $path);
 }
 
+function fixturePath(string $path = ''): string
+{
+    return rtrim(__DIR__.'/__fixtures__/'.$path, '/');
+}
+
 class TestServiceProvider extends FeatureServiceProvider
 {
+    protected function featuresPath(): string
+    {
+        return base_path('features/TwoWords');
+    }
+
     protected function name(): string
     {
         return 'TwoWords';

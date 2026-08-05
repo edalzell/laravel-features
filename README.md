@@ -153,6 +153,42 @@ In a package, `registerFeatures()` defaults to looking in `<package-root>/featur
 $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 ```
 
+### Features outside the app
+
+A feature works from anywhere — the app, a package, or a directory outside the app entirely, such as a monorepo where two apps share one set of features:
+
+```
+gym/
+├── apps/
+│   ├── server/
+│   └── mobile/
+└── shared/
+    └── features/
+        └── Scheduling/
+```
+
+Two things need wiring, in each app that uses them.
+
+**Autoloading** — declare the directory and its namespace in `composer.json`, and the plugin generates PSR-4 entries for every feature it finds:
+
+```json
+"extra": {
+    "laravel-features": {
+        "paths": {
+            "../../shared/features": "Shared\\Features"
+        }
+    }
+}
+```
+
+**Registration** — point `registerFeatures()` at the same directory:
+
+```php
+$this->registerFeatures(base_path('../../shared/features'), 'Shared\\Features');
+```
+
+The app's own `features/` directory is still scanned, so app-local and shared features can coexist.
+
 ## Testing
 
 ```bash
