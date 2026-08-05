@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.6.3 - 2026-08-05
+
+### 🐛 Fixed
+
+- Require laravel-features-plugin ^0.2 [@edalzell](https://github.com/edalzell) (#83)
+
 ## v0.6.2 - 2026-08-05
 
 ### 🐛 Fixed
