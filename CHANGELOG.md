@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.0 - 2026-08-08
+
+### 🚀 New
+
+- Put feature route files in their conventional route groups [@edalzell](https://github.com/edalzell) (#85)
+
 ## v0.6.3 - 2026-08-05
 
 ### 🐛 Fixed
