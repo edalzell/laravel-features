@@ -9,6 +9,7 @@ use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use ReflectionClass;
@@ -34,6 +35,9 @@ class Features
     private string $namespace;
 
     private string $path;
+
+    /** @var array<string, array<string, mixed>> */
+    private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
     {
@@ -192,11 +196,41 @@ class Features
         }
 
         collect($this->finder('routes'))
-            ->map(fn (SplFileInfo $file) => $file->getRealPath())
-            ->filter()
-            ->each(fn (string $routePath) => $this->callProtected('loadRoutesFrom', $routePath));
+            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
 
         return $this;
+    }
+
+    /**
+     * `loadRoutesFrom()` is a bare require, so without this a feature's
+     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
+     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
+     * route files in a group; features should behave like the app.
+     *
+     * @param  array<string, array<string, mixed>>  $groups
+     */
+    public function routeGroups(array $groups): static
+    {
+        $this->routeGroups = $groups;
+
+        return $this;
+    }
+
+    private function loadRouteFile(SplFileInfo $file): void
+    {
+        if (! $path = $file->getRealPath()) {
+            return;
+        }
+
+        $group = $this->routeGroups[$file->getBasename('.php')] ?? null;
+
+        if ($group === null) {
+            $this->callProtected('loadRoutesFrom', $path);
+
+            return;
+        }
+
+        Route::group($group, fn () => $this->callProtected('loadRoutesFrom', $path));
     }
 
     public function registerSeeders(): static

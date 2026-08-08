@@ -32,6 +32,43 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Register | Config, Migrations, Routes, Seeders, Views |
 | Boot | Config publishing, Listeners, Policies, Seeders |
 
+## Route groups
+
+A feature's route files are put in a route group, chosen by filename, the same way the framework does it for an application's own route files:
+
+| File | Group |
+|---|---|
+| `routes/web.php` | `web` middleware |
+| `routes/api.php` | `api` middleware, `api` prefix |
+| anything else | no middleware group, no prefix |
+
+Without this, `loadRoutesFrom()` is a bare `require` — a feature's `routes/web.php` would get no session or CSRF, and `routes/api.php` no throttling and no prefix.
+
+Publish the config to change a group for all features at once — to add an API version, for example:
+
+```bash
+php artisan vendor:publish --tag=features-config
+```
+
+```php
+// config/features.php
+'route_groups' => [
+    'web' => ['middleware' => 'web'],
+    'api' => ['middleware' => 'api', 'prefix' => 'api/v1', 'as' => 'api.v1.'],
+],
+```
+
+Or override `routeGroups()` on one feature's service provider:
+
+```php
+protected function routeGroups(): array
+{
+    return ['api' => ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api/internal']];
+}
+```
+
+Set an entry to `null`, or remove it, and that file gets no middleware group and no prefix — only what it declares itself.
+
 ## Installation
 
 You can install the package via composer:
@@ -73,7 +110,8 @@ Override any of these protected methods to customise behaviour:
 protected function configFileName(): string      // default: kebab-cased feature name
 protected function configGroup(): string         // default: '' (no subdirectory)
 protected function configPublishHandle(): string // default: kebab-cased feature name
-protected function featuresPath(): string        // default: base_path('features/FeatureName')
+protected function featuresPath(): string        // default: derived from the provider's own location
+protected function routeGroups(): array          // default: config('features.route_groups')
 ```
 
 ### Option 2: Standalone `Features` object
