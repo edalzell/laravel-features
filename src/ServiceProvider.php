@@ -14,11 +14,17 @@ class ServiceProvider extends LaravelServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands(Make::class);
+
+            $this->publishes([
+                __DIR__.'/../config/features.php' => config_path('features.php'),
+            ], 'features-config');
         }
     }
 
     public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/features.php', 'features');
+
         $this->registerFeatures(base_path('features'), 'Features');
     }
 }
