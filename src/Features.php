@@ -51,9 +51,7 @@ class Features
         $this->path = dirname($reflection->getFileName(), 2);
         $this->namespace = $reflection->getNamespaceName();
         $this->name = basename($this->path);
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
-        $this->livewireNamespace = $this->slug();
+        $this->applySlugDefaults();
     }
 
     public function bootConfig(): static
@@ -170,9 +168,7 @@ class Features
     public function name(string $name): static
     {
         $this->name = $name;
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
-        $this->livewireNamespace = $this->slug();
+        $this->applySlugDefaults();
 
         return $this;
     }
@@ -290,6 +286,17 @@ class Features
         return $this;
     }
 
+    /**
+     * The settings that take the feature's slug unless the feature says otherwise.
+     * They all follow the name, so they are re-derived whenever it changes.
+     */
+    private function applySlugDefaults(): void
+    {
+        $this->configFileName = $this->slug();
+        $this->configPublishHandle = $this->slug();
+        $this->livewireNamespace = $this->slug();
+    }
+
     private function callProtected(string $method, mixed ...$args): mixed
     {
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
@@ -313,7 +320,7 @@ class Features
         return DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
     }
 
-    /** @return Collection<string, string> */
+    /** @return Collection<string, class-string<Component>> */
     private function discoverLivewireComponents(): Collection
     {
         if (! $this->disk()->exists('src/Livewire')) {
@@ -401,7 +408,7 @@ class Features
             ->replaceEnd('.php', '')
             ->replace('/', '\\');
 
-        return "{$this->namespace}\\Livewire\\{$relative}";
+        return $this->livewireRootNamespace().$relative;
     }
 
     /**
@@ -412,12 +419,17 @@ class Features
     private function livewireName(string $class): string
     {
         $name = str($class)
-            ->after("{$this->namespace}\\Livewire\\")
+            ->after($this->livewireRootNamespace())
             ->explode('\\')
             ->map(fn (string $segment): string => str($segment)->kebab()->toString())
             ->join('.');
 
         return $this->join('.', $this->livewireNamespace, str($name)->replaceEnd('.index', '')->toString());
+    }
+
+    private function livewireRootNamespace(): string
+    {
+        return "{$this->namespace}\\Livewire\\";
     }
 
     /** @return array<string, string> */
