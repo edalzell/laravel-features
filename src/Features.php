@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Component;
+use Livewire\Livewire;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -29,6 +31,8 @@ class Features
     private string $configPublishHandle;
 
     private ?Filesystem $disk = null;
+
+    private string $livewireNamespace;
 
     private string $name;
 
@@ -49,6 +53,7 @@ class Features
         $this->name = basename($this->path);
         $this->configFileName = $this->slug();
         $this->configPublishHandle = $this->slug();
+        $this->livewireNamespace = $this->slug();
     }
 
     public function bootConfig(): static
@@ -77,6 +82,7 @@ class Features
         $this
             ->bootConfig()
             ->bootListeners()
+            ->bootLivewireComponents()
             ->bootPolicies()
             ->bootSeeders();
     }
@@ -88,6 +94,25 @@ class Features
                 Event::listen($event, $listener);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Livewire's own auto-discovery only knows about `livewire.class_namespace`, so a
+     * feature's components have to be registered by name the way a package's are. The
+     * binding is only there once Livewire's service provider has run, so a feature is
+     * a no-op when Livewire isn't installed.
+     */
+    public function bootLivewireComponents(): static
+    {
+        if (! $this->app->bound('livewire')) {
+            return $this;
+        }
+
+        $this
+            ->discoverLivewireComponents()
+            ->each(fn (string $class, string $name) => Livewire::component($name, $class));
 
         return $this;
     }
@@ -131,11 +156,23 @@ class Features
         return $this;
     }
 
+    /**
+     * Prefixed to every Livewire component name in the feature, so two features can
+     * each have a `PostList` without clashing. Pass an empty string to drop it.
+     */
+    public function livewireNamespace(string $namespace): static
+    {
+        $this->livewireNamespace = $namespace;
+
+        return $this;
+    }
+
     public function name(string $name): static
     {
         $this->name = $name;
         $this->configFileName = $this->slug();
         $this->configPublishHandle = $this->slug();
+        $this->livewireNamespace = $this->slug();
 
         return $this;
     }
@@ -277,6 +314,19 @@ class Features
     }
 
     /** @return Collection<string, string> */
+    private function discoverLivewireComponents(): Collection
+    {
+        if (! $this->disk()->exists('src/Livewire')) {
+            return collect();
+        }
+
+        return collect($this->finder('src/Livewire'))
+            ->map(fn (SplFileInfo $file): string => $this->livewireClass($file))
+            ->filter(fn (string $class): bool => is_subclass_of($class, Component::class))
+            ->mapWithKeys(fn (string $class): array => [$this->livewireName($class) => $class]);
+    }
+
+    /** @return Collection<string, string> */
     private function discoverPolicies(): Collection
     {
         if (! $this->disk()->exists('src/Policies')) {
@@ -343,6 +393,31 @@ class Features
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
+    }
+
+    private function livewireClass(SplFileInfo $file): string
+    {
+        $relative = str($file->getRelativePathname())
+            ->replaceEnd('.php', '')
+            ->replace('/', '\\');
+
+        return "{$this->namespace}\\Livewire\\{$relative}";
+    }
+
+    /**
+     * Built the same way Livewire builds its own names: every namespace segment below
+     * `src/Livewire` kebab-cased and joined with dots, with a trailing `.index`
+     * dropped so `Posts\Index` answers to `posts`.
+     */
+    private function livewireName(string $class): string
+    {
+        $name = str($class)
+            ->after("{$this->namespace}\\Livewire\\")
+            ->explode('\\')
+            ->map(fn (string $segment): string => str($segment)->kebab()->toString())
+            ->join('.');
+
+        return $this->join('.', $this->livewireNamespace, str($name)->replaceEnd('.index', '')->toString());
     }
 
     /** @return array<string, string> */

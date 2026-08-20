@@ -30,7 +30,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Routes, Seeders, Views |
-| Boot | Config publishing, Listeners, Policies, Seeders |
+| Boot | Config publishing, Listeners, Livewire components, Policies, Seeders |
 
 ## Route groups
 
@@ -68,6 +68,33 @@ protected function routeGroups(): array
 ```
 
 Set an entry to `null`, or remove it, and that file gets no middleware group and no prefix — only what it declares itself.
+
+## Livewire components
+
+Livewire's own auto-discovery only looks in the app's `livewire.class_namespace` (`App\Livewire`), so it never sees a feature's components. Put them in `src/Livewire` and they are registered for you, named the way Livewire names its own — each directory below `src/Livewire` kebab-cased and joined with dots — behind the feature's slug:
+
+```
+MyGreatFeature/
+└── src/
+    └── Livewire/
+        ├── PostList.php          -> <livewire:my-great-feature.post-list />
+        └── Posts/
+            ├── Index.php         -> <livewire:my-great-feature.posts />
+            └── ShowPost.php      -> <livewire:my-great-feature.posts.show-post />
+```
+
+As in Livewire itself, an `Index` component answers to the name of the directory it sits in. The feature's slug goes in front so two features can each have a `PostList`. Classes in `src/Livewire` that aren't Livewire components are left alone.
+
+Drop the prefix, or change it, on one feature's service provider:
+
+```php
+protected function livewireNamespace(): string
+{
+    return '';
+}
+```
+
+Livewire is not a dependency of this package. When it isn't installed, nothing is registered and nothing breaks.
 
 ## Installation
 
@@ -111,6 +138,7 @@ protected function configFileName(): string      // default: kebab-cased feature
 protected function configGroup(): string         // default: '' (no subdirectory)
 protected function configPublishHandle(): string // default: kebab-cased feature name
 protected function featuresPath(): string        // default: derived from the provider's own location
+protected function livewireNamespace(): string   // default: kebab-cased feature name
 protected function routeGroups(): array          // default: config('features.route_groups')
 ```
 

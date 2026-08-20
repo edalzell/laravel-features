@@ -3,6 +3,7 @@
 namespace Edalzell\Features\Tests;
 
 use Edalzell\Features\ServiceProvider;
+use Livewire\LivewireServiceProvider;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -12,6 +13,6 @@ class TestCase extends Orchestra
 
     protected function getPackageProviders($app)
     {
-        return [ServiceProvider::class];
+        return [LivewireServiceProvider::class, ServiceProvider::class];
     }
 }

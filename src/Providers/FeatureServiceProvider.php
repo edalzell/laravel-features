@@ -22,6 +22,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
+            ->livewireNamespace($this->livewireNamespace())
             ->routeGroups($this->routeGroups());
     }
 
@@ -70,6 +71,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     protected function featuresPath(): string
     {
         return $this->directory();
+    }
+
+    /**
+     * Prefixed to every Livewire component name in `src/Livewire`, so a feature's
+     * `PostList` answers to `my-great-feature.post-list` and two features can each
+     * have one. Return an empty string to register them under their bare names.
+     */
+    protected function livewireNamespace(): string
+    {
+        return $this->slug();
     }
 
     protected function name(): string

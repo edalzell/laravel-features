@@ -12,6 +12,7 @@ Within those folders Laravel "things" are automatically booted and/or registered
 Booted:
 * Config
 * Listeners
+* Livewire components
 * Policies
 * Seeders
 
