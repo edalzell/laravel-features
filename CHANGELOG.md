@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.0 - 2026-08-20
+
+- Auto-register a feature's Livewire components [@edalzell](https://github.com/edalzell) (#88)
+
+### 🚀 New
+
+- Add a Boost skill for using this package [@edalzell](https://github.com/edalzell) (#87)
+
 ## v0.7.0 - 2026-08-08
 
 ### 🚀 New
