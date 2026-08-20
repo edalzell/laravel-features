@@ -71,21 +71,46 @@ Set an entry to `null`, or remove it, and that file gets no middleware group and
 
 ## Livewire components
 
-Livewire's own auto-discovery only looks in the app's `livewire.class_namespace` (`App\Livewire`), so it never sees a feature's components. Put them in `src/Livewire` and they are registered for you, named the way Livewire names its own — each directory below `src/Livewire` kebab-cased and joined with dots — behind the feature's slug:
+Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components in `resources/views/livewire`, and they are registered for you behind the feature's slug.
+
+### Livewire 4
+
+A feature's directories are registered as a Livewire namespace, so Livewire resolves and names the components itself:
 
 ```
 MyGreatFeature/
+├── resources/
+│   └── views/
+│       └── livewire/
+│           ├── greeting.blade.php    -> <livewire:my-great-feature::greeting />
+│           └── checklist/            -> <livewire:my-great-feature::checklist />
+│               ├── checklist.php
+│               └── checklist.blade.php
 └── src/
     └── Livewire/
-        ├── PostList.php          -> <livewire:my-great-feature.post-list />
+        ├── PostList.php              -> <livewire:my-great-feature::post-list />
         └── Posts/
-            ├── Index.php         -> <livewire:my-great-feature.posts />
-            └── ShowPost.php      -> <livewire:my-great-feature.posts.show-post />
+            ├── Index.php             -> <livewire:my-great-feature::posts />
+            └── ShowPost.php          -> <livewire:my-great-feature::posts.show-post />
 ```
 
-As in Livewire itself, an `Index` component answers to the name of the directory it sits in. The feature's slug goes in front so two features can each have a `PostList`. Classes in `src/Livewire` that aren't Livewire components are left alone.
+Single- and multi-file components follow Livewire's own rules — a single-file component is a `.blade.php` holding a `new class extends Component` block, a multi-file component a directory holding `name.php` and `name.blade.php` alongside any `name.js` or `name.css`. Nothing is scanned: Livewire resolves a name the first time it is used.
 
-Drop the prefix, or change it, on one feature's service provider:
+### Livewire 3
+
+Livewire 3 has no namespaces and no view-based components, so a feature's class components are registered one at a time, named the way Livewire names its own — each directory below `src/Livewire` kebab-cased and joined with dots — behind the feature's slug:
+
+```
+src/Livewire/PostList.php         -> <livewire:my-great-feature.post-list />
+src/Livewire/Posts/Index.php      -> <livewire:my-great-feature.posts />
+src/Livewire/Posts/ShowPost.php   -> <livewire:my-great-feature.posts.show-post />
+```
+
+As in Livewire itself, an `Index` component answers to the name of the directory it sits in. Classes in `src/Livewire` that aren't Livewire components are left alone.
+
+### Changing the prefix
+
+The feature's slug goes in front so two features can each have a `PostList`. Change it, or drop it, on one feature's service provider:
 
 ```php
 protected function livewireNamespace(): string
@@ -93,6 +118,8 @@ protected function livewireNamespace(): string
     return '';
 }
 ```
+
+An empty string drops the prefix: on Livewire 4 the feature's directories are registered as plain locations, and on Livewire 3 its components get their bare names.
 
 Livewire is not a dependency of this package. When it isn't installed, nothing is registered and nothing breaks.
 

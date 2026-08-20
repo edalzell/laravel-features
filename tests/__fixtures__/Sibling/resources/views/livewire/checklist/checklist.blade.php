@@ -1,0 +1,1 @@
+<div>{{ count($items) }}</div>

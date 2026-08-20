@@ -97,15 +97,20 @@ class Features
     }
 
     /**
-     * Livewire's own auto-discovery only knows about `livewire.class_namespace`, so a
-     * feature's components have to be registered by name the way a package's are. The
-     * binding is only there once Livewire's service provider has run, so a feature is
-     * a no-op when Livewire isn't installed.
+     * Livewire's own auto-discovery only knows about the app's own component
+     * locations, so a feature has to point Livewire at its own. Livewire 4 takes a
+     * namespace and resolves it lazily; Livewire 3 has no such thing, so its
+     * components are registered one by one instead. The binding is only there once
+     * Livewire's service provider has run, so a feature is a no-op without it.
      */
     public function bootLivewireComponents(): static
     {
         if (! $this->app->bound('livewire')) {
             return $this;
+        }
+
+        if ($this->livewireResolvesNamespaces()) {
+            return $this->addLivewireLocations();
         }
 
         $this
@@ -287,6 +292,34 @@ class Features
     }
 
     /**
+     * Livewire 4 resolves lazily, so a feature only has to say where its components
+     * live: `src/Livewire` for class components, `resources/views/livewire` for the
+     * single- and multi-file ones. Livewire names them itself, the way it names the
+     * app's own — `my-great-feature::post-list`. A feature that wants no namespace
+     * gets a plain location, so its components answer to their bare names.
+     */
+    private function addLivewireLocations(): static
+    {
+        $viewPath = $this->disk()->path('resources/views/livewire');
+
+        if ($this->livewireNamespace === '') {
+            Livewire::addLocation(viewPath: $viewPath, classNamespace: $this->livewireRootNamespace());
+
+            return $this;
+        }
+
+        Livewire::addNamespace(
+            $this->livewireNamespace,
+            viewPath: $viewPath,
+            classNamespace: $this->livewireRootNamespace(),
+            classPath: $this->disk()->path('src/Livewire'),
+            classViewPath: $viewPath,
+        );
+
+        return $this;
+    }
+
+    /**
      * The settings that take the feature's slug unless the feature says otherwise.
      * They all follow the name, so they are re-derived whenever it changes.
      */
@@ -408,7 +441,7 @@ class Features
             ->replaceEnd('.php', '')
             ->replace('/', '\\');
 
-        return $this->livewireRootNamespace().$relative;
+        return $this->livewireRootNamespace().'\\'.$relative;
     }
 
     /**
@@ -419,7 +452,7 @@ class Features
     private function livewireName(string $class): string
     {
         $name = str($class)
-            ->after($this->livewireRootNamespace())
+            ->after($this->livewireRootNamespace().'\\')
             ->explode('\\')
             ->map(fn (string $segment): string => str($segment)->kebab()->toString())
             ->join('.');
@@ -427,9 +460,15 @@ class Features
         return $this->join('.', $this->livewireNamespace, str($name)->replaceEnd('.index', '')->toString());
     }
 
+    /** The Finder is Livewire 4's, and it is what resolves a registered namespace. */
+    private function livewireResolvesNamespaces(): bool
+    {
+        return $this->app->bound('livewire.finder');
+    }
+
     private function livewireRootNamespace(): string
     {
-        return "{$this->namespace}\\Livewire\\";
+        return "{$this->namespace}\\Livewire";
     }
 
     /** @return array<string, string> */
