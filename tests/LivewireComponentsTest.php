@@ -61,6 +61,16 @@ it('can resolve components under their bare names', function () {
         ->toBe(tidy(fixturePath('Sibling/resources/views/livewire/greeting.blade.php')));
 });
 
+it('routes a feature component as a full page', function () {
+    config(['app.key' => 'base64:'.base64_encode(str_repeat('a', 32))]);
+
+    $provider = new SiblingServiceProvider(app());
+    $provider->register();
+    $provider->boot();
+
+    $this->get('sibling-page')->assertOk()->assertSee('Hello');
+});
+
 it('registers nothing when livewire isnt installed', function () {
     $app = mock(Application::class)
         ->makePartial()

@@ -103,6 +103,20 @@ protected function livewireNamespace(): string
 
 An empty string registers the feature's directories as plain locations instead, so its components answer to their bare names.
 
+### Full-page components
+
+A feature's namespace is a peer of Livewire's own `pages::` and `layouts::` — those are just default entries in the app's `component_namespaces`, not a separate mechanism — so a feature routes one of its components as a full page from its own `routes/web.php`, with no extra registration:
+
+```php
+Route::livewire('posts/create', 'my-great-feature::create-post');
+```
+
+The page renders into `livewire.component_layout`, the app's layout. To give a feature its own, point a component at a view from the feature's `resources/views`:
+
+```php
+#[Layout('my-great-feature::layout')]
+```
+
 This needs Livewire 4, which introduced both the namespace registration and view-based components. Livewire is not a dependency of this package: when it isn't installed, nothing is registered and nothing breaks.
 
 ## Installation

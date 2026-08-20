@@ -1,8 +1,9 @@
 <?php
 
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new class extends Component
+new #[Layout('sibling::layout')] class extends Component
 {
     public string $greeting = 'Hello';
 };
