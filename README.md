@@ -30,7 +30,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Routes, Seeders, Views |
-| Boot | Config publishing, Listeners, Policies, Seeders |
+| Boot | Config publishing, Listeners, Livewire components, Policies, Seeders |
 
 ## Route groups
 
@@ -68,6 +68,56 @@ protected function routeGroups(): array
 ```
 
 Set an entry to `null`, or remove it, and that file gets no middleware group and no prefix — only what it declares itself.
+
+## Livewire components
+
+Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components in `resources/views/livewire`. The feature's directories are registered as a Livewire namespace, so Livewire resolves and names them itself:
+
+```
+MyGreatFeature/
+├── resources/
+│   └── views/
+│       └── livewire/
+│           ├── greeting.blade.php    -> <livewire:my-great-feature::greeting />
+│           └── checklist/            -> <livewire:my-great-feature::checklist />
+│               ├── checklist.php
+│               └── checklist.blade.php
+└── src/
+    └── Livewire/
+        ├── PostList.php              -> <livewire:my-great-feature::post-list />
+        └── Posts/
+            ├── Index.php             -> <livewire:my-great-feature::posts />
+            └── ShowPost.php          -> <livewire:my-great-feature::posts.show-post />
+```
+
+Single- and multi-file components follow Livewire's own rules — a single-file component is a `.blade.php` holding a `new class extends Component` block, a multi-file component a directory holding `name.php` and `name.blade.php` alongside any `name.js` or `name.css`. Nothing is scanned: Livewire resolves a name the first time it is used, exactly as it does for the app's own components.
+
+The feature's slug goes in front so two features can each have a `PostList`. Change it, or drop it, on one feature's service provider:
+
+```php
+protected function livewireNamespace(): string
+{
+    return '';
+}
+```
+
+An empty string registers the feature's directories as plain locations instead, so its components answer to their bare names.
+
+### Full-page components
+
+A feature's namespace is a peer of Livewire's own `pages::` and `layouts::` — those are just default entries in the app's `component_namespaces`, not a separate mechanism — so a feature routes one of its components as a full page from its own `routes/web.php`, with no extra registration:
+
+```php
+Route::livewire('posts/create', 'my-great-feature::create-post');
+```
+
+The page renders into `livewire.component_layout`, the app's layout. To give a feature its own, point a component at a view from the feature's `resources/views`:
+
+```php
+#[Layout('my-great-feature::layout')]
+```
+
+This needs Livewire 4, which introduced both the namespace registration and view-based components. Livewire is not a dependency of this package: when it isn't installed, nothing is registered and nothing breaks.
 
 ## Installation
 
@@ -111,6 +161,7 @@ protected function configFileName(): string      // default: kebab-cased feature
 protected function configGroup(): string         // default: '' (no subdirectory)
 protected function configPublishHandle(): string // default: kebab-cased feature name
 protected function featuresPath(): string        // default: derived from the provider's own location
+protected function livewireNamespace(): string   // default: kebab-cased feature name
 protected function routeGroups(): array          // default: config('features.route_groups')
 ```
 

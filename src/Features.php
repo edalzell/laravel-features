@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -30,6 +31,8 @@ class Features
 
     private ?Filesystem $disk = null;
 
+    private string $livewireNamespace;
+
     private string $name;
 
     private string $namespace;
@@ -47,8 +50,7 @@ class Features
         $this->path = dirname($reflection->getFileName(), 2);
         $this->namespace = $reflection->getNamespaceName();
         $this->name = basename($this->path);
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
+        $this->applySlugDefaults();
     }
 
     public function bootConfig(): static
@@ -77,6 +79,7 @@ class Features
         $this
             ->bootConfig()
             ->bootListeners()
+            ->bootLivewireComponents()
             ->bootPolicies()
             ->bootSeeders();
     }
@@ -90,6 +93,21 @@ class Features
         }
 
         return $this;
+    }
+
+    /**
+     * Livewire's own resolution only knows about the app's own component locations,
+     * so a feature has to point Livewire at its own. The binding is only there once
+     * Livewire's service provider has run, so a feature is a no-op when Livewire
+     * isn't installed.
+     */
+    public function bootLivewireComponents(): static
+    {
+        if (! $this->app->bound('livewire')) {
+            return $this;
+        }
+
+        return $this->addLivewireLocations();
     }
 
     public function bootPolicies(): static
@@ -131,11 +149,21 @@ class Features
         return $this;
     }
 
+    /**
+     * Prefixed to every Livewire component name in the feature, so two features can
+     * each have a `PostList` without clashing. Pass an empty string to drop it.
+     */
+    public function livewireNamespace(string $namespace): static
+    {
+        $this->livewireNamespace = $namespace;
+
+        return $this;
+    }
+
     public function name(string $name): static
     {
         $this->name = $name;
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
+        $this->applySlugDefaults();
 
         return $this;
     }
@@ -253,6 +281,46 @@ class Features
         return $this;
     }
 
+    /**
+     * A feature only has to say where its components live: `src/Livewire` for class
+     * components, `resources/views/livewire` for the single- and multi-file ones.
+     * Livewire names them itself, the way it names the app's own —
+     * `my-great-feature::post-list` — and resolves them lazily, so nothing is read
+     * until a component is used. A feature that wants no namespace gets a plain
+     * location, so its components answer to their bare names.
+     */
+    private function addLivewireLocations(): static
+    {
+        $viewPath = $this->disk()->path('resources/views/livewire');
+
+        if ($this->livewireNamespace === '') {
+            Livewire::addLocation(viewPath: $viewPath, classNamespace: $this->livewireRootNamespace());
+
+            return $this;
+        }
+
+        Livewire::addNamespace(
+            $this->livewireNamespace,
+            viewPath: $viewPath,
+            classNamespace: $this->livewireRootNamespace(),
+            classPath: $this->disk()->path('src/Livewire'),
+            classViewPath: $viewPath,
+        );
+
+        return $this;
+    }
+
+    /**
+     * The settings that take the feature's slug unless the feature says otherwise.
+     * They all follow the name, so they are re-derived whenever it changes.
+     */
+    private function applySlugDefaults(): void
+    {
+        $this->configFileName = $this->slug();
+        $this->configPublishHandle = $this->slug();
+        $this->livewireNamespace = $this->slug();
+    }
+
     private function callProtected(string $method, mixed ...$args): mixed
     {
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
@@ -343,6 +411,11 @@ class Features
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
+    }
+
+    private function livewireRootNamespace(): string
+    {
+        return "{$this->namespace}\\Livewire";
     }
 
     /** @return array<string, string> */
