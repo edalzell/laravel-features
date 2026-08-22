@@ -29,8 +29,8 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 
 | Phase | What |
 |---|---|
-| Register | Config, Migrations, Routes, Seeders, Views |
-| Boot | Config publishing, Listeners, Livewire components, Policies, Seeders |
+| Register | Config, Migrations, Seeders, Views |
+| Boot | Config publishing, Listeners, Livewire components, Policies, Routes, Seeders |
 
 ## Route groups
 
@@ -43,6 +43,8 @@ A feature's route files are put in a route group, chosen by filename, the same w
 | anything else | no middleware group, no prefix |
 
 Without this, `loadRoutesFrom()` is a bare `require` — a feature's `routes/web.php` would get no session or CSRF, and `routes/api.php` no throttling and no prefix.
+
+Routes are loaded on **boot**, not register. A route file may reach for a macro that another package defines — `Route::livewire()` is the common one — and packages register in discovery order, so this one can run well before the package supplying the macro. Booting happens once every provider has registered, which is also where the framework loads its own route files.
 
 Publish the config to change a group for all features at once — to add an API version, for example:
 

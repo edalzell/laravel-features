@@ -58,7 +58,7 @@ it('can load routes', function () {
         ->once()
         ->withArgs(fn (string $path) => tidy($path) === tidy($disk->path('routes/web.php')));
 
-    $features->registerRoutes();
+    $features->bootRoutes();
 });
 
 it('wont load routes if there arent any', function () {
@@ -67,7 +67,7 @@ it('wont load routes if there arent any', function () {
 
     $provider->shouldNotReceive('loadRoutesFrom');
 
-    $features->registerRoutes();
+    $features->bootRoutes();
 });
 
 it('can load views', function () {
@@ -197,7 +197,7 @@ it('loads all route files', function () {
 
     $provider->shouldReceive('loadRoutesFrom')->twice();
 
-    $features->registerRoutes();
+    $features->bootRoutes();
 });
 
 it('registers the seeders singleton', function () {

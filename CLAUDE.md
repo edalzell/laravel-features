@@ -14,14 +14,17 @@ Booted:
 * Listeners
 * Livewire components
 * Policies
+* Routes
 * Seeders
 
 Registered:
 * Config
 * Migrations
-* Routes
 * Seeders
 * Views
+
+Routes boot rather than register because a route file may use a macro another package
+defines (`Route::livewire()`), and package registration order is not guaranteed.
 
 There are 2 ways to use it:
 

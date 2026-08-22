@@ -33,10 +33,12 @@ This is the part that fails silently — get a file in the wrong place and nothi
 
 | Phase | What | Source |
 |---|---|---|
-| **register()** | Config (merged), Migrations, Routes, Seeders (container binding), Views | `src/`, `database/`, `routes/`, `resources/views/`, `config/` |
-| **boot()** | Config (published for `vendor:publish`), Listeners, Policies, Seeders (discovered & queued) | `src/Listeners/`, `src/Policies/`, `database/seeders/` |
+| **register()** | Config (merged), Migrations, Seeders (container binding), Views | `database/migrations/`, `resources/views/`, `config/` |
+| **boot()** | Config (published for `vendor:publish`), Listeners, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Listeners/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
 
-Config and Seeders each do something different at each phase: `register()` merges the config file into `config()` and creates the seeder-runner binding; `boot()` makes the config file publishable and discovers the actual seeder classes to add to the runner. Listeners and Policies are boot-only — they need the container fully wired first, so no equivalent happens during register.
+Config and Seeders each do something different at each phase: `register()` merges the config file into `config()` and creates the seeder-runner binding; `boot()` makes the config file publishable and discovers the actual seeder classes to add to the runner. Listeners, Livewire components, Policies and Routes are boot-only — they need the container fully wired first, so no equivalent happens during register.
+
+Routes are the subtlest of those. A route file may reach for a macro another package defines — `Route::livewire()` most often — and packages register in discovery order, so this package can run long before the one supplying the macro. Loading routes on boot puts them where the framework loads its own.
 
 Everything is discovered by scanning a fixed subfolder — `src/Listeners`, `src/Policies`, `database/seeders`. A class in the wrong folder isn't wired up, and there's no warning: a listener outside `src/Listeners` just never fires, a policy outside `src/Policies` is never registered with `Gate`, a seeder outside `database/seeders` never gets added to the run. Same for the top-level folders: migrations only load from `database/migrations`, config only from `config/<slug>.php` (kebab-case of the feature name, unless overridden), views only from `resources/views`.
 

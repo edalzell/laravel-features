@@ -81,6 +81,7 @@ class Features
             ->bootListeners()
             ->bootLivewireComponents()
             ->bootPolicies()
+            ->bootRoutes()
             ->bootSeeders();
     }
 
@@ -115,6 +116,25 @@ class Features
         $this
             ->discoverPolicies()
             ->each(fn (string $policy, string $model) => Gate::policy($model, $policy));
+
+        return $this;
+    }
+
+    /**
+     * Booted, not registered. A feature's route file may reach for a macro another
+     * package defines — `Route::livewire()` is the common one — and packages are
+     * registered in discovery order, so this package can run long before the one
+     * that supplies the macro. Booting happens once every provider has registered,
+     * which is also where the framework's own route files are loaded.
+     */
+    public function bootRoutes(): static
+    {
+        if (! $this->disk()->exists('routes')) {
+            return $this;
+        }
+
+        collect($this->finder('routes'))
+            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
 
         return $this;
     }
@@ -201,7 +221,6 @@ class Features
         $this
             ->registerConfig()
             ->registerMigrations()
-            ->registerRoutes()
             ->registerSeeders()
             ->registerViews();
     }
@@ -213,18 +232,6 @@ class Features
         }
 
         $this->callProtected('loadMigrationsFrom', $this->disk()->path('database/migrations'));
-
-        return $this;
-    }
-
-    public function registerRoutes(): static
-    {
-        if (! $this->disk()->exists('routes')) {
-            return $this;
-        }
-
-        collect($this->finder('routes'))
-            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
 
         return $this;
     }
@@ -242,23 +249,6 @@ class Features
         $this->routeGroups = $groups;
 
         return $this;
-    }
-
-    private function loadRouteFile(SplFileInfo $file): void
-    {
-        if (! $path = $file->getRealPath()) {
-            return;
-        }
-
-        $group = $this->routeGroups[$file->getBasename('.php')] ?? null;
-
-        if ($group === null) {
-            $this->callProtected('loadRoutesFrom', $path);
-
-            return;
-        }
-
-        Route::group($group, fn () => $this->callProtected('loadRoutesFrom', $path));
     }
 
     public function registerSeeders(): static
@@ -416,6 +406,23 @@ class Features
     private function livewireRootNamespace(): string
     {
         return "{$this->namespace}\\Livewire";
+    }
+
+    private function loadRouteFile(SplFileInfo $file): void
+    {
+        if (! $path = $file->getRealPath()) {
+            return;
+        }
+
+        $group = $this->routeGroups[$file->getBasename('.php')] ?? null;
+
+        if ($group === null) {
+            $this->callProtected('loadRoutesFrom', $path);
+
+            return;
+        }
+
+        Route::group($group, fn () => $this->callProtected('loadRoutesFrom', $path));
     }
 
     /** @return array<string, string> */
