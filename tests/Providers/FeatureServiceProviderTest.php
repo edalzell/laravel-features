@@ -88,7 +88,7 @@ it('loads migrations via register', function () {
     $provider->register();
 });
 
-it('loads routes via register', function () {
+it('loads routes via boot', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('routes/web.php', '');
     $provider = mockServiceProvider(TestServiceProvider::class);
 
@@ -96,6 +96,18 @@ it('loads routes via register', function () {
         ->shouldReceive('loadRoutesFrom')
         ->once()
         ->withArgs(fn (string $path) => tidy($path) === tidy($disk->path('routes/web.php')));
+
+    $provider->boot();
+});
+
+it('doesnt load routes via register', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))->put('routes/web.php', '');
+    $provider = mockServiceProvider(TestServiceProvider::class);
+
+    // Registering is too early: a route file may call a macro — `Route::livewire()`
+    // — that another package only defines when its own provider registers, and
+    // discovery order can put this package first.
+    $provider->shouldNotReceive('loadRoutesFrom');
 
     $provider->register();
 });

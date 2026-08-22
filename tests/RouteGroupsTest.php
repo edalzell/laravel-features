@@ -10,13 +10,13 @@ function siblingRoute(string $name): ?Illuminate\Routing\Route
 }
 
 it('puts routes/web.php in the web middleware group', function () {
-    (new SiblingServiceProvider(app()))->register();
+    (new SiblingServiceProvider(app()))->boot();
 
     expect(siblingRoute('sibling.web')?->gatherMiddleware())->toContain('web');
 });
 
 it('puts routes/api.php in the api group and prefixes it', function () {
-    (new SiblingServiceProvider(app()))->register();
+    (new SiblingServiceProvider(app()))->boot();
 
     $route = siblingRoute('sibling.api');
 
@@ -31,13 +31,13 @@ it('lets the app change a group through config', function () {
         'as' => 'api.v1.',
     ]);
 
-    (new SiblingServiceProvider(app()))->register();
+    (new SiblingServiceProvider(app()))->boot();
 
     expect(siblingRoute('api.v1.sibling.api')?->uri())->toBe('api/v1/sibling-api');
 });
 
 it('lets a feature override its own groups', function () {
-    (new OverridingSiblingServiceProvider(app()))->register();
+    (new OverridingSiblingServiceProvider(app()))->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('internal/sibling-api');
 });
@@ -45,7 +45,7 @@ it('lets a feature override its own groups', function () {
 it('adds no middleware group or prefix when there is no entry for the file', function () {
     config()->set('features.route_groups', []);
 
-    (new SiblingServiceProvider(app()))->register();
+    (new SiblingServiceProvider(app()))->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('sibling-api')
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
