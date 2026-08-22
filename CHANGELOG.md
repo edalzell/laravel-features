@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.1 - 2026-08-22
+
+### 🐛 Fixed
+
+- Load a feature's routes on boot rather than register [@edalzell](https://github.com/edalzell) (#90)
+
 ## v0.8.0 - 2026-08-20
 
 - Auto-register a feature's Livewire components [@edalzell](https://github.com/edalzell) (#88)
