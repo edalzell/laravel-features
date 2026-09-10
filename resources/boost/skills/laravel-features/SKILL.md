@@ -75,7 +75,7 @@ Override any of these to customize:
 
 ```php
 protected function configFileName(): string      // default: kebab-cased feature name
-protected function configGroup(): string         // default: '' (no subdirectory)
+protected function configGroup(): string         // default: '' (no subdirectory); when set, merges as `{group}.{file}`
 protected function configPublishHandle(): string  // default: kebab-cased feature name
 protected function featuresPath(): string         // default: derived from this class's own file location
 protected function routeGroups(): array           // default: config('features.route_groups')
