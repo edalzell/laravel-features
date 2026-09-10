@@ -15,7 +15,6 @@ function mockApplicationWithConfig(): Application
     $app = mock(Application::class);
 
     $app->shouldReceive('singleton')->with(FeatureRegistry::class)->andReturnNull();
-    $app->shouldReceive('bound')->with(FeatureRegistry::class)->andReturn(true);
     $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn(new FeatureRegistry);
     $app->shouldReceive('make')->with('config')->andReturn(new Repository);
     $app->shouldReceive('configurationIsCached')->andReturn(false);

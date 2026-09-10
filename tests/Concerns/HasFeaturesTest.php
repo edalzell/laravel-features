@@ -14,7 +14,6 @@ it('registers features at an explicit path and namespace', function () {
     $registry = new FeatureRegistry;
 
     $app = mock(Application::class);
-    $app->shouldReceive('bound')->with(FeatureRegistry::class)->andReturn(true);
     $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn($registry);
     $app->shouldReceive('register')
         ->once()

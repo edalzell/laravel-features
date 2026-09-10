@@ -19,10 +19,6 @@ trait HasFeatures
             return;
         }
 
-        if (! $this->app->bound(FeatureRegistry::class)) {
-            $this->app->singleton(FeatureRegistry::class);
-        }
-
         $registry = $this->app->make(FeatureRegistry::class);
 
         collect(File::directories($path))
