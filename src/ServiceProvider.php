@@ -23,6 +23,8 @@ class ServiceProvider extends LaravelServiceProvider
 
     public function register(): void
     {
+        $this->app->singleton(FeatureRegistry::class);
+
         $this->mergeConfigFrom(__DIR__.'/../config/features.php', 'features');
 
         $this->registerFeatures(base_path('features'), 'Features');

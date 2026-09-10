@@ -1,6 +1,7 @@
 <?php
 
 use Edalzell\Features\Concerns\HasFeatures;
+use Edalzell\Features\FeatureRegistry;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
@@ -11,11 +12,19 @@ it('registers features at an explicit path and namespace', function () {
     File::expects('exists')->with('/features/path/MyFeature/src/ServiceProvider.php')->andReturns(true);
 
     $app = mock(Application::class);
+    $registry = new FeatureRegistry($app);
+
+    $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn($registry);
     $app->shouldReceive('register')
         ->once()
         ->with('My\\App\\MyFeature\\ServiceProvider');
 
     (new TestHasFeaturesProvider($app))->registerFeatures('/features/path', 'My\\App');
+
+    expect($registry->get('MyFeature'))
+        ->name->toBe('MyFeature')
+        ->rootPath->toBe('/features/path/MyFeature')
+        ->rootNamespace->toBe('My\\App\\MyFeature');
 });
 
 it('skips registration when path does not exist', function () {
@@ -23,6 +32,7 @@ it('skips registration when path does not exist', function () {
 
     $app = mock(Application::class);
     $app->shouldNotReceive('register');
+    $app->shouldNotReceive('make');
 
     (new TestHasFeaturesProvider($app))->registerFeatures('/nonexistent', 'My\\App');
 });

@@ -120,6 +120,8 @@ class AppServiceProvider extends ServiceProvider
 
 This scans the target directory for subfolders containing `src/ServiceProvider.php` and registers each as `<namespacePrefix>\<FolderName>\ServiceProvider`. **If a folder is missing `src/ServiceProvider.php`, it's silently skipped** — no error, the feature just doesn't exist as far as the app is concerned. If the folder name and the provider's actual namespace don't match (e.g. after renaming a feature folder without updating its `namespace` declaration), registration throws a "class not found" error at boot — that's the signal to check the namespace against the folder name.
 
+Each discovered feature is also stored on `FeatureRegistry` (`app(FeatureRegistry::class)->all()`). Use `Feature::path()`, `namespace()`, and `has()` when package code needs a feature's location without re-deriving folder/namespace conventions.
+
 ## Adding a feature
 
 ```bash

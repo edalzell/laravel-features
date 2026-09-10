@@ -244,6 +244,25 @@ In a package, `registerFeatures()` defaults to looking in `<package-root>/featur
 $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 ```
 
+### Looking up registered features
+
+`registerFeatures()` also records each discovered feature in `FeatureRegistry`. Use that when something outside the feature needs its path or namespace — Setup runners, for example — without re-scanning disk or hardcoding conventions:
+
+```php
+use Edalzell\Features\Feature;
+use Edalzell\Features\FeatureRegistry;
+
+app(FeatureRegistry::class)
+    ->all()
+    ->filter(fn (Feature $feature) => $feature->has('src/Setup'))
+    ->each(function (Feature $feature) {
+        $feature->path('src/Setup');      // absolute path
+        $feature->namespace('Setup');     // App\Features\Mail\Setup
+    });
+```
+
+`registerFeatures()` records each feature via `FeatureRegistry::register()`, which also registers that feature's `ServiceProvider`. `Feature::path()` / `namespace()` with no argument return the feature root. `has()` checks that a relative path exists on disk. Use `FeatureRegistry::add()` when you only need the descriptor without loading the provider (e.g. tests).
+
 ### Features outside the app
 
 A feature works from anywhere — the app, a package, or a directory outside the app entirely, such as a monorepo where two apps share one set of features:
