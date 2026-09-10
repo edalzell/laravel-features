@@ -4,11 +4,17 @@ namespace Edalzell\Features;
 
 readonly class Feature
 {
+    public string $name;
+
+    public string $rootNamespace;
+
     public function __construct(
-        public string $name,
         public string $rootPath,
-        public string $rootNamespace,
-    ) {}
+        string $namespacePrefix,
+    ) {
+        $this->name = basename($this->rootPath);
+        $this->rootNamespace = rtrim($namespacePrefix, '\\').'\\'.$this->name;
+    }
 
     public function has(string $relative = ''): bool
     {
