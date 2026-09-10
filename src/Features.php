@@ -59,15 +59,13 @@ class Features
             return $this;
         }
 
-        $configFile = $this->configFileName.'.php';
-
-        if (! $this->disk()->exists($path = 'config/'.$configFile)) {
+        if (! $this->disk()->exists($path = $this->configRelativePath())) {
             return $this;
         }
 
         $this->callProtected(
             'publishes',
-            [$this->disk()->path($path) => config_path($this->join('/', $this->configGroup, $configFile))],
+            [$this->disk()->path($path) => config_path($this->join('/', $this->configGroup, $this->configFileName.'.php'))],
             $this->join('-', $this->configPublishHandle, 'config'),
         );
 
@@ -205,13 +203,11 @@ class Features
 
     public function registerConfig(): static
     {
-        if (! $this->disk()->exists('config/'.$this->configFileName.'.php')) {
+        if (! $this->disk()->exists($path = $this->configRelativePath())) {
             return $this;
         }
 
-        $path = $this->join('/', 'config', $this->configGroup, $this->configFileName.'.php');
-
-        $this->callProtected('mergeConfigFrom', $this->disk()->path($path), $this->configFileName);
+        $this->callProtected('mergeConfigFrom', $this->disk()->path($path), $this->configMergeKey());
 
         return $this;
     }
@@ -314,6 +310,16 @@ class Features
     private function callProtected(string $method, mixed ...$args): mixed
     {
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
+    }
+
+    private function configMergeKey(): string
+    {
+        return $this->join('.', $this->configGroup, $this->configFileName);
+    }
+
+    private function configRelativePath(): string
+    {
+        return $this->join('/', 'config', $this->configGroup, $this->configFileName.'.php');
     }
 
     /** @return array<string, array<string>> */
