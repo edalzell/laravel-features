@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.1 - 2026-09-10
+
+### 🐛 Fixed
+
+- Prefix config merge key with configGroup [@edalzell](https://github.com/edalzell) (#94)
+
 ## v0.9.0 - 2026-09-10
 
 ### 🚀 New
