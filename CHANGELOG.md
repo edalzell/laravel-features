@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.0 - 2026-09-10
+
+### 🚀 New
+
+- Add FeatureRegistry for discovered features [@edalzell](https://github.com/edalzell) (#92)
+
 ## v0.8.1 - 2026-08-22
 
 ### 🐛 Fixed
