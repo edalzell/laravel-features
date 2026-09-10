@@ -261,7 +261,7 @@ app(FeatureRegistry::class)
     });
 ```
 
-`Feature::path()` / `namespace()` with no argument return the feature root. `has()` checks that a relative path exists on disk.
+`registerFeatures()` records each feature via `FeatureRegistry::register()`, which also registers that feature's `ServiceProvider`. `Feature::path()` / `namespace()` with no argument return the feature root. `has()` checks that a relative path exists on disk. Use `FeatureRegistry::add()` when you only need the descriptor without loading the provider (e.g. tests).
 
 ### Features outside the app
 

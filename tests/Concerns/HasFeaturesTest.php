@@ -11,9 +11,9 @@ it('registers features at an explicit path and namespace', function () {
     File::expects('directories')->with('/features/path')->andReturns(['/features/path/MyFeature']);
     File::expects('exists')->with('/features/path/MyFeature/src/ServiceProvider.php')->andReturns(true);
 
-    $registry = new FeatureRegistry;
-
     $app = mock(Application::class);
+    $registry = new FeatureRegistry($app);
+
     $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn($registry);
     $app->shouldReceive('register')
         ->once()

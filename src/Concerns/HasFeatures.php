@@ -23,16 +23,10 @@ trait HasFeatures
 
         collect(File::directories($path))
             ->filter(fn (string $dir) => File::exists($dir.'/src/ServiceProvider.php'))
-            ->each(function (string $dir) use ($namespacePrefix, $registry) {
-                $feature = new Feature(
-                    name: basename($dir),
-                    rootPath: $dir,
-                    rootNamespace: $namespacePrefix.'\\'.basename($dir),
-                );
-
-                $registry->add($feature);
-
-                $this->app->register($feature->namespace().'\\ServiceProvider');
-            });
+            ->each(fn (string $dir) => $registry->register(new Feature(
+                name: basename($dir),
+                rootPath: $dir,
+                rootNamespace: $namespacePrefix.'\\'.basename($dir),
+            )));
     }
 }
