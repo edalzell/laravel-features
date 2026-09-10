@@ -1,8 +1,10 @@
 <?php
 
+use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\ServiceProvider;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\File;
 
 /**
  * register() merges the package config before discovering features, so a mocked
@@ -12,6 +14,9 @@ function mockApplicationWithConfig(): Application
 {
     $app = mock(Application::class);
 
+    $app->shouldReceive('singleton')->with(FeatureRegistry::class)->andReturnNull();
+    $app->shouldReceive('bound')->with(FeatureRegistry::class)->andReturn(true);
+    $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn(new FeatureRegistry);
     $app->shouldReceive('make')->with('config')->andReturn(new Repository);
     $app->shouldReceive('configurationIsCached')->andReturn(false);
 

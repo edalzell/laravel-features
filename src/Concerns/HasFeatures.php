@@ -2,6 +2,8 @@
 
 namespace Edalzell\Features\Concerns;
 
+use Edalzell\Features\Feature;
+use Edalzell\Features\FeatureRegistry;
 use Illuminate\Support\Facades\File;
 use ReflectionClass;
 
@@ -17,8 +19,24 @@ trait HasFeatures
             return;
         }
 
+        if (! $this->app->bound(FeatureRegistry::class)) {
+            $this->app->singleton(FeatureRegistry::class);
+        }
+
+        $registry = $this->app->make(FeatureRegistry::class);
+
         collect(File::directories($path))
             ->filter(fn (string $dir) => File::exists($dir.'/src/ServiceProvider.php'))
-            ->each(fn (string $dir) => $this->app->register($namespacePrefix.'\\'.basename($dir).'\\ServiceProvider'));
+            ->each(function (string $dir) use ($namespacePrefix, $registry) {
+                $feature = new Feature(
+                    name: basename($dir),
+                    rootPath: $dir,
+                    rootNamespace: $namespacePrefix.'\\'.basename($dir),
+                );
+
+                $registry->add($feature);
+
+                $this->app->register($feature->namespace().'\\ServiceProvider');
+            });
     }
 }
