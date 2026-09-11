@@ -24,7 +24,19 @@ it('registers features at an explicit path and namespace', function () {
     expect($registry->get('MyFeature'))
         ->name->toBe('MyFeature')
         ->rootPath->toBe('/features/path/MyFeature')
-        ->rootNamespace->toBe('My\\App\\MyFeature');
+        ->rootNamespace->toBe('My\\App\\MyFeature')
+        ->configGroup->toBe('');
+});
+
+it('stamps config group from the host composer package name', function () {
+    $app = app();
+    $registry = $app->make(FeatureRegistry::class);
+
+    (new Edalzell\Features\Tests\Fixtures\PackageHost\ServiceProvider($app))->registerFeatures();
+
+    expect($registry->get('SecureHeaders'))
+        ->configGroup->toBe('juicebox')
+        ->rootNamespace->toBe('Edalzell\\Features\\Tests\\Fixtures\\PackageHost\\Features\\SecureHeaders');
 });
 
 it('skips registration when path does not exist', function () {

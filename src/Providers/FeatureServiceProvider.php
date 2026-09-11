@@ -2,6 +2,7 @@
 
 namespace Edalzell\Features\Providers;
 
+use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\Features;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
@@ -60,7 +61,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function configGroup(): string
     {
-        return '';
+        if (! $this->app->bound(FeatureRegistry::class)) {
+            return '';
+        }
+
+        return $this->app->make(FeatureRegistry::class)->get($this->name())?->configGroup ?? '';
     }
 
     protected function configPublishHandle(): string

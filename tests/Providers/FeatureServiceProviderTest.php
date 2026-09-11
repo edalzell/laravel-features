@@ -50,14 +50,14 @@ it('merges config via register', function () {
 });
 
 it('publishes config to group directory when group is set', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/admin/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     $provider = mockServiceProvider(TestGroupedServiceProvider::class);
 
     $provider
         ->shouldReceive('publishes')
         ->once()
         ->with(
-            [$disk->path('config/admin/two-words.php') => config_path('admin/two-words.php')],
+            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
             'admin-two-words-config'
         );
 
@@ -65,13 +65,13 @@ it('publishes config to group directory when group is set', function () {
 });
 
 it('merges config from group directory via register', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/admin/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     $provider = mockServiceProvider(TestGroupedServiceProvider::class);
 
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/admin/two-words.php'), 'admin.two-words');
+        ->with($disk->path('config/two-words.php'), 'admin.two-words');
 
     $provider->register();
 });
