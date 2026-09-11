@@ -11,6 +11,7 @@ readonly class Feature
     public function __construct(
         public string $rootPath,
         string $namespacePrefix,
+        public string $configGroup = '',
     ) {
         $this->name = basename($this->rootPath);
         $this->rootNamespace = rtrim($namespacePrefix, '\\').'\\'.$this->name;

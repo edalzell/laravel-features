@@ -160,7 +160,7 @@ Override any of these protected methods to customise behaviour:
 
 ```php
 protected function configFileName(): string      // default: kebab-cased feature name
-protected function configGroup(): string         // default: '' (no subdirectory); when set, merges as `{group}.{file}` (e.g. prime + mail → config('prime.mail'))
+protected function configGroup(): string         // default: host Composer package short name when registered via package `features/` (e.g. transformstudios/prime → prime); merge key `{group}.{file}`, publish to `config/{group}/{file}.php`
 protected function configPublishHandle(): string // default: kebab-cased feature name
 protected function featuresPath(): string        // default: derived from the provider's own location
 protected function livewireNamespace(): string   // default: kebab-cased feature name

@@ -121,14 +121,14 @@ it('can register policies', function () {
 });
 
 it('merges config when it exists in group directory', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/admin/two-words.php', '');
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     [$features, $provider] = mockFeatures();
     $features->configGroup('admin');
 
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/admin/two-words.php'), 'admin.two-words');
+        ->with($disk->path('config/two-words.php'), 'admin.two-words');
 
     $features->registerConfig();
 });
@@ -143,8 +143,8 @@ it('wont merge config when group directory config does not exist', function () {
     $features->registerConfig();
 });
 
-it('publishes grouped config from the group directory', function () {
-    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/admin/two-words.php', '');
+it('publishes grouped config from the flat feature file', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     [$features, $provider] = mockFeatures();
     $features->configGroup('admin');
 
@@ -152,7 +152,7 @@ it('publishes grouped config from the group directory', function () {
         ->shouldReceive('publishes')
         ->once()
         ->with(
-            [$disk->path('config/admin/two-words.php') => config_path('admin/two-words.php')],
+            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
             'two-words-config',
         );
 

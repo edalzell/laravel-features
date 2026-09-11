@@ -319,7 +319,7 @@ class Features
 
     private function configRelativePath(): string
     {
-        return $this->join('/', 'config', $this->configGroup, $this->configFileName.'.php');
+        return $this->join('/', 'config', $this->configFileName.'.php');
     }
 
     /** @return array<string, array<string>> */
