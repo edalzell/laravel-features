@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.9.2 - 2026-09-11
+
+### 🐛 Fixed
+
+- Keep feature config files flat; derive configGroup from package [@edalzell](https://github.com/edalzell) (#96)
+
 ## v0.9.1 - 2026-09-10
 
 ### 🐛 Fixed
