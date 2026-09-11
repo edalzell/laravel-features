@@ -65,7 +65,11 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             return '';
         }
 
-        return $this->app->make(FeatureRegistry::class)->get($this->name())?->configGroup ?? '';
+        if (is_null($feature = $this->app->make(FeatureRegistry::class)->get($this->name()))) {
+            return '';
+        }
+
+        return $feature->configGroup;
     }
 
     protected function configPublishHandle(): string
