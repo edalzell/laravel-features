@@ -6,6 +6,6 @@ on:
 
 jobs:
   publish:
-    uses: edalzell/github-workflows/.github/workflows/release-publish.yml@0ccc48350b3c3e6a02c626526468e905dd0b59d0 # v1.1.2
+    uses: edalzell/github-workflows/.github/workflows/release-publish.yml@9f72f0b77303abff9903b16da75346b1eb1c3785 # v1.4.0
     permissions:
       contents: write
