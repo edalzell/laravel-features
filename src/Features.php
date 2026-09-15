@@ -269,15 +269,17 @@ class Features
 
     /**
      * A feature only has to say where its components live: `src/Livewire` for class
-     * components, `resources/views/livewire` for the single- and multi-file ones.
-     * Livewire names them itself, the way it names the app's own —
-     * `my-great-feature::post-list` — and resolves them lazily, so nothing is read
-     * until a component is used. A feature that wants no namespace gets a plain
+     * components, `resources/views` for the single- and multi-file ones, which keep
+     * Livewire's own split — `livewire/` for components, `pages/` for full pages — as
+     * a dotted prefix: `my-great-feature::livewire.post-list`,
+     * `my-great-feature::pages.show`. Livewire allows a namespace one directory, so
+     * the views root is the only way both are reachable under one name. Nothing is
+     * read until a component is used. A feature that wants no namespace gets a plain
      * location, so its components answer to their bare names.
      */
     private function addLivewireLocations(): static
     {
-        $viewPath = $this->disk()->path('resources/views/livewire');
+        $viewPath = $this->disk()->path('resources/views');
 
         if ($this->livewireNamespace === '') {
             Livewire::addLocation(viewPath: $viewPath, classNamespace: $this->livewireRootNamespace());
@@ -290,7 +292,7 @@ class Features
             viewPath: $viewPath,
             classNamespace: $this->livewireRootNamespace(),
             classPath: $this->disk()->path('src/Livewire'),
-            classViewPath: $viewPath,
+            classViewPath: $this->disk()->path('resources/views/livewire'),
         );
 
         return $this;

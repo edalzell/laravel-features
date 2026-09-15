@@ -73,17 +73,19 @@ Set an entry to `null`, or remove it, and that file gets no middleware group and
 
 ## Livewire components
 
-Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components in `resources/views/livewire`. The feature's directories are registered as a Livewire namespace, so Livewire resolves and names them itself:
+Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components under `resources/views` — `livewire/` for ordinary components and `pages/` for full pages, the same split Livewire uses for the app. The views root is registered as the feature's Livewire namespace, so both directories answer under one name with the directory as a dotted prefix:
 
 ```
 MyGreatFeature/
 ├── resources/
 │   └── views/
-│       └── livewire/
-│           ├── greeting.blade.php    -> <livewire:my-great-feature::greeting />
-│           └── checklist/            -> <livewire:my-great-feature::checklist />
-│               ├── checklist.php
-│               └── checklist.blade.php
+│       ├── livewire/
+│       │   ├── greeting.blade.php    -> <livewire:my-great-feature::livewire.greeting />
+│       │   └── checklist/            -> <livewire:my-great-feature::livewire.checklist />
+│       │       ├── checklist.php
+│       │       └── checklist.blade.php
+│       └── pages/
+│           └── show.blade.php        -> Route::livewire('show', 'my-great-feature::pages.show')
 └── src/
     └── Livewire/
         ├── PostList.php              -> <livewire:my-great-feature::post-list />
