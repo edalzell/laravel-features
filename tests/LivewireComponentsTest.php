@@ -1,6 +1,7 @@
 <?php
 
 use Edalzell\Features\Features;
+use Edalzell\Features\Tests\Fixtures\PagesOnly\ServiceProvider as PagesOnlyServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Sibling\Livewire\Counter;
 use Edalzell\Features\Tests\Fixtures\Sibling\Livewire\Posts\Index;
 use Edalzell\Features\Tests\Fixtures\Sibling\Livewire\Posts\ShowPost;
@@ -34,15 +35,22 @@ it('resolves an index class component by its directory name', function () {
 it('resolves a single-file component', function () {
     (new SiblingServiceProvider(app()))->boot();
 
-    expect(tidy(finder()->resolveSingleFileComponentPath('sibling::greeting')))
+    expect(tidy(finder()->resolveSingleFileComponentPath('sibling::livewire.greeting')))
         ->toBe(tidy(fixturePath('Sibling/resources/views/livewire/greeting.blade.php')));
 });
 
 it('resolves a multi-file component', function () {
     (new SiblingServiceProvider(app()))->boot();
 
-    expect(tidy(finder()->resolveMultiFileComponentPath('sibling::checklist')))
+    expect(tidy(finder()->resolveMultiFileComponentPath('sibling::livewire.checklist')))
         ->toBe(tidy(fixturePath('Sibling/resources/views/livewire/checklist')));
+});
+
+it('resolves a page component beside the livewire directory', function () {
+    (new PagesOnlyServiceProvider(app()))->boot();
+
+    expect(tidy(finder()->resolveSingleFileComponentPath('pages-only::pages.welcome')))
+        ->toBe(tidy(fixturePath('PagesOnly/resources/views/pages/welcome.blade.php')));
 });
 
 it('names a component with the feature namespace going back', function () {
@@ -57,7 +65,7 @@ it('can resolve components under their bare names', function () {
         ->bootLivewireComponents();
 
     expect(finder()->resolveClassComponentClassName('counter'))->toBe(Counter::class)
-        ->and(tidy(finder()->resolveSingleFileComponentPath('greeting')))
+        ->and(tidy(finder()->resolveSingleFileComponentPath('livewire.greeting')))
         ->toBe(tidy(fixturePath('Sibling/resources/views/livewire/greeting.blade.php')));
 });
 
