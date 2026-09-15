@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.10.0 - 2026-09-15
+
+### 🚀 New
+
+- Register the views root so livewire/ and pages/ share the namespace [@edalzell](https://github.com/edalzell) (#99)
+
+### 🧰 Maintenance
+
+- Bump the github-actions group with 3 updates [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#98)
+
 ## v0.9.2 - 2026-09-11
 
 ### 🐛 Fixed
