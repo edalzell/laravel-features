@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.11.0 - 2026-09-16
+
+### 🚀 New
+
+- Order feature seeders with #[SeedAfter] [@edalzell](https://github.com/edalzell) (#101)
+
 ## v0.10.0 - 2026-09-15
 
 ### 🚀 New
