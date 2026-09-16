@@ -205,6 +205,29 @@ it('publishes config with a custom publish handle', function () {
     $features->bootConfig();
 });
 
+it('wont publish config when publishing is opted out', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    [$features, $provider] = mockFeatures();
+    $features->configGroup('admin')->publishesConfig(false);
+
+    $provider->shouldNotReceive('publishes');
+
+    $features->bootConfig();
+});
+
+it('still merges config when publishing is opted out', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    [$features, $provider] = mockFeatures();
+    $features->configGroup('admin')->publishesConfig(false);
+
+    $provider
+        ->shouldReceive('mergeConfigFrom')
+        ->once()
+        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+
+    $features->registerConfig();
+});
+
 it('loads all route files', function () {
     tap(mockOnDemandDisk('features/TwoWords'))
         ->put('routes/web.php', '')

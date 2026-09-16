@@ -77,6 +77,7 @@ Override any of these to customize:
 protected function configFileName(): string      // default: kebab-cased feature name
 protected function configGroup(): string         // default: host Composer package short name for package features; merge `{group}.{file}`, publish under `config/{group}/`
 protected function configPublishHandle(): string  // default: kebab-cased feature name
+protected function publishesConfig(): bool        // default: true, or what `registerFeatures()` stamped; false still merges `{group}.{file}`, publishes nothing
 protected function featuresPath(): string         // default: derived from this class's own file location
 protected function routeGroups(): array           // default: config('features.route_groups')
 ```
@@ -114,6 +115,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerFeatures(); // defaults to base_path('features'), namespace 'Features'
+        // or, for a package whose features' settings nest in its own config file (config/{group}.php)
+        // rather than a config/{group}/ directory: $this->registerFeatures(publishesConfig: false)
     }
 }
 ```

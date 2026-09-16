@@ -39,6 +39,8 @@ class Features
 
     private string $path;
 
+    private bool $publishesConfig = true;
+
     /** @var array<string, array<string, mixed>> */
     private array $routeGroups = [];
 
@@ -55,7 +57,7 @@ class Features
 
     public function bootConfig(): static
     {
-        if (! $this->app->runningInConsole()) {
+        if (! $this->publishesConfig || ! $this->app->runningInConsole()) {
             return $this;
         }
 
@@ -197,6 +199,19 @@ class Features
     {
         $this->path = $path;
         $this->disk = null;
+
+        return $this;
+    }
+
+    /**
+     * The defaults are still merged at `{group}.{file}`; only the copy into the
+     * app's `config/` is skipped. A host package uses this when its features'
+     * settings belong nested in the package's own config file rather than in a
+     * `config/{group}/` directory of their own.
+     */
+    public function publishesConfig(bool $publishes): static
+    {
+        $this->publishesConfig = $publishes;
 
         return $this;
     }

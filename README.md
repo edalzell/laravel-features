@@ -186,6 +186,7 @@ Override any of these protected methods to customise behaviour:
 protected function configFileName(): string      // default: kebab-cased feature name
 protected function configGroup(): string         // default: host Composer package short name when registered via package `features/` (e.g. transformstudios/prime → prime); merge key `{group}.{file}`, publish to `config/{group}/{file}.php`
 protected function configPublishHandle(): string // default: kebab-cased feature name
+protected function publishesConfig(): bool       // default: true, or whatever `registerFeatures()` stamped; false still merges `{group}.{file}` but offers nothing to `vendor:publish`
 protected function featuresPath(): string        // default: derived from the provider's own location
 protected function livewireNamespace(): string   // default: kebab-cased feature name
 protected function routeGroups(): array          // default: config('features.route_groups')
@@ -267,6 +268,17 @@ In a package, `registerFeatures()` defaults to looking in `<package-root>/featur
 ```php
 $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 ```
+
+#### Where a package feature's config lives
+
+A package feature's config is merged at `{group}.{file}`, where the group defaults to the package's Composer short name — `transformstudios/prime` + `features/Maps/config/maps.php` is read as `config('prime.maps.…')`. A site can then override it in one of two places, and the package picks which by whether it publishes:
+
+| Convention | Site overrides in | `registerFeatures()` |
+|---|---|---|
+| A directory per package | `config/prime/maps.php` | default — each feature publishes its file there |
+| Nested in the package's own config | `config/prime.php` under a `maps` key | `registerFeatures(publishesConfig: false)` |
+
+Opting out only skips `vendor:publish`; the feature's defaults are still merged, so anything the site doesn't set keeps its default. Pick one convention per package: if a site ends up with both `config/prime.php['maps']` and `config/prime/maps.php`, Laravel loads the nested file last and it silently replaces the whole `maps` key.
 
 ### Looking up registered features
 

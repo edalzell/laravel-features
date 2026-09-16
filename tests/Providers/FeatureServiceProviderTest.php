@@ -1,5 +1,7 @@
 <?php
 
+use Edalzell\Features\Feature;
+use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
@@ -67,6 +69,29 @@ it('publishes config to group directory when group is set', function () {
 it('merges config from group directory via register', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
     $provider = mockServiceProvider(TestGroupedServiceProvider::class);
+
+    $provider
+        ->shouldReceive('mergeConfigFrom')
+        ->once()
+        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+
+    $provider->register();
+});
+
+it('wont publish config when the registered feature opts out', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    app(FeatureRegistry::class)->add(new Feature(base_path('features/TwoWords'), 'Features', 'admin', false));
+    $provider = mockServiceProvider(TestServiceProvider::class);
+
+    $provider->shouldNotReceive('publishes');
+
+    $provider->boot();
+});
+
+it('merges config when the registered feature opts out of publishing', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
+    app(FeatureRegistry::class)->add(new Feature(base_path('features/TwoWords'), 'Features', 'admin', false));
+    $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
         ->shouldReceive('mergeConfigFrom')

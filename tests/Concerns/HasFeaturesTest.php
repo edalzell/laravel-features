@@ -25,7 +25,8 @@ it('registers features at an explicit path and namespace', function () {
         ->name->toBe('MyFeature')
         ->rootPath->toBe('/features/path/MyFeature')
         ->rootNamespace->toBe('My\\App\\MyFeature')
-        ->configGroup->toBe('');
+        ->configGroup->toBe('')
+        ->publishesConfig->toBeTrue();
 });
 
 it('stamps config group from the host composer package name', function () {
@@ -36,7 +37,19 @@ it('stamps config group from the host composer package name', function () {
 
     expect($registry->get('SecureHeaders'))
         ->configGroup->toBe('juicebox')
+        ->publishesConfig->toBeTrue()
         ->rootNamespace->toBe('Edalzell\\Features\\Tests\\Fixtures\\PackageHost\\Features\\SecureHeaders');
+});
+
+it('stamps the publish opt-out on every feature it registers', function () {
+    $app = app();
+    $registry = $app->make(FeatureRegistry::class);
+
+    (new Edalzell\Features\Tests\Fixtures\PackageHost\ServiceProvider($app))->registerFeatures(publishesConfig: false);
+
+    expect($registry->get('SecureHeaders'))
+        ->configGroup->toBe('juicebox')
+        ->publishesConfig->toBeFalse();
 });
 
 it('skips registration when path does not exist', function () {
