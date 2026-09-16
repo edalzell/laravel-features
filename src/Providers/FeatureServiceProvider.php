@@ -2,6 +2,7 @@
 
 namespace Edalzell\Features\Providers;
 
+use Edalzell\Features\Feature;
 use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\Features;
 use Illuminate\Contracts\Foundation\Application;
@@ -24,6 +25,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
             ->livewireNamespace($this->livewireNamespace())
+            ->publishesConfig($this->publishesConfig())
             ->routeGroups($this->routeGroups());
     }
 
@@ -61,15 +63,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     protected function configGroup(): string
     {
-        if (! $this->app->bound(FeatureRegistry::class)) {
-            return '';
-        }
-
-        if (is_null($feature = $this->app->make(FeatureRegistry::class)->get($this->name()))) {
-            return '';
-        }
-
-        return $feature->configGroup;
+        return $this->feature()->configGroup ?? '';
     }
 
     protected function configPublishHandle(): string
@@ -98,6 +92,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
+     * Whether the feature's config is offered to `vendor:publish`. A host package
+     * registering its features with `registerFeatures(publishesConfig: false)` keeps
+     * the merged defaults but leaves the app's copy to its own config file.
+     */
+    protected function publishesConfig(): bool
+    {
+        return $this->feature()->publishesConfig ?? true;
+    }
+
+    /**
      * The feature's root directory, derived from this provider's own location
      * (`<feature>/src/ServiceProvider.php`) so a feature works wherever it
      * lives — the app, a package, or a directory outside the app entirely.
@@ -111,6 +115,15 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         }
 
         return dirname($file, 2);
+    }
+
+    private function feature(): ?Feature
+    {
+        if (! $this->app->bound(FeatureRegistry::class)) {
+            return null;
+        }
+
+        return $this->app->make(FeatureRegistry::class)->get($this->name());
     }
 
     protected function slug(): string

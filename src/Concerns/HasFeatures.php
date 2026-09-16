@@ -9,8 +9,11 @@ use ReflectionClass;
 
 trait HasFeatures
 {
-    public function registerFeatures(?string $path = null, ?string $namespacePrefix = null): void
-    {
+    public function registerFeatures(
+        ?string $path = null,
+        ?string $namespacePrefix = null,
+        bool $publishesConfig = true,
+    ): void {
         $reflection = new ReflectionClass($this);
         $packageRoot = dirname($reflection->getFileName(), 2);
         $usingPackageFeatures = $path === null;
@@ -26,7 +29,7 @@ trait HasFeatures
 
         collect(File::directories($path))
             ->filter(fn (string $dir) => File::exists($dir.'/src/ServiceProvider.php'))
-            ->each(fn (string $dir) => $registry->register(new Feature($dir, $namespacePrefix, $configGroup)));
+            ->each(fn (string $dir) => $registry->register(new Feature($dir, $namespacePrefix, $configGroup, $publishesConfig)));
     }
 
     private function packageConfigGroup(string $packageRoot): string

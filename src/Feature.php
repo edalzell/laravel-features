@@ -12,6 +12,7 @@ readonly class Feature
         public string $rootPath,
         string $namespacePrefix,
         public string $configGroup = '',
+        public bool $publishesConfig = true,
     ) {
         $this->name = basename($this->rootPath);
         $this->rootNamespace = rtrim($namespacePrefix, '\\').'\\'.$this->name;
