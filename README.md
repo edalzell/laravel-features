@@ -123,6 +123,28 @@ The page renders into `livewire.component_layout`, the app's layout. To give a f
 
 This needs Livewire 4, which introduced both the namespace registration and view-based components. Livewire is not a dependency of this package: when it isn't installed, nothing is registered and nothing breaks.
 
+## Seeders
+
+Every feature's `database/seeders` are collected and run together, in the order their features were registered — alphabetical, for an app's own `features/` directory. That order breaks down once one feature's data depends on another's.
+
+`#[SeedAfter]` names the seeders that must run first:
+
+```php
+use Edalzell\Features\Attributes\SeedAfter;
+use Illuminate\Database\Seeder;
+
+#[SeedAfter(ListingSeeder::class)]
+class AvailabilitySeeder extends Seeder
+{
+    public function run(): void
+    {
+        // ...
+    }
+}
+```
+
+A seeder with no `#[SeedAfter]`, or whose dependencies are already satisfied, keeps its registration position — that's the tiebreak, not alphabetical or random order. Naming a seeder outside the collected set is fine and is simply ignored for ordering; that one is the app's own `database/seeders` to order. A cycle between `#[SeedAfter]` declarations throws a `LogicException` naming the seeders involved.
+
 ## Installation
 
 You can install the package via composer:
