@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.0 - 2026-09-16
+
+### 🚀 New
+
+- Let a host package opt its features out of config publishing [@edalzell](https://github.com/edalzell) (#103)
+
 ## v0.11.0 - 2026-09-16
 
 ### 🚀 New
