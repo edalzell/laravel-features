@@ -24,14 +24,13 @@ class Seeders extends Seeder
     }
 
     /**
-     * A seeder's own #[SeedAfter] dependencies, narrowed to the ones actually
-     * collected — a dependency living outside this list (an app's own
-     * `database/seeders`, say) has nothing here to order it against.
+     * The seeders this one names in `#[SeedAfter]`, narrowed to the ones collected
+     * here: a dependency living elsewhere (an app's own `database/seeders`, say)
+     * has nothing in this list to be ordered against.
      *
-     * @param  array<int, string>  $collected
      * @return array<int, string>
      */
-    private function dependenciesFor(string $seeder, array $collected): array
+    private function dependenciesFor(string $seeder): array
     {
         if (! class_exists($seeder)) {
             return [];
@@ -39,56 +38,50 @@ class Seeders extends Seeder
 
         $attribute = (new ReflectionClass($seeder))->getAttributes(SeedAfter::class)[0] ?? null;
 
-        if ($attribute === null) {
-            return [];
-        }
-
-        return array_values(array_intersect($attribute->newInstance()->seeders, $collected));
+        return $attribute === null
+            ? []
+            : array_values(array_intersect($attribute->newInstance()->seeders, $this->seeders));
     }
 
     /**
-     * Kahn's algorithm, breaking ties by registration order so a seeder with no
-     * `#[SeedAfter]` keeps its collected position.
+     * Depth-first topological sort: before a seeder is placed, everything it must
+     * run after is placed first. Walking the collected list in order makes
+     * registration order the tiebreak, and a seeder met again while its own
+     * dependencies are still being placed is a cycle.
+     * https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
      *
      * @return array<int, string>
      */
     private function sorted(): array
     {
-        $seeders = $this->seeders;
-        $positions = array_flip($seeders);
-
-        $dependencies = [];
-        $dependents = [];
-        $remaining = [];
-
-        foreach ($seeders as $seeder) {
-            $dependencies[$seeder] = $this->dependenciesFor($seeder, $seeders);
-            $remaining[$seeder] = count($dependencies[$seeder]);
-
-            foreach ($dependencies[$seeder] as $dependency) {
-                $dependents[$dependency][] = $seeder;
-            }
-        }
-
-        $available = array_values(array_filter($seeders, fn (string $seeder) => $remaining[$seeder] === 0));
         $sorted = [];
+        $placing = [];
 
-        while ($available !== []) {
-            usort($available, fn (string $a, string $b) => $positions[$a] <=> $positions[$b]);
-            $next = array_shift($available);
-            $sorted[] = $next;
-
-            foreach ($dependents[$next] ?? [] as $dependent) {
-                if (--$remaining[$dependent] === 0) {
-                    $available[] = $dependent;
-                }
+        $place = function (string $seeder) use (&$place, &$sorted, &$placing): void {
+            if (in_array($seeder, $sorted, true)) {
+                return;
             }
-        }
 
-        if (count($sorted) !== count($seeders)) {
-            $cycle = array_diff($seeders, $sorted);
+            // The keys of $placing are the path walked to get here; from this seeder on, it is the cycle.
+            throw_if(
+                isset($placing[$seeder]),
+                LogicException::class,
+                'Circular seeder dependency detected: '.implode(' -> ', [...array_slice(array_keys($placing), array_search($seeder, array_keys($placing), true)), $seeder]),
+            );
 
-            throw new LogicException('Circular seeder dependency detected: '.implode(', ', $cycle));
+            $placing[$seeder] = true;
+
+            foreach ($this->dependenciesFor($seeder) as $dependency) {
+                $place($dependency);
+            }
+
+            unset($placing[$seeder]);
+
+            $sorted[] = $seeder;
+        };
+
+        foreach ($this->seeders as $seeder) {
+            $place($seeder);
         }
 
         return $sorted;
