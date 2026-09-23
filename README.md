@@ -145,6 +145,12 @@ class AvailabilitySeeder extends Seeder
 
 A seeder with no `#[SeedAfter]`, or whose dependencies are already satisfied, keeps its registration position — that's the tiebreak, not alphabetical or random order. Naming a seeder outside the collected set is fine and is simply ignored for ordering; that one is the app's own `database/seeders` to order. A cycle between `#[SeedAfter]` declarations throws a `LogicException` naming the seeders involved.
 
+## Dependencies
+
+A feature can't declare Composer dependencies of its own — it shares the app's `vendor/` and lockfile, so there's nowhere for a feature's `require` to go. Add them to the app's `composer.json`, and list them in the feature's own README so it's clear which feature needs what, and nobody removes one as unused.
+
+A feature that needs its own dependencies to travel with it — to be installed in several apps, say — should be a package instead.
+
 ## Installation
 
 You can install the package via composer:
