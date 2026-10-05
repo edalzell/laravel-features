@@ -58,7 +58,11 @@ class Features
 
     public function bootCommands(): static
     {
-        if (! $this->app->runningInConsole() || ($commands = $this->discoverCommands()) === []) {
+        if (! $this->app->runningInConsole()) {
+            return $this;
+        }
+
+        if (($commands = $this->discoverCommands()) === []) {
             return $this;
         }
 
