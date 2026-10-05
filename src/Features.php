@@ -62,7 +62,7 @@ class Features
             return $this;
         }
 
-        if (($commands = $this->discoverCommands()) === []) {
+        if (empty($commands = $this->discoverCommands())) {
             return $this;
         }
 
