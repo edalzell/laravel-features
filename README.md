@@ -71,6 +71,17 @@ protected function routeGroups(): array
 
 Set an entry to `null`, or remove it, and that file gets no middleware group and no prefix — only what it declares itself.
 
+An entry can also be a closure, which is handed the file's path and loads it itself — for when a route file has to be registered through something other than a plain route group:
+
+```php
+protected function routeGroups(): array
+{
+    return ['admin' => fn (string $path) => Admin::routes(fn () => require $path)];
+}
+```
+
+Closures can't be cached, so this only works from `routeGroups()`, not from `config/features.php`.
+
 ## Livewire components
 
 Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components under `resources/views` — `livewire/` for ordinary components and `pages/` for full pages, the same split Livewire uses for the app. The views root is registered as the feature's Livewire namespace, so both directories answer under one name with the directory as a dotted prefix:

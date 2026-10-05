@@ -51,6 +51,27 @@ it('adds no middleware group or prefix when there is no entry for the file', fun
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
 });
 
+it('hands the route file to a closure instead of grouping it', function () {
+    (new ClosureSiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('closure/sibling-api')
+        ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
+});
+
+class ClosureSiblingServiceProvider extends SiblingServiceProvider
+{
+    protected function featuresPath(): string
+    {
+        return dirname(__DIR__).'/tests/__fixtures__/Sibling';
+    }
+
+    /** @return array<string, array<string, mixed>|Closure> */
+    protected function routeGroups(): array
+    {
+        return ['api' => fn (string $path) => Route::prefix('closure')->group($path)];
+    }
+}
+
 class OverridingSiblingServiceProvider extends SiblingServiceProvider
 {
     /**
