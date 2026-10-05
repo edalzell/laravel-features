@@ -2,6 +2,7 @@
 
 namespace Edalzell\Features;
 
+use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
@@ -55,6 +56,17 @@ class Features
         $this->applySlugDefaults();
     }
 
+    public function bootCommands(): static
+    {
+        if (! $this->app->runningInConsole() || ($commands = $this->discoverCommands()) === []) {
+            return $this;
+        }
+
+        $this->provider->commands($commands);
+
+        return $this;
+    }
+
     public function bootConfig(): static
     {
         if (! $this->publishesConfig || ! $this->app->runningInConsole()) {
@@ -77,6 +89,7 @@ class Features
     public function bootFeature(): void
     {
         $this
+            ->bootCommands()
             ->bootConfig()
             ->bootListeners()
             ->bootLivewireComponents()
@@ -339,6 +352,21 @@ class Features
         return $this->join('/', 'config', $this->configFileName.'.php');
     }
 
+    /** @return array<int, class-string<Command>> */
+    private function discoverCommands(): array
+    {
+        if (! $this->disk()->exists('src/Console/Commands')) {
+            return [];
+        }
+
+        return collect($this->finder('src/Console/Commands'))
+            ->keys()
+            ->map(fn (string $path) => $this->getClassNameFromFile($path))
+            ->filter(fn (?string $class) => $this->isCommand($class))
+            ->values()
+            ->all();
+    }
+
     /** @return array<string, array<string>> */
     private function discoverEvents(): array
     {
@@ -419,6 +447,11 @@ class Features
         }
 
         return null;
+    }
+
+    private function isCommand(?string $class): bool
+    {
+        return is_subclass_of($class, Command::class) && ! (new ReflectionClass($class))->isAbstract();
     }
 
     private function join(string $separator, string ...$parts): string

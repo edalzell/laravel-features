@@ -30,7 +30,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Seeders, Views |
-| Boot | Config publishing, Listeners, Livewire components, Policies, Routes, Seeders |
+| Boot | Commands, Config publishing, Listeners, Livewire components, Policies, Routes, Seeders |
 
 ## Route groups
 

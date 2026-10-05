@@ -10,6 +10,7 @@ A feature should act very much like a mini-Laravel app, in that all folder conve
 Within those folders Laravel "things" are automatically booted and/or registered as they would be in a standard Laravel app:
 
 Booted:
+* Commands
 * Config
 * Listeners
 * Livewire components
