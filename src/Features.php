@@ -234,6 +234,7 @@ class Features
             ->registerConfig()
             ->registerMigrations()
             ->registerSeeders()
+            ->registerTranslations()
             ->registerViews();
     }
 
@@ -269,6 +270,18 @@ class Features
         if (! $this->app->bound(Seeders::class)) {
             $this->app->singleton(Seeders::class, fn () => new Seeders);
         }
+
+        return $this;
+    }
+
+    public function registerTranslations(): static
+    {
+        if (! $this->disk()->exists('lang')) {
+            return $this;
+        }
+
+        $this->callProtected('loadTranslationsFrom', $this->disk()->path('lang'), $this->slug());
+        $this->callProtected('loadJsonTranslationsFrom', $this->disk()->path('lang'));
 
         return $this;
     }
@@ -413,7 +426,8 @@ class Features
                 }
             }
 
-            if ($tokens[$i][0] === T_CLASS) {
+            // `Foo::class` is a T_CLASS token too, but a constant, not the declaration
+            if ($tokens[$i][0] === T_CLASS && $tokens[$i - 1][0] !== T_DOUBLE_COLON) {
                 $i += 2; // skip whitespace
 
                 return $namespace ? $namespace.'\\'.$tokens[$i][1] : $tokens[$i][1];

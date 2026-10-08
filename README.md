@@ -17,6 +17,7 @@ Add self-contained features to your Laravel app or package, including all resour
   │       │   ├── factories
   │       │   ├── migrations
   │       │   └── seeders
+  │       ├── lang
   │       ├── resources
   │       ├── routes
   │       └── src/
@@ -29,7 +30,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 
 | Phase | What |
 |---|---|
-| Register | Config, Migrations, Seeders, Views |
+| Register | Config, Migrations, Seeders, Translations, Views |
 | Boot | Config publishing, Listeners, Livewire components, Policies, Routes, Seeders |
 
 ## Route groups

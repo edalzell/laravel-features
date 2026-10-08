@@ -2,6 +2,7 @@
 
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
+use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
 use Edalzell\Features\Tests\Fixtures\TestSeeder;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
@@ -271,6 +272,17 @@ it('adds no seeders when database/seeders directory does not exist', function ()
     $features->bootSeeders();
 });
 
+it('discovers a seeder that names another with ::class in SeedAfter', function () {
+    $content = file_get_contents(__DIR__.'/__fixtures__/Seeders/Beta.php');
+
+    tap(mockOnDemandDisk('features/TwoWords'))->put('database/seeders/Beta.php', $content);
+    [$features] = mockFeatures();
+
+    SeedersFacade::shouldReceive('add')->once()->with([Beta::class]);
+
+    $features->bootSeeders();
+});
+
 it('discovers and boots seeders', function () {
     $content = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Database\Seeder; class TestSeeder extends Seeder { public function run(): void {} }';
 
@@ -280,4 +292,30 @@ it('discovers and boots seeders', function () {
     SeedersFacade::shouldReceive('add')->once()->with([TestSeeder::class]);
 
     $features->bootSeeders();
+});
+
+it('can load translations', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('lang/en/messages.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider
+        ->shouldReceive('loadTranslationsFrom')
+        ->once()
+        ->with($disk->path('lang'), 'two-words');
+    $provider
+        ->shouldReceive('loadJsonTranslationsFrom')
+        ->once()
+        ->with($disk->path('lang'));
+
+    $features->registerTranslations();
+});
+
+it('wont load translations when there arent any', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldNotReceive('loadTranslationsFrom');
+    $provider->shouldNotReceive('loadJsonTranslationsFrom');
+
+    $features->registerTranslations();
 });
