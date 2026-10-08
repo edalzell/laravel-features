@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.0.1 - 2026-10-08
+
+### 🐛 Fixed
+
+- Discover seeders that reference another seeder with ::class [@edalzell](https://github.com/edalzell) (#110)
+
+### 🧰 Maintenance
+
+- Document where feature dependencies go [@edalzell](https://github.com/edalzell) (#105)
+
 ## v1.0.0 - 2026-09-16
 
 ### 🚀 New
