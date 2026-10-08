@@ -2,6 +2,7 @@
 
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
+use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
 use Edalzell\Features\Tests\Fixtures\TestSeeder;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
@@ -267,6 +268,17 @@ it('adds no seeders when database/seeders directory does not exist', function ()
     [$features] = mockFeatures();
 
     SeedersFacade::shouldReceive('add')->once()->with([]);
+
+    $features->bootSeeders();
+});
+
+it('discovers a seeder that names another with ::class in SeedAfter', function () {
+    $content = file_get_contents(__DIR__.'/__fixtures__/Seeders/Beta.php');
+
+    tap(mockOnDemandDisk('features/TwoWords'))->put('database/seeders/Beta.php', $content);
+    [$features] = mockFeatures();
+
+    SeedersFacade::shouldReceive('add')->once()->with([Beta::class]);
 
     $features->bootSeeders();
 });
