@@ -3,6 +3,7 @@
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
+use Edalzell\Features\Tests\Fixtures\TestCommand;
 use Edalzell\Features\Tests\Fixtures\TestSeeder;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
@@ -292,6 +293,52 @@ it('discovers and boots seeders', function () {
     SeedersFacade::shouldReceive('add')->once()->with([TestSeeder::class]);
 
     $features->bootSeeders();
+});
+
+it('registers commands', function () {
+    $content = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Console\Command; class TestCommand extends Command {}';
+
+    tap(mockOnDemandDisk('features/TwoWords'))->put('src/Console/Commands/TestCommand.php', $content);
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('commands')->once()->with([TestCommand::class]);
+
+    $features->bootCommands();
+});
+
+it('wont register commands if there arent any', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldNotReceive('commands');
+
+    $features->bootCommands();
+});
+
+it('wont register abstract commands or classes that arent commands', function () {
+    $abstract = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Console\Command; abstract class AbstractTestCommand extends Command {}';
+    $seeder = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Database\Seeder; class TestSeeder extends Seeder {}';
+
+    tap(mockOnDemandDisk('features/TwoWords'))
+        ->put('src/Console/Commands/AbstractTestCommand.php', $abstract)
+        ->put('src/Console/Commands/TestSeeder.php', $seeder);
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldNotReceive('commands');
+
+    $features->bootCommands();
+});
+
+it('wont register commands when not running in console', function () {
+    $app = mock(Application::class)
+        ->makePartial()
+        ->shouldReceive('runningInConsole')->andReturn(false)
+        ->getMock();
+
+    [$features, $provider] = mockFeatures(app: $app);
+    $provider->shouldNotReceive('commands');
+
+    $features->bootCommands();
 });
 
 it('can load translations', function () {
