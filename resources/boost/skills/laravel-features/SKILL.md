@@ -14,6 +14,7 @@ features/MyGreatFeature/
 │   ├── factories/
 │   ├── migrations/
 │   └── seeders/
+├── lang/
 ├── resources/views/
 ├── routes/
 │   ├── web.php
@@ -33,7 +34,7 @@ This is the part that fails silently — get a file in the wrong place and nothi
 
 | Phase | What | Source |
 |---|---|---|
-| **register()** | Config (merged), Migrations, Seeders (container binding), Views | `database/migrations/`, `resources/views/`, `config/` |
+| **register()** | Config (merged), Migrations, Seeders (container binding), Translations, Views | `database/migrations/`, `lang/`, `resources/views/`, `config/` |
 | **boot()** | Config (published for `vendor:publish`), Listeners, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Listeners/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
 
 Config and Seeders each do something different at each phase: `register()` merges the config file into `config()` and creates the seeder-runner binding; `boot()` makes the config file publishable and discovers the actual seeder classes to add to the runner. Listeners, Livewire components, Policies and Routes are boot-only — they need the container fully wired first, so no equivalent happens during register.

@@ -293,3 +293,29 @@ it('discovers and boots seeders', function () {
 
     $features->bootSeeders();
 });
+
+it('can load translations', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('lang/en/messages.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider
+        ->shouldReceive('loadTranslationsFrom')
+        ->once()
+        ->with($disk->path('lang'), 'two-words');
+    $provider
+        ->shouldReceive('loadJsonTranslationsFrom')
+        ->once()
+        ->with($disk->path('lang'));
+
+    $features->registerTranslations();
+});
+
+it('wont load translations when there arent any', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldNotReceive('loadTranslationsFrom');
+    $provider->shouldNotReceive('loadJsonTranslationsFrom');
+
+    $features->registerTranslations();
+});
