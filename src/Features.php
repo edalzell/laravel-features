@@ -411,7 +411,8 @@ class Features
                 }
             }
 
-            if ($tokens[$i][0] === T_CLASS) {
+            // `Foo::class` is a T_CLASS token too, but a constant, not the declaration
+            if ($tokens[$i][0] === T_CLASS && $tokens[$i - 1][0] !== T_DOUBLE_COLON) {
                 $i += 2; // skip whitespace
 
                 return $namespace ? $namespace.'\\'.$tokens[$i][1] : $tokens[$i][1];
