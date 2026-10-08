@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.1.0 - 2026-10-08
+
+### 🚀 New
+
+- Register a feature's console commands [@edalzell](https://github.com/edalzell) (#107)
+- Load a feature's translations [@edalzell](https://github.com/edalzell) (#108)
+- Let a route group be a closure [@edalzell](https://github.com/edalzell) (#109)
+
+### 🐛 Fixed
+
+- Discover seeders that reference another seeder with ::class [@edalzell](https://github.com/edalzell) (#110)
+
+### 🧰 Maintenance
+
+- Bump the github-actions group with 3 updates [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#106)
+- Document where feature dependencies go [@edalzell](https://github.com/edalzell) (#105)
+
 ## v1.0.0 - 2026-09-16
 
 ### 🚀 New
