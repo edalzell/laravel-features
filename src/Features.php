@@ -2,6 +2,7 @@
 
 namespace Edalzell\Features;
 
+use Closure;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
@@ -41,7 +42,7 @@ class Features
 
     private bool $publishesConfig = true;
 
-    /** @var array<string, array<string, mixed>> */
+    /** @var array<string, array<string, mixed>|Closure> */
     private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
@@ -252,9 +253,10 @@ class Features
      * `loadRoutesFrom()` is a bare require, so without this a feature's
      * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app.
+     * route files in a group; features should behave like the app. A closure is
+     * handed the file's path instead, and loads it however it likes.
      *
-     * @param  array<string, array<string, mixed>>  $groups
+     * @param  array<string, array<string, mixed>|Closure>  $groups
      */
     public function routeGroups(array $groups): static
     {
@@ -455,6 +457,12 @@ class Features
 
         if ($group === null) {
             $this->callProtected('loadRoutesFrom', $path);
+
+            return;
+        }
+
+        if ($group instanceof Closure) {
+            $group($path);
 
             return;
         }
