@@ -2,6 +2,7 @@
 
 namespace Edalzell\Features;
 
+use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
@@ -42,7 +43,7 @@ class Features
 
     private bool $publishesConfig = true;
 
-    /** @var array<string, array<string, mixed>> */
+    /** @var array<string, array<string, mixed>|Closure> */
     private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
@@ -250,6 +251,7 @@ class Features
             ->registerConfig()
             ->registerMigrations()
             ->registerSeeders()
+            ->registerTranslations()
             ->registerViews();
     }
 
@@ -268,9 +270,10 @@ class Features
      * `loadRoutesFrom()` is a bare require, so without this a feature's
      * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app.
+     * route files in a group; features should behave like the app. A closure is
+     * handed the file's path instead, and loads it however it likes.
      *
-     * @param  array<string, array<string, mixed>>  $groups
+     * @param  array<string, array<string, mixed>|Closure>  $groups
      */
     public function routeGroups(array $groups): static
     {
@@ -284,6 +287,18 @@ class Features
         if (! $this->app->bound(Seeders::class)) {
             $this->app->singleton(Seeders::class, fn () => new Seeders);
         }
+
+        return $this;
+    }
+
+    public function registerTranslations(): static
+    {
+        if (! $this->disk()->exists('lang')) {
+            return $this;
+        }
+
+        $this->callProtected('loadTranslationsFrom', $this->disk()->path('lang'), $this->slug());
+        $this->callProtected('loadJsonTranslationsFrom', $this->disk()->path('lang'));
 
         return $this;
     }
@@ -443,7 +458,8 @@ class Features
                 }
             }
 
-            if ($tokens[$i][0] === T_CLASS) {
+            // `Foo::class` is a T_CLASS token too, but a constant, not the declaration
+            if ($tokens[$i][0] === T_CLASS && $tokens[$i - 1][0] !== T_DOUBLE_COLON) {
                 $i += 2; // skip whitespace
 
                 return $namespace ? $namespace.'\\'.$tokens[$i][1] : $tokens[$i][1];
@@ -478,6 +494,12 @@ class Features
 
         if ($group === null) {
             $this->callProtected('loadRoutesFrom', $path);
+
+            return;
+        }
+
+        if ($group instanceof Closure) {
+            $group($path);
 
             return;
         }

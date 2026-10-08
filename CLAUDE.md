@@ -4,6 +4,7 @@ A feature should act very much like a mini-Laravel app, in that all folder conve
 * `src` for code
 * `config` for configuration
 * `database` for the factories, migrations and seeders
+* `lang` for translations
 * `resources` for views
 * `routes` for Laravel routes
 
@@ -22,6 +23,7 @@ Registered:
 * Config
 * Migrations
 * Seeders
+* Translations
 * Views
 
 Routes boot rather than register because a route file may use a macro another package
