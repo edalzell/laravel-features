@@ -3,11 +3,13 @@
 namespace Edalzell\Features;
 
 use Closure;
+use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
 use Illuminate\Foundation\Events\DiscoverEvents;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -39,6 +41,9 @@ class Features
 
     private string $namespace;
 
+    /** @var array<string, mixed> */
+    private array $options = [];
+
     private string $path;
 
     private bool $publishesConfig = true;
@@ -55,6 +60,11 @@ class Features
         $this->namespace = $reflection->getNamespaceName();
         $this->name = basename($this->path);
         $this->applySlugDefaults();
+    }
+
+    public function app(): Application
+    {
+        return $this->app;
     }
 
     public function bootCommands(): static
@@ -100,7 +110,20 @@ class Features
             ->bootLivewireComponents()
             ->bootPolicies()
             ->bootRoutes()
-            ->bootSeeders();
+            ->bootSeeders()
+            ->bootExtensions();
+    }
+
+    /**
+     * Last, so an extension sees a feature whose Laravel pieces are all in place.
+     * Resolved through the container tag rather than a static list so a package
+     * only has to tag itself to take part.
+     */
+    public function bootExtensions(): static
+    {
+        collect($this->app->tagged(Extension::TAG))->each(fn (Extension $extension) => $extension->boot($this));
+
+        return $this;
     }
 
     public function bootListeners(): static
@@ -187,6 +210,14 @@ class Features
         return $this;
     }
 
+    public function disk(): Filesystem
+    {
+        return $this->disk ??= Storage::build([
+            'driver' => 'local',
+            'root' => $this->path,
+        ]);
+    }
+
     /**
      * Prefixed to every Livewire component name in the feature, so two features can
      * each have a `PostList` without clashing. Pass an empty string to drop it.
@@ -213,12 +244,35 @@ class Features
         return $this;
     }
 
+    public function option(string $key, mixed $default = null): mixed
+    {
+        return Arr::get($this->options, $key, $default);
+    }
+
+    /**
+     * Settings an extension reads per feature, keyed by dotted name
+     * (`livewire.namespace`). The core doesn't look at them.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public function options(array $options): static
+    {
+        $this->options = $options;
+
+        return $this;
+    }
+
     public function path(string $path): static
     {
         $this->path = $path;
         $this->disk = null;
 
         return $this;
+    }
+
+    public function provider(): ServiceProvider
+    {
+        return $this->provider;
     }
 
     /**
@@ -312,6 +366,21 @@ class Features
         $this->callProtected('loadViewsFrom', $this->disk()->path('resources/views'), $this->slug());
 
         return $this;
+    }
+
+    public function rootNamespace(): string
+    {
+        return $this->namespace;
+    }
+
+    public function rootPath(): string
+    {
+        return $this->path;
+    }
+
+    public function slug(): string
+    {
+        return str($this->name)->kebab()->toString();
     }
 
     /**
@@ -429,14 +498,6 @@ class Features
             ->all();
     }
 
-    private function disk(): Filesystem
-    {
-        return $this->disk ??= Storage::build([
-            'driver' => 'local',
-            'root' => $this->path,
-        ]);
-    }
-
     private function finder(string $path): Finder
     {
         return tap(new Finder)
@@ -514,10 +575,5 @@ class Features
         $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
 
         return ["{$this->namespace}\\Models\\{$modelName}" => $policyClass];
-    }
-
-    private function slug(): string
-    {
-        return str($this->name)->kebab()->toString();
     }
 }

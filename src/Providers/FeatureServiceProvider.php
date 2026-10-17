@@ -26,6 +26,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
             ->livewireNamespace($this->livewireNamespace())
+            ->options($this->options())
             ->publishesConfig($this->publishesConfig())
             ->routeGroups($this->routeGroups());
     }
@@ -91,6 +92,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     protected function name(): string
     {
         return basename($this->directory());
+    }
+
+    /**
+     * Settings for extensions, keyed by dotted name — `livewire.namespace`, say.
+     * The core ignores them; each extension reads its own.
+     *
+     * @return array<string, mixed>
+     */
+    protected function options(): array
+    {
+        return [];
     }
 
     /**

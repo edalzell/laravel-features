@@ -1,7 +1,9 @@
 <?php
 
+use Edalzell\Features\Contracts\Extension;
 use Edalzell\Features\Feature;
 use Edalzell\Features\FeatureRegistry;
+use Edalzell\Features\Features;
 use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
@@ -175,6 +177,25 @@ it('derives the feature name and slug from the provider location', function () {
         ->and(array_map(tidy(...), $hints['sibling']))
         ->toContain(tidy(fixturePath('Sibling/resources/views')));
 });
+
+it('hands its options to extensions', function () {
+    app()->instance('extension', mock(Extension::class)
+        ->shouldReceive('boot')
+        ->once()
+        ->withArgs(fn (Features $features) => $features->option('livewire.namespace') === 'blog')
+        ->getMock());
+    app()->tag('extension', Extension::TAG);
+
+    (new TestOptionsServiceProvider(app()))->boot();
+});
+
+class TestOptionsServiceProvider extends TestServiceProvider
+{
+    protected function options(): array
+    {
+        return ['livewire.namespace' => 'blog'];
+    }
+}
 
 class TestGroupedServiceProvider extends FeatureServiceProvider
 {
