@@ -4,6 +4,8 @@ namespace Edalzell\Features;
 
 use Edalzell\Features\Concerns\HasFeatures;
 use Edalzell\Features\Console\Commands\Make;
+use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extensions\LivewireComponents;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
 class ServiceProvider extends LaravelServiceProvider
@@ -26,6 +28,8 @@ class ServiceProvider extends LaravelServiceProvider
         $this->app->singleton(FeatureRegistry::class);
 
         $this->mergeConfigFrom(__DIR__.'/../config/features.php', 'features');
+
+        $this->app->tag(LivewireComponents::class, Extension::TAG);
 
         $this->registerFeatures(base_path('features'), 'Features');
     }
