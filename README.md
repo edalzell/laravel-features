@@ -31,7 +31,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Seeders, Translations, Views |
-| Boot | Commands, Config publishing, Listeners, Livewire components, Policies, Routes, Seeders |
+| Boot | Commands, Config publishing, Listeners, Policies, Routes, Seeders, then any [extensions](#extensions) — Livewire components ship as one |
 
 ## Route groups
 
@@ -108,12 +108,12 @@ MyGreatFeature/
 
 Single- and multi-file components follow Livewire's own rules — a single-file component is a `.blade.php` holding a `new class extends Component` block, a multi-file component a directory holding `name.php` and `name.blade.php` alongside any `name.js` or `name.css`. Nothing is scanned: Livewire resolves a name the first time it is used, exactly as it does for the app's own components.
 
-The feature's slug goes in front so two features can each have a `PostList`. Change it, or drop it, on one feature's service provider:
+The feature's slug goes in front so two features can each have a `PostList`. Change it, or drop it, through the feature's options:
 
 ```php
-protected function livewireNamespace(): string
+protected function options(): array
 {
-    return '';
+    return ['livewire.namespace' => ''];
 }
 ```
 
@@ -134,6 +134,29 @@ The page renders into `livewire.component_layout`, the app's layout. To give a f
 ```
 
 This needs Livewire 4, which introduced both the namespace registration and view-based components. Livewire is not a dependency of this package: when it isn't installed, nothing is registered and nothing breaks.
+
+## Extensions
+
+Livewire isn't part of Laravel, and neither is anything else a feature might want autoloaded — Statamic fieldtypes and tags, say. Rather than teach the core about each one, a package hooks in with an extension: implement `Edalzell\Features\Contracts\Extension` and tag it in your service provider. Every feature hands itself over once its own Laravel pieces have booted:
+
+```php
+use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Features;
+
+class StatamicAddons implements Extension
+{
+    public function boot(Features $features): void
+    {
+        // $features->rootPath(), rootNamespace(), slug(), disk(), app(), provider()
+        // $features->option('statamic.something', $default)
+    }
+}
+
+// in the package's service provider
+$this->app->tag(StatamicAddons::class, Extension::TAG);
+```
+
+The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`.
 
 ## Seeders
 
@@ -206,7 +229,7 @@ protected function configGroup(): string         // default: host Composer packa
 protected function configPublishHandle(): string // default: kebab-cased feature name
 protected function publishesConfig(): bool       // default: true, or whatever `registerFeatures()` stamped; false still merges `{group}.{file}` but offers nothing to `vendor:publish`
 protected function featuresPath(): string        // default: derived from the provider's own location
-protected function livewireNamespace(): string   // default: kebab-cased feature name
+protected function options(): array              // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array          // default: config('features.route_groups')
 ```
 
