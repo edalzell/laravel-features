@@ -117,7 +117,7 @@ class Features
      */
     public function bootExtensions(): static
     {
-        collect($this->app->tagged(Extension::TAG))->each(fn (Extension $extension) => $extension->boot($this));
+        collect($this->app->tagged(Extension::TAG))->each->boot($this);
 
         return $this;
     }
