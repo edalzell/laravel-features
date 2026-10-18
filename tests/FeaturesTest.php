@@ -1,12 +1,16 @@
 <?php
 
 use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Features;
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
+use Edalzell\Features\Tests\Fixtures\Sibling\Events\GreetingSent;
+use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Edalzell\Features\Tests\Fixtures\TestCommand;
 use Edalzell\Features\Tests\Fixtures\TestSeeder;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
@@ -17,7 +21,7 @@ it('merges config when it exists', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'two-words');
+        ->with(featureFile('config/two-words.php'), 'two-words');
 
     $features->registerConfig();
 });
@@ -38,7 +42,7 @@ it('can load migrations', function () {
     $provider
         ->shouldReceive('loadMigrationsFrom')
         ->once()
-        ->with($disk->path('database/migrations'));
+        ->with(featureFile('database/migrations'));
 
     $features->registerMigrations();
 });
@@ -59,7 +63,7 @@ it('can load routes', function () {
     $provider
         ->shouldReceive('loadRoutesFrom')
         ->once()
-        ->withArgs(fn (string $path) => tidy($path) === tidy($disk->path('routes/web.php')));
+        ->withArgs(fn (string $path) => tidy($path) === tidy(featureFile('routes/web.php')));
 
     $features->bootRoutes();
 });
@@ -80,7 +84,7 @@ it('can load views', function () {
     $provider
         ->shouldReceive('loadViewsFrom')
         ->once()
-        ->with($disk->path('resources/views'), 'two-words');
+        ->with(featureFile('resources/views'), 'two-words');
 
     $features->registerViews();
 });
@@ -92,6 +96,24 @@ it('wont load views when there arent any', function () {
     $provider->shouldNotReceive('loadViewsFrom');
 
     $features->registerViews();
+});
+
+it('registers listeners, nested ones included, and clears the discovery callback', function () {
+    (new Features(new SiblingServiceProvider(app())))->bootListeners();
+
+    expect(Event::getRawListeners()[GreetingSent::class])->toHaveCount(2)
+        ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
+});
+
+it('registers policies', function () {
+    mockOnDemandDisk('features/TwoWords')->put('src/Policies/PostPolicy.php', '');
+    [$features] = mockFeatures();
+
+    Gate::shouldReceive('policy')
+        ->once()
+        ->with('Features\TwoWords\Models\Post', 'Features\TwoWords\Policies\PostPolicy');
+
+    $features->bootPolicies();
 });
 
 it('wont register listeners if there arent any', function () {
@@ -131,7 +153,7 @@ it('merges config when it exists in group directory', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+        ->with(featureFile('config/two-words.php'), 'admin.two-words');
 
     $features->registerConfig();
 });
@@ -155,7 +177,7 @@ it('publishes grouped config from the flat feature file', function () {
         ->shouldReceive('publishes')
         ->once()
         ->with(
-            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
+            [featureFile('config/two-words.php') => config_path('admin/two-words.php')],
             'two-words-config',
         );
 
@@ -169,7 +191,7 @@ it('publishes config when running in console', function () {
     $provider
         ->shouldReceive('publishes')
         ->once()
-        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
+        ->with([featureFile('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
 
     $features->bootConfig();
 });
@@ -203,7 +225,7 @@ it('publishes config with a custom publish handle', function () {
     $provider
         ->shouldReceive('publishes')
         ->once()
-        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'custom-config');
+        ->with([featureFile('config/two-words.php') => config_path('two-words.php')], 'custom-config');
 
     $features->bootConfig();
 });
@@ -226,7 +248,7 @@ it('still merges config when publishing is opted out', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+        ->with(featureFile('config/two-words.php'), 'admin.two-words');
 
     $features->registerConfig();
 });
@@ -296,6 +318,34 @@ it('discovers and boots seeders', function () {
     $features->bootSeeders();
 });
 
+it('ignores seeder files with no class, and abstract seeders', function () {
+    $disk = mockOnDemandDisk('features/TwoWords');
+    $disk->put('database/seeders/Contract.php', file_get_contents(fixturePath('Seeders/Contract.php')));
+    $disk->put('database/seeders/AbstractSeeder.php', file_get_contents(fixturePath('Seeders/AbstractSeeder.php')));
+    $disk->put('database/seeders/Beta.php', file_get_contents(fixturePath('Seeders/Beta.php')));
+    [$features] = mockFeatures();
+
+    SeedersFacade::shouldReceive('add')->once()->with([Beta::class]);
+
+    $features->bootSeeders();
+});
+
+it('finds the class past comments, braces, enums and anonymous classes', function () {
+    $spaced = '<?php namespace Edalzell\\Features\\Tests\\Fixtures { use Illuminate\\Console\\Command; class /* spaced */ TestCommand extends Command {} }';
+    $enum = '<?php namespace Features\\TwoWords; enum Shape { case Square; public function anon() { return new class(1) extends \\stdClass {}; } }';
+    $constant = '<?php namespace Features\\TwoWords; use Illuminate\\Console\\Command; #[Attr(Command::class)] interface Marker {}';
+
+    $disk = mockOnDemandDisk('features/TwoWords');
+    $disk->put('src/Console/Commands/TestCommand.php', $spaced);
+    $disk->put('src/Console/Commands/Shape.php', $enum);
+    $disk->put('src/Console/Commands/Marker.php', $constant);
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('commands')->once()->with([TestCommand::class]);
+
+    $features->bootCommands();
+});
+
 it('registers commands', function () {
     $content = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Console\Command; class TestCommand extends Command {}';
 
@@ -349,11 +399,11 @@ it('can load translations', function () {
     $provider
         ->shouldReceive('loadTranslationsFrom')
         ->once()
-        ->with($disk->path('lang'), 'two-words');
+        ->with(featureFile('lang'), 'two-words');
     $provider
         ->shouldReceive('loadJsonTranslationsFrom')
         ->once()
-        ->with($disk->path('lang'));
+        ->with(featureFile('lang'));
 
     $features->registerTranslations();
 });
@@ -388,10 +438,20 @@ it('boots nothing when no extension is tagged', function () {
 it('returns an option or its default', function () {
     [$features] = mockFeatures();
 
-    $features->options(['livewire.namespace' => 'blog']);
+    $features->options(['livewire.namespace' => 'blog', 'unset' => null]);
 
     expect($features->option('livewire.namespace'))->toBe('blog')
-        ->and($features->option('missing', 'fallback'))->toBe('fallback');
+        ->and($features->option('missing', 'fallback'))->toBe('fallback')
+        ->and($features->option('unset', 'fallback'))->toBe('fallback');
+});
+
+it('keeps an explicit config file name when the name is set afterwards', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/custom.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('mergeConfigFrom')->once()->with(featureFile('config/custom.php'), 'custom');
+
+    $features->configFileName('custom')->name('Other')->registerConfig();
 });
 
 it('exposes the feature to extensions', function () {
@@ -399,7 +459,8 @@ it('exposes the feature to extensions', function () {
 
     expect($features->app())->toBe(app())
         ->and($features->provider())->toBe($provider)
-        ->and($features->rootPath())->toBe(base_path('features/TwoWords'))
+        ->and($features->rootPath())->toBe(fakeFeatureRoot())
+        ->and($features->pathTo('routes/web.php'))->toBe(fakeFeatureRoot().'/routes/web.php')
         ->and($features->rootNamespace())->toBe('Features\\TwoWords')
         ->and($features->slug())->toBe('two-words');
 });

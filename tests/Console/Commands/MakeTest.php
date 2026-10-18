@@ -105,6 +105,26 @@ PHP);
                 ->toContain('$this->registerFeatures();');
         });
 
+        it('adds the trait when the class brace is on the declaration line', function () {
+            file_put_contents($this->packageDir.'/src/ServiceProvider.php', <<<'PHP'
+<?php
+
+namespace TheDev\ThePackage;
+
+use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+
+class ServiceProvider extends LaravelServiceProvider {
+    public function boot(): void {}
+}
+PHP);
+
+            $this->artisan('make:feature', ['name' => 'MyFeature', 'package' => 'the-dev/the-package'])->assertSuccessful();
+
+            expect(file_get_contents($this->packageDir.'/src/ServiceProvider.php'))
+                ->toContain('use HasFeatures;')
+                ->toContain('$this->registerFeatures();');
+        });
+
         it('inserts registerFeatures into an existing register method', function () {
             file_put_contents($this->packageDir.'/src/ServiceProvider.php', <<<'PHP'
 <?php

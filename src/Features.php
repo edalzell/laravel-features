@@ -5,7 +5,6 @@ namespace Edalzell\Features;
 use Closure;
 use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
 use Illuminate\Foundation\Events\DiscoverEvents;
@@ -14,8 +13,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -26,13 +25,11 @@ class Features
 {
     private readonly Application $app;
 
-    private string $configFileName;
+    private ?string $configFileName = null;
 
     private string $configGroup = '';
 
-    private string $configPublishHandle;
-
-    private ?Filesystem $disk = null;
+    private ?string $configPublishHandle = null;
 
     private string $name;
 
@@ -45,7 +42,7 @@ class Features
 
     private bool $publishesConfig = true;
 
-    /** @var array<string, array<string, mixed>|Closure|class-string> */
+    /** @var array<string, array<string, mixed>|Closure|class-string|null> */
     private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
@@ -56,7 +53,6 @@ class Features
         $this->path = dirname($reflection->getFileName(), 2);
         $this->namespace = $reflection->getNamespaceName();
         $this->name = basename($this->path);
-        $this->applySlugDefaults();
     }
 
     public function app(): Application
@@ -85,15 +81,27 @@ class Features
             return $this;
         }
 
-        if (! $this->disk()->exists($path = $this->configRelativePath())) {
+        if (! $this->has($path = $this->configRelativePath())) {
             return $this;
         }
 
         $this->callProtected(
             'publishes',
-            [$this->disk()->path($path) => config_path($this->join('/', $this->configGroup, $this->configFileName.'.php'))],
-            $this->join('-', $this->configPublishHandle, 'config'),
+            [$this->pathTo($path) => config_path($this->join('/', $this->configGroup, $this->configFile().'.php'))],
+            $this->join('-', $this->configPublishHandle ?? $this->slug(), 'config'),
         );
+
+        return $this;
+    }
+
+    /**
+     * Last, so an extension sees a feature whose Laravel pieces are all in place.
+     * Resolved through the container tag rather than a static list so a package
+     * only has to tag itself to take part.
+     */
+    public function bootExtensions(): static
+    {
+        collect($this->app->tagged(Extension::TAG))->each->boot($this);
 
         return $this;
     }
@@ -108,18 +116,6 @@ class Features
             ->bootRoutes()
             ->bootSeeders()
             ->bootExtensions();
-    }
-
-    /**
-     * Last, so an extension sees a feature whose Laravel pieces are all in place.
-     * Resolved through the container tag rather than a static list so a package
-     * only has to tag itself to take part.
-     */
-    public function bootExtensions(): static
-    {
-        collect($this->app->tagged(Extension::TAG))->each->boot($this);
-
-        return $this;
     }
 
     public function bootListeners(): static
@@ -151,11 +147,11 @@ class Features
      */
     public function bootRoutes(): static
     {
-        if (! $this->disk()->exists('routes')) {
+        if ($this->app->routesAreCached() || ! $this->has('routes')) {
             return $this;
         }
 
-        collect($this->finder('routes'))
+        collect($this->finder('routes')->depth(0))
             ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
 
         return $this;
@@ -191,18 +187,15 @@ class Features
         return $this;
     }
 
-    public function disk(): Filesystem
+    /** Whether the feature has this file or directory. */
+    public function has(string $relative): bool
     {
-        return $this->disk ??= Storage::build([
-            'driver' => 'local',
-            'root' => $this->path,
-        ]);
+        return file_exists($this->pathTo($relative));
     }
 
     public function name(string $name): static
     {
         $this->name = $name;
-        $this->applySlugDefaults();
 
         return $this;
     }
@@ -216,7 +209,7 @@ class Features
 
     public function option(string $key, mixed $default = null): mixed
     {
-        return Arr::get($this->options, $key, $default);
+        return Arr::get($this->options, $key) ?? $default;
     }
 
     /**
@@ -235,9 +228,13 @@ class Features
     public function path(string $path): static
     {
         $this->path = $path;
-        $this->disk = null;
 
         return $this;
+    }
+
+    public function pathTo(string $relative = ''): string
+    {
+        return $relative === '' ? $this->path : "{$this->path}/".ltrim($relative, '/');
     }
 
     public function provider(): ServiceProvider
@@ -260,11 +257,11 @@ class Features
 
     public function registerConfig(): static
     {
-        if (! $this->disk()->exists($path = $this->configRelativePath())) {
+        if (! $this->has($path = $this->configRelativePath())) {
             return $this;
         }
 
-        $this->callProtected('mergeConfigFrom', $this->disk()->path($path), $this->configMergeKey());
+        $this->callProtected('mergeConfigFrom', $this->pathTo($path), $this->configMergeKey());
 
         return $this;
     }
@@ -281,28 +278,11 @@ class Features
 
     public function registerMigrations(): static
     {
-        if (! $this->disk()->exists('database/migrations')) {
+        if (! $this->has('database/migrations')) {
             return $this;
         }
 
-        $this->callProtected('loadMigrationsFrom', $this->disk()->path('database/migrations'));
-
-        return $this;
-    }
-
-    /**
-     * `loadRoutesFrom()` is a bare require, so without this a feature's
-     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
-     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app. A closure, or
-     * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes — the class so config stays cacheable.
-     *
-     * @param  array<string, array<string, mixed>|Closure|class-string>  $groups
-     */
-    public function routeGroups(array $groups): static
-    {
-        $this->routeGroups = $groups;
+        $this->callProtected('loadMigrationsFrom', $this->pathTo('database/migrations'));
 
         return $this;
     }
@@ -318,23 +298,23 @@ class Features
 
     public function registerTranslations(): static
     {
-        if (! $this->disk()->exists('lang')) {
+        if (! $this->has('lang')) {
             return $this;
         }
 
-        $this->callProtected('loadTranslationsFrom', $this->disk()->path('lang'), $this->slug());
-        $this->callProtected('loadJsonTranslationsFrom', $this->disk()->path('lang'));
+        $this->callProtected('loadTranslationsFrom', $this->pathTo('lang'), $this->slug());
+        $this->callProtected('loadJsonTranslationsFrom', $this->pathTo('lang'));
 
         return $this;
     }
 
     public function registerViews(): static
     {
-        if (! $this->disk()->exists('resources/views')) {
+        if (! $this->has('resources/views')) {
             return $this;
         }
 
-        $this->callProtected('loadViewsFrom', $this->disk()->path('resources/views'), $this->slug());
+        $this->callProtected('loadViewsFrom', $this->pathTo('resources/views'), $this->slug());
 
         return $this;
     }
@@ -349,19 +329,26 @@ class Features
         return $this->path;
     }
 
+    /**
+     * `loadRoutesFrom()` is a bare require, so without this a feature's
+     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
+     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
+     * route files in a group; features should behave like the app. A closure, or
+     * the name of an invokable class, is handed the file's path and this instance
+     * instead and loads it however it likes — the class so config stays cacheable.
+     *
+     * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
+     */
+    public function routeGroups(array $groups): static
+    {
+        $this->routeGroups = $groups;
+
+        return $this;
+    }
+
     public function slug(): string
     {
         return str($this->name)->kebab()->toString();
-    }
-
-    /**
-     * The settings that take the feature's slug unless the feature says otherwise.
-     * They all follow the name, so they are re-derived whenever it changes.
-     */
-    private function applySlugDefaults(): void
-    {
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
     }
 
     private function callProtected(string $method, mixed ...$args): mixed
@@ -369,27 +356,33 @@ class Features
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
     }
 
+    /** Defaults to the slug, like the publish handle, unless the feature says otherwise. */
+    private function configFile(): string
+    {
+        return $this->configFileName ?? $this->slug();
+    }
+
     private function configMergeKey(): string
     {
-        return $this->join('.', $this->configGroup, $this->configFileName);
+        return $this->join('.', $this->configGroup, $this->configFile());
     }
 
     private function configRelativePath(): string
     {
-        return $this->join('/', 'config', $this->configFileName.'.php');
+        return $this->join('/', 'config', $this->configFile().'.php');
     }
 
     /** @return array<int, class-string<Command>> */
     private function discoverCommands(): array
     {
-        if (! $this->disk()->exists('src/Console/Commands')) {
+        if (! $this->has('src/Console/Commands')) {
             return [];
         }
 
         return collect($this->finder('src/Console/Commands'))
             ->keys()
             ->map(fn (string $path) => $this->getClassNameFromFile($path))
-            ->filter(fn (?string $class) => $this->isCommand($class))
+            ->filter(fn (?string $class) => $this->isConcrete($class, Command::class))
             ->values()
             ->all();
     }
@@ -397,25 +390,27 @@ class Features
     /** @return array<string, array<string>> */
     private function discoverEvents(): array
     {
-        if (! $this->disk()->exists('src/Listeners')) {
+        if (! $this->has('src/Listeners')) {
             return [];
         }
 
-        // guessClassNamesUsing() sets a static callback on DiscoverEvents. This is safe
-        // because within() is called immediately after, before any other feature's
-        // bootListeners() runs. Do not move these two calls apart.
-        DiscoverEvents::guessClassNamesUsing(
-            // @phpstan-ignore-next-line
-            fn (SplFileInfo $file, $_ignored): string => "{$this->namespace}\\Listeners\\".$file->getBasename('.php'),
-        );
+        // The callback is a static on DiscoverEvents, so it is cleared again
+        // straight after: left in place it would misname the app's own listeners
+        // the next time anything discovers events — `event:cache`, say.
+        // @phpstan-ignore-next-line argument.type — a name built from the path can't be proven a class-string
+        DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => $this->listenerClass($file));
 
-        return DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
+        try {
+            return DiscoverEvents::within($this->pathTo('src/Listeners'), '');
+        } finally {
+            DiscoverEvents::$guessClassNamesUsingCallback = null;
+        }
     }
 
     /** @return Collection<string, string> */
     private function discoverPolicies(): Collection
     {
-        if (! $this->disk()->exists('src/Policies')) {
+        if (! $this->has('src/Policies')) {
             return collect();
         }
 
@@ -426,57 +421,85 @@ class Features
     /** @return array<int, string> */
     private function discoverSeeders(): array
     {
-        if (! $this->disk()->exists('database/seeders')) {
+        if (! $this->has('database/seeders')) {
             return [];
         }
 
         return collect($this->finder('database/seeders'))
             ->keys()
             ->map(fn (string $path) => $this->getClassNameFromFile($path))
-            ->filter(fn (string $class) => is_subclass_of($class, Seeder::class))
+            ->filter(fn (?string $class) => $this->isConcrete($class, Seeder::class))
+            ->values()
             ->all();
     }
 
+    /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
     private function finder(string $path): Finder
     {
         return tap(new Finder)
             ->files()
-            ->in($this->disk()->path($path))->name('*.php');
+            ->in($this->pathTo($path))
+            ->name('*.php')
+            ->sortByName();
     }
 
+    /**
+     * The first class declared in the file, or null when it declares none — an
+     * interface, enum or trait, say. `Foo::class` and `new class` are `T_CLASS`
+     * tokens too, so the token before decides.
+     */
     private function getClassNameFromFile(string $filePath): ?string
     {
-        $tokens = token_get_all(file_get_contents($filePath));
+        $tokens = array_values(array_filter(
+            token_get_all(file_get_contents($filePath)),
+            fn (array|string $token) => is_string($token) || ! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT]),
+        ));
         $namespace = '';
 
-        for ($i = 0; $i < count($tokens); $i++) {
-            if ($tokens[$i][0] === T_NAMESPACE) {
-                $i += 2; // skip whitespace
-                while (isset($tokens[$i]) && is_array($tokens[$i])) {
-                    $namespace .= $tokens[$i][1];
-                    $i++;
-                }
+        foreach ($tokens as $i => $token) {
+            if (! is_array($token)) {
+                continue;
             }
 
-            // `Foo::class` is a T_CLASS token too, but a constant, not the declaration
-            if ($tokens[$i][0] === T_CLASS && $tokens[$i - 1][0] !== T_DOUBLE_COLON) {
-                $i += 2; // skip whitespace
+            $previous = $tokens[$i - 1] ?? null;
+            $next = $tokens[$i + 1] ?? null;
 
-                return $namespace ? $namespace.'\\'.$tokens[$i][1] : $tokens[$i][1];
+            if ($token[0] === T_NAMESPACE && is_array($next) && in_array($next[0], [T_STRING, T_NAME_QUALIFIED])) {
+                $namespace = $next[1];
             }
+
+            if ($token[0] !== T_CLASS || ! is_array($next) || $next[0] !== T_STRING) {
+                continue;
+            }
+
+            if (is_array($previous) && in_array($previous[0], [T_DOUBLE_COLON, T_NEW])) {
+                continue;
+            }
+
+            return $namespace === '' ? $next[1] : "{$namespace}\\{$next[1]}";
         }
 
         return null;
     }
 
-    private function isCommand(?string $class): bool
+    /** @param  class-string  $base */
+    private function isConcrete(?string $class, string $base): bool
     {
-        return is_subclass_of($class, Command::class) && ! (new ReflectionClass($class))->isAbstract();
+        return ! is_null($class) && is_subclass_of($class, $base) && ! (new ReflectionClass($class))->isAbstract();
     }
 
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
+    }
+
+    private function listenerClass(SplFileInfo $file): string
+    {
+        return str($file->getRelativePathname())
+            ->beforeLast('.php')
+            ->replace('/', '\\')
+            ->prepend("{$this->namespace}\\Listeners\\")
+            ->toString();
     }
 
     private function loadRouteFile(SplFileInfo $file): void
@@ -500,6 +523,11 @@ class Features
         }
 
         if (is_string($group)) {
+            throw_unless(
+                method_exists($group, '__invoke'),
+                new InvalidArgumentException("Route group [{$group}] for routes/{$file->getBasename()} of feature [{$this->name}] is not an invokable class."),
+            );
+
             $this->app->make($group)($path, $this);
 
             return;

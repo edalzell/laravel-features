@@ -71,4 +71,3 @@ Preferences:
 
 # Testing
 * test directory structure mirrors the code directory structure
-* isolated tests must be run first (see the composer.json scripts for an example)

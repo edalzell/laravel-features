@@ -3,9 +3,9 @@
 namespace Edalzell\Features\Console\Commands;
 
 use Closure;
-use Composer\Console\Input\InputArgument;
 use Illuminate\Console\GeneratorCommand;
 use Illuminate\Support\Facades\Pipeline;
+use Symfony\Component\Console\Input\InputArgument;
 
 class Make extends GeneratorCommand
 {
@@ -143,9 +143,9 @@ class Make extends GeneratorCommand
 
     private function addHasFeaturesTrait(string $content, Closure $next): string
     {
-        // insert the trait use as the first line inside the class body
+        // insert the trait use as the first line inside the class body, whichever line the brace is on
         $content = preg_replace(
-            '/(class [^\n]+\n\{)/s',
+            '/(\bclass\s+\w+[^{]*\{)/',
             '$1'.PHP_EOL.'    use HasFeatures;'.PHP_EOL,
             $content,
             1

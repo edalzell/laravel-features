@@ -25,14 +25,14 @@ class LivewireComponents implements Extension
 {
     public function boot(Features $features): void
     {
-        if (! $features->app()->bound('livewire')) {
+        if (! $features->app()->bound('livewire') || ! method_exists(Livewire::getFacadeRoot(), 'addNamespace')) {
             return;
         }
 
-        $viewPath = $features->disk()->path('resources/views');
+        $viewPath = $features->pathTo('resources/views');
         $classNamespace = $features->rootNamespace().'\\Livewire';
 
-        if (($namespace = $features->option('livewire.namespace', $features->slug())) === '') {
+        if (($namespace = (string) $features->option('livewire.namespace', $features->slug())) === '') {
             Livewire::addLocation(viewPath: $viewPath, classNamespace: $classNamespace);
 
             return;
@@ -42,8 +42,8 @@ class LivewireComponents implements Extension
             $namespace,
             viewPath: $viewPath,
             classNamespace: $classNamespace,
-            classPath: $features->disk()->path('src/Livewire'),
-            classViewPath: $features->disk()->path('resources/views/livewire'),
+            classPath: $features->pathTo('src/Livewire'),
+            classViewPath: $features->pathTo('resources/views/livewire'),
         );
     }
 }
