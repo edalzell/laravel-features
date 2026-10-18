@@ -25,6 +25,7 @@ it('doesnt publish config when not running in console', function () {
     $app = mock(Application::class)
         ->makePartial()
         ->shouldReceive('runningInConsole')->andReturn(false)
+        ->shouldReceive('routesAreCached')->andReturn(false)
         ->getMock();
 
     $provider = mockServiceProvider(TestServiceProvider::class, $app);

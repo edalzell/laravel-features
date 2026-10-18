@@ -52,19 +52,18 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
      * Keyed by route filename without extension. Matches how the framework groups an
      * application's own route files, so `routes/web.php` and `routes/api.php` behave
      * the same inside a feature. Override this to change a group for one feature, or
-     * set `features.route_groups` to change it for all of them. A filename with no
-     * entry gets no middleware group and no prefix — only what the file declares. A
-     * closure entry, or an invokable class name, is handed the file's path and the
-     * `Features` instance and loads it itself.
+     * set `features.route_groups` to change it for all of them. The package defaults
+     * always sit underneath — another package setting one key in config can't drop
+     * the rest — so an entry is `null` to opt a file out, which gets it no middleware
+     * group and no prefix, only what the file declares. A closure entry, or an
+     * invokable class name, is handed the file's path and the `Features` instance
+     * and loads it itself.
      *
-     * @return array<string, array<string, mixed>|Closure|class-string>
+     * @return array<string, array<string, mixed>|Closure|class-string|null>
      */
     protected function routeGroups(): array
     {
-        return config('features.route_groups', [
-            'web' => ['middleware' => 'web'],
-            'api' => ['middleware' => 'api', 'prefix' => 'api'],
-        ]);
+        return [...$this->defaultRouteGroups(), ...config('features.route_groups', [])];
     }
 
     protected function configGroup(): string
@@ -113,6 +112,12 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
      * (`<feature>/src/ServiceProvider.php`) so a feature works wherever it
      * lives — the app, a package, or a directory outside the app entirely.
      */
+    /** @return array<string, array<string, mixed>> */
+    private function defaultRouteGroups(): array
+    {
+        return (require dirname(__DIR__, 2).'/config/features.php')['route_groups'];
+    }
+
     private function directory(): string
     {
         $file = (new ReflectionClass(static::class))->getFileName();

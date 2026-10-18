@@ -2,6 +2,7 @@
 
 use Edalzell\Features\Features;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 
 function siblingRoute(string $name): ?Illuminate\Routing\Route
@@ -43,13 +44,51 @@ it('lets a feature override its own groups', function () {
     expect(siblingRoute('sibling.api')?->uri())->toBe('internal/sibling-api');
 });
 
-it('adds no middleware group or prefix when there is no entry for the file', function () {
-    config()->set('features.route_groups', []);
+it('adds no middleware group or prefix when the entry is null', function () {
+    config()->set('features.route_groups.api', null);
 
     (new SiblingServiceProvider(app()))->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('sibling-api')
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
+});
+
+it('keeps the default groups when config only names another', function () {
+    config()->set('features.route_groups', ['admin' => ['prefix' => 'admin']]);
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.web')?->gatherMiddleware())->toContain('web')
+        ->and(siblingRoute('sibling.api')?->uri())->toBe('api/sibling-api');
+});
+
+it('rejects a string group that is not an invokable class', function () {
+    config()->set('features.route_groups.api', 'api');
+
+    (new SiblingServiceProvider(app()))->boot();
+})->throws(InvalidArgumentException::class, 'Route group [api] for routes/api.php of feature [Sibling]');
+
+it('loads nothing when the routes are cached', function () {
+    $app = mock(Application::class)->makePartial()->shouldReceive('routesAreCached')->andReturn(true)->getMock();
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('routes/web.php', '');
+    [$features, $provider] = mockFeatures(app: $app);
+
+    $provider->shouldNotReceive('loadRoutesFrom');
+
+    $features->bootRoutes();
+});
+
+it('loads route files in name order, top level only', function () {
+    $disk = mockOnDemandDisk('features/TwoWords');
+    $disk->put('routes/zeta.php', '');
+    $disk->put('routes/alpha.php', '');
+    $disk->put('routes/nested/beta.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('loadRoutesFrom')->once()->ordered()->withArgs(fn (string $path) => str_ends_with($path, 'alpha.php'));
+    $provider->shouldReceive('loadRoutesFrom')->once()->ordered()->withArgs(fn (string $path) => str_ends_with($path, 'zeta.php'));
+
+    $features->bootRoutes();
 });
 
 it('hands the route file to a closure instead of grouping it', function () {

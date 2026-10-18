@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -45,7 +46,7 @@ class Features
 
     private bool $publishesConfig = true;
 
-    /** @var array<string, array<string, mixed>|Closure|class-string> */
+    /** @var array<string, array<string, mixed>|Closure|class-string|null> */
     private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
@@ -151,11 +152,11 @@ class Features
      */
     public function bootRoutes(): static
     {
-        if (! $this->disk()->exists('routes')) {
+        if ($this->app->routesAreCached() || ! $this->disk()->exists('routes')) {
             return $this;
         }
 
-        collect($this->finder('routes'))
+        collect($this->finder('routes')->depth(0))
             ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
 
         return $this;
@@ -298,7 +299,7 @@ class Features
      * the name of an invokable class, is handed the file's path and this instance
      * instead and loads it however it likes — the class so config stays cacheable.
      *
-     * @param  array<string, array<string, mixed>|Closure|class-string>  $groups
+     * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
      */
     public function routeGroups(array $groups): static
     {
@@ -440,11 +441,14 @@ class Features
             ->all();
     }
 
+    /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
     private function finder(string $path): Finder
     {
         return tap(new Finder)
             ->files()
-            ->in($this->disk()->path($path))->name('*.php');
+            ->in($this->disk()->path($path))
+            ->name('*.php')
+            ->sortByName();
     }
 
     /**
@@ -527,6 +531,11 @@ class Features
         }
 
         if (is_string($group)) {
+            throw_unless(
+                method_exists($group, '__invoke'),
+                new InvalidArgumentException("Route group [{$group}] for routes/{$file->getBasename()} of feature [{$this->name}] is not an invokable class."),
+            );
+
             $this->app->make($group)($path, $this);
 
             return;
