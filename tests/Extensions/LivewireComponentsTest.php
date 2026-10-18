@@ -92,3 +92,9 @@ it('registers nothing when livewire isnt installed', function () {
 
     (new LivewireComponents)->boot(new Features(new SiblingServiceProvider($app)));
 });
+
+it('registers nothing on a livewire without namespaces', function () {
+    Livewire::swap(new stdClass);
+
+    (new LivewireComponents)->boot(new Features(new SiblingServiceProvider(app())));
+})->throwsNoExceptions();
