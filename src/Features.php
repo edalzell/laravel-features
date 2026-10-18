@@ -401,15 +401,17 @@ class Features
             return [];
         }
 
-        // guessClassNamesUsing() sets a static callback on DiscoverEvents. This is safe
-        // because within() is called immediately after, before any other feature's
-        // bootListeners() runs. Do not move these two calls apart.
-        DiscoverEvents::guessClassNamesUsing(
-            // @phpstan-ignore-next-line
-            fn (SplFileInfo $file, $_ignored): string => "{$this->namespace}\\Listeners\\".$file->getBasename('.php'),
-        );
+        // The callback is a static on DiscoverEvents, so it is cleared again
+        // straight after: left in place it would misname the app's own listeners
+        // the next time anything discovers events — `event:cache`, say.
+        // @phpstan-ignore-next-line argument.type — a name built from the path can't be proven a class-string
+        DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => $this->listenerClass($file));
 
-        return DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
+        try {
+            return DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
+        } finally {
+            DiscoverEvents::$guessClassNamesUsingCallback = null;
+        }
     }
 
     /** @return Collection<string, string> */
@@ -445,26 +447,40 @@ class Features
             ->in($this->disk()->path($path))->name('*.php');
     }
 
+    /**
+     * The first class declared in the file, or null when it declares none — an
+     * interface, enum or trait, say. `Foo::class` and `new class` are `T_CLASS`
+     * tokens too, so the token before decides.
+     */
     private function getClassNameFromFile(string $filePath): ?string
     {
-        $tokens = token_get_all(file_get_contents($filePath));
+        $tokens = array_values(array_filter(
+            token_get_all(file_get_contents($filePath)),
+            fn (array|string $token) => is_string($token) || ! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT]),
+        ));
         $namespace = '';
 
-        for ($i = 0; $i < count($tokens); $i++) {
-            if ($tokens[$i][0] === T_NAMESPACE) {
-                $i += 2; // skip whitespace
-                while (isset($tokens[$i]) && is_array($tokens[$i])) {
-                    $namespace .= $tokens[$i][1];
-                    $i++;
-                }
+        foreach ($tokens as $i => $token) {
+            if (! is_array($token)) {
+                continue;
             }
 
-            // `Foo::class` is a T_CLASS token too, but a constant, not the declaration
-            if ($tokens[$i][0] === T_CLASS && $tokens[$i - 1][0] !== T_DOUBLE_COLON) {
-                $i += 2; // skip whitespace
+            $previous = $tokens[$i - 1] ?? null;
+            $next = $tokens[$i + 1] ?? null;
 
-                return $namespace ? $namespace.'\\'.$tokens[$i][1] : $tokens[$i][1];
+            if ($token[0] === T_NAMESPACE && is_array($next) && in_array($next[0], [T_STRING, T_NAME_QUALIFIED])) {
+                $namespace = $next[1];
             }
+
+            if ($token[0] !== T_CLASS || ! is_array($next) || $next[0] !== T_STRING) {
+                continue;
+            }
+
+            if (is_array($previous) && in_array($previous[0], [T_DOUBLE_COLON, T_NEW])) {
+                continue;
+            }
+
+            return $namespace === '' ? $next[1] : "{$namespace}\\{$next[1]}";
         }
 
         return null;
@@ -479,6 +495,15 @@ class Features
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
+    }
+
+    private function listenerClass(SplFileInfo $file): string
+    {
+        return str($file->getRelativePathname())
+            ->beforeLast('.php')
+            ->replace('/', '\\')
+            ->prepend("{$this->namespace}\\Listeners\\")
+            ->toString();
     }
 
     private function loadRouteFile(SplFileInfo $file): void

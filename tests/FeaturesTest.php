@@ -1,12 +1,16 @@
 <?php
 
 use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Features;
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
+use Edalzell\Features\Tests\Fixtures\Sibling\Events\GreetingSent;
+use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Edalzell\Features\Tests\Fixtures\TestCommand;
 use Edalzell\Features\Tests\Fixtures\TestSeeder;
 use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 
@@ -92,6 +96,24 @@ it('wont load views when there arent any', function () {
     $provider->shouldNotReceive('loadViewsFrom');
 
     $features->registerViews();
+});
+
+it('registers listeners, nested ones included, and clears the discovery callback', function () {
+    (new Features(new SiblingServiceProvider(app())))->bootListeners();
+
+    expect(Event::getRawListeners()[GreetingSent::class])->toHaveCount(2)
+        ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
+});
+
+it('registers policies', function () {
+    mockOnDemandDisk('features/TwoWords')->put('src/Policies/PostPolicy.php', '');
+    [$features] = mockFeatures();
+
+    Gate::shouldReceive('policy')
+        ->once()
+        ->with('Features\TwoWords\Models\Post', 'Features\TwoWords\Policies\PostPolicy');
+
+    $features->bootPolicies();
 });
 
 it('wont register listeners if there arent any', function () {
@@ -306,6 +328,22 @@ it('ignores seeder files with no class, and abstract seeders', function () {
     SeedersFacade::shouldReceive('add')->once()->with([Beta::class]);
 
     $features->bootSeeders();
+});
+
+it('finds the class past comments, braces, enums and anonymous classes', function () {
+    $spaced = '<?php namespace Edalzell\\Features\\Tests\\Fixtures { use Illuminate\\Console\\Command; class /* spaced */ TestCommand extends Command {} }';
+    $enum = '<?php namespace Features\\TwoWords; enum Shape { case Square; public function anon() { return new class(1) extends \\stdClass {}; } }';
+    $constant = '<?php namespace Features\\TwoWords; use Illuminate\\Console\\Command; #[Attr(Command::class)] interface Marker {}';
+
+    $disk = mockOnDemandDisk('features/TwoWords');
+    $disk->put('src/Console/Commands/TestCommand.php', $spaced);
+    $disk->put('src/Console/Commands/Shape.php', $enum);
+    $disk->put('src/Console/Commands/Marker.php', $constant);
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('commands')->once()->with([TestCommand::class]);
+
+    $features->bootCommands();
 });
 
 it('registers commands', function () {
