@@ -94,18 +94,6 @@ class Features
         return $this;
     }
 
-    public function bootFeature(): void
-    {
-        $this
-            ->bootCommands()
-            ->bootConfig()
-            ->bootListeners()
-            ->bootPolicies()
-            ->bootRoutes()
-            ->bootSeeders()
-            ->bootExtensions();
-    }
-
     /**
      * Last, so an extension sees a feature whose Laravel pieces are all in place.
      * Resolved through the container tag rather than a static list so a package
@@ -116,6 +104,18 @@ class Features
         collect($this->app->tagged(Extension::TAG))->each->boot($this);
 
         return $this;
+    }
+
+    public function bootFeature(): void
+    {
+        $this
+            ->bootCommands()
+            ->bootConfig()
+            ->bootListeners()
+            ->bootPolicies()
+            ->bootRoutes()
+            ->bootSeeders()
+            ->bootExtensions();
     }
 
     public function bootListeners(): static
@@ -187,6 +187,12 @@ class Features
         return $this;
     }
 
+    /** Whether the feature has this file or directory. */
+    public function has(string $relative): bool
+    {
+        return file_exists($this->pathTo($relative));
+    }
+
     public function name(string $name): static
     {
         $this->name = $name;
@@ -217,12 +223,6 @@ class Features
         $this->options = $options;
 
         return $this;
-    }
-
-    /** Whether the feature has this file or directory. */
-    public function has(string $relative): bool
-    {
-        return file_exists($this->pathTo($relative));
     }
 
     public function path(string $path): static
@@ -287,23 +287,6 @@ class Features
         return $this;
     }
 
-    /**
-     * `loadRoutesFrom()` is a bare require, so without this a feature's
-     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
-     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app. A closure, or
-     * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes — the class so config stays cacheable.
-     *
-     * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
-     */
-    public function routeGroups(array $groups): static
-    {
-        $this->routeGroups = $groups;
-
-        return $this;
-    }
-
     public function registerSeeders(): static
     {
         if (! $this->app->bound(Seeders::class)) {
@@ -344,6 +327,23 @@ class Features
     public function rootPath(): string
     {
         return $this->path;
+    }
+
+    /**
+     * `loadRoutesFrom()` is a bare require, so without this a feature's
+     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
+     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
+     * route files in a group; features should behave like the app. A closure, or
+     * the name of an invokable class, is handed the file's path and this instance
+     * instead and loads it however it likes — the class so config stays cacheable.
+     *
+     * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
+     */
+    public function routeGroups(array $groups): static
+    {
+        $this->routeGroups = $groups;
+
+        return $this;
     }
 
     public function slug(): string
