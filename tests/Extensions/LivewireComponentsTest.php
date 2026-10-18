@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\Extensions\LivewireComponents;
 use Edalzell\Features\Features;
 use Edalzell\Features\Tests\Fixtures\PagesOnly\ServiceProvider as PagesOnlyServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Sibling\Livewire\Counter;
@@ -60,9 +61,9 @@ it('names a component with the feature namespace going back', function () {
 });
 
 it('can resolve components under their bare names', function () {
-    (new Features(new SiblingServiceProvider(app())))
-        ->livewireNamespace('')
-        ->bootLivewireComponents();
+    $features = (new Features(new SiblingServiceProvider(app())))->options(['livewire.namespace' => '']);
+
+    (new LivewireComponents)->boot($features);
 
     expect(finder()->resolveClassComponentClassName('counter'))->toBe(Counter::class)
         ->and(tidy(finder()->resolveSingleFileComponentPath('livewire.greeting')))
@@ -89,5 +90,5 @@ it('registers nothing when livewire isnt installed', function () {
         ->shouldNotReceive('addLocation')
         ->shouldNotReceive('addNamespace');
 
-    (new Features(new SiblingServiceProvider($app)))->bootLivewireComponents();
+    (new LivewireComponents)->boot(new Features(new SiblingServiceProvider($app)));
 });

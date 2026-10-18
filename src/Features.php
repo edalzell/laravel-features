@@ -3,18 +3,19 @@
 namespace Edalzell\Features;
 
 use Closure;
+use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
 use Illuminate\Foundation\Events\DiscoverEvents;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
-use Livewire\Livewire;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -33,17 +34,18 @@ class Features
 
     private ?Filesystem $disk = null;
 
-    private string $livewireNamespace;
-
     private string $name;
 
     private string $namespace;
+
+    /** @var array<string, mixed> */
+    private array $options = [];
 
     private string $path;
 
     private bool $publishesConfig = true;
 
-    /** @var array<string, array<string, mixed>|Closure> */
+    /** @var array<string, array<string, mixed>|Closure|class-string> */
     private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
@@ -55,6 +57,11 @@ class Features
         $this->namespace = $reflection->getNamespaceName();
         $this->name = basename($this->path);
         $this->applySlugDefaults();
+    }
+
+    public function app(): Application
+    {
+        return $this->app;
     }
 
     public function bootCommands(): static
@@ -97,10 +104,22 @@ class Features
             ->bootCommands()
             ->bootConfig()
             ->bootListeners()
-            ->bootLivewireComponents()
             ->bootPolicies()
             ->bootRoutes()
-            ->bootSeeders();
+            ->bootSeeders()
+            ->bootExtensions();
+    }
+
+    /**
+     * Last, so an extension sees a feature whose Laravel pieces are all in place.
+     * Resolved through the container tag rather than a static list so a package
+     * only has to tag itself to take part.
+     */
+    public function bootExtensions(): static
+    {
+        collect($this->app->tagged(Extension::TAG))->each->boot($this);
+
+        return $this;
     }
 
     public function bootListeners(): static
@@ -112,21 +131,6 @@ class Features
         }
 
         return $this;
-    }
-
-    /**
-     * Livewire's own resolution only knows about the app's own component locations,
-     * so a feature has to point Livewire at its own. The binding is only there once
-     * Livewire's service provider has run, so a feature is a no-op when Livewire
-     * isn't installed.
-     */
-    public function bootLivewireComponents(): static
-    {
-        if (! $this->app->bound('livewire')) {
-            return $this;
-        }
-
-        return $this->addLivewireLocations();
     }
 
     public function bootPolicies(): static
@@ -187,15 +191,12 @@ class Features
         return $this;
     }
 
-    /**
-     * Prefixed to every Livewire component name in the feature, so two features can
-     * each have a `PostList` without clashing. Pass an empty string to drop it.
-     */
-    public function livewireNamespace(string $namespace): static
+    public function disk(): Filesystem
     {
-        $this->livewireNamespace = $namespace;
-
-        return $this;
+        return $this->disk ??= Storage::build([
+            'driver' => 'local',
+            'root' => $this->path,
+        ]);
     }
 
     public function name(string $name): static
@@ -213,12 +214,35 @@ class Features
         return $this;
     }
 
+    public function option(string $key, mixed $default = null): mixed
+    {
+        return Arr::get($this->options, $key, $default);
+    }
+
+    /**
+     * Settings an extension reads per feature, keyed by dotted name
+     * (`livewire.namespace`). The core doesn't look at them.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public function options(array $options): static
+    {
+        $this->options = $options;
+
+        return $this;
+    }
+
     public function path(string $path): static
     {
         $this->path = $path;
         $this->disk = null;
 
         return $this;
+    }
+
+    public function provider(): ServiceProvider
+    {
+        return $this->provider;
     }
 
     /**
@@ -270,10 +294,11 @@ class Features
      * `loadRoutesFrom()` is a bare require, so without this a feature's
      * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app. A closure is
-     * handed the file's path instead, and loads it however it likes.
+     * route files in a group; features should behave like the app. A closure, or
+     * the name of an invokable class, is handed the file's path and this instance
+     * instead and loads it however it likes — the class so config stays cacheable.
      *
-     * @param  array<string, array<string, mixed>|Closure>  $groups
+     * @param  array<string, array<string, mixed>|Closure|class-string>  $groups
      */
     public function routeGroups(array $groups): static
     {
@@ -314,35 +339,19 @@ class Features
         return $this;
     }
 
-    /**
-     * A feature only has to say where its components live: `src/Livewire` for class
-     * components, `resources/views` for the single- and multi-file ones, which keep
-     * Livewire's own split — `livewire/` for components, `pages/` for full pages — as
-     * a dotted prefix: `my-great-feature::livewire.post-list`,
-     * `my-great-feature::pages.show`. Livewire allows a namespace one directory, so
-     * the views root is the only way both are reachable under one name. Nothing is
-     * read until a component is used. A feature that wants no namespace gets a plain
-     * location, so its components answer to their bare names.
-     */
-    private function addLivewireLocations(): static
+    public function rootNamespace(): string
     {
-        $viewPath = $this->disk()->path('resources/views');
+        return $this->namespace;
+    }
 
-        if ($this->livewireNamespace === '') {
-            Livewire::addLocation(viewPath: $viewPath, classNamespace: $this->livewireRootNamespace());
+    public function rootPath(): string
+    {
+        return $this->path;
+    }
 
-            return $this;
-        }
-
-        Livewire::addNamespace(
-            $this->livewireNamespace,
-            viewPath: $viewPath,
-            classNamespace: $this->livewireRootNamespace(),
-            classPath: $this->disk()->path('src/Livewire'),
-            classViewPath: $this->disk()->path('resources/views/livewire'),
-        );
-
-        return $this;
+    public function slug(): string
+    {
+        return str($this->name)->kebab()->toString();
     }
 
     /**
@@ -353,7 +362,6 @@ class Features
     {
         $this->configFileName = $this->slug();
         $this->configPublishHandle = $this->slug();
-        $this->livewireNamespace = $this->slug();
     }
 
     private function callProtected(string $method, mixed ...$args): mixed
@@ -429,14 +437,6 @@ class Features
             ->all();
     }
 
-    private function disk(): Filesystem
-    {
-        return $this->disk ??= Storage::build([
-            'driver' => 'local',
-            'root' => $this->path,
-        ]);
-    }
-
     private function finder(string $path): Finder
     {
         return tap(new Finder)
@@ -479,11 +479,6 @@ class Features
         return implode($separator, array_filter($parts));
     }
 
-    private function livewireRootNamespace(): string
-    {
-        return "{$this->namespace}\\Livewire";
-    }
-
     private function loadRouteFile(SplFileInfo $file): void
     {
         if (! $path = $file->getRealPath()) {
@@ -499,7 +494,13 @@ class Features
         }
 
         if ($group instanceof Closure) {
-            $group($path);
+            $group($path, $this);
+
+            return;
+        }
+
+        if (is_string($group)) {
+            $this->app->make($group)($path, $this);
 
             return;
         }
@@ -514,10 +515,5 @@ class Features
         $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
 
         return ["{$this->namespace}\\Models\\{$modelName}" => $policyClass];
-    }
-
-    private function slug(): string
-    {
-        return str($this->name)->kebab()->toString();
     }
 }

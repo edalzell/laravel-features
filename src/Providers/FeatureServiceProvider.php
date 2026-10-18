@@ -25,14 +25,17 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
-            ->livewireNamespace($this->livewireNamespace())
-            ->publishesConfig($this->publishesConfig())
-            ->routeGroups($this->routeGroups());
+            ->options($this->options())
+            ->publishesConfig($this->publishesConfig());
     }
 
+    /**
+     * Route groups are read here, not in the constructor, so a package that
+     * registers after this one can still set them in config for every feature.
+     */
     public function boot(): void
     {
-        $this->features->bootFeature();
+        $this->features->routeGroups($this->routeGroups())->bootFeature();
     }
 
     public function register(): void
@@ -51,9 +54,10 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
      * the same inside a feature. Override this to change a group for one feature, or
      * set `features.route_groups` to change it for all of them. A filename with no
      * entry gets no middleware group and no prefix — only what the file declares. A
-     * closure entry is handed the file's path and loads it itself.
+     * closure entry, or an invokable class name, is handed the file's path and the
+     * `Features` instance and loads it itself.
      *
-     * @return array<string, array<string, mixed>|Closure>
+     * @return array<string, array<string, mixed>|Closure|class-string>
      */
     protected function routeGroups(): array
     {
@@ -78,19 +82,20 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return $this->directory();
     }
 
-    /**
-     * Prefixed to every Livewire component name in `src/Livewire`, so a feature's
-     * `PostList` answers to `my-great-feature.post-list` and two features can each
-     * have one. Return an empty string to register them under their bare names.
-     */
-    protected function livewireNamespace(): string
-    {
-        return $this->slug();
-    }
-
     protected function name(): string
     {
         return basename($this->directory());
+    }
+
+    /**
+     * Settings for extensions, keyed by dotted name — `livewire.namespace`, say.
+     * The core ignores them; each extension reads its own.
+     *
+     * @return array<string, mixed>
+     */
+    protected function options(): array
+    {
+        return [];
     }
 
     /**

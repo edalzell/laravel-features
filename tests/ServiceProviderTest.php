@@ -1,5 +1,7 @@
 <?php
 
+use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extensions\LivewireComponents;
 use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\ServiceProvider;
 use Illuminate\Config\Repository;
@@ -18,6 +20,7 @@ function mockApplicationWithConfig(): Application
     $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn(new FeatureRegistry($app));
     $app->shouldReceive('make')->with('config')->andReturn(new Repository);
     $app->shouldReceive('configurationIsCached')->andReturn(false);
+    $app->shouldReceive('tag')->with(LivewireComponents::class, Extension::TAG)->byDefault();
 
     return $app;
 }
@@ -46,6 +49,15 @@ it('doesnt register feature when no provider', function () {
     $app = mockApplicationWithConfig();
 
     $app->shouldNotReceive('register');
+
+    (new ServiceProvider($app))->register();
+});
+
+it('tags the livewire extension', function () {
+    $app = mockApplicationWithConfig();
+
+    File::expects('exists')->with(base_path('features'))->andReturns(false);
+    $app->shouldReceive('tag')->once()->with(LivewireComponents::class, Extension::TAG);
 
     (new ServiceProvider($app))->register();
 });

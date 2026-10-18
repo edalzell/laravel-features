@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\Contracts\Extension;
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
@@ -365,4 +366,40 @@ it('wont load translations when there arent any', function () {
     $provider->shouldNotReceive('loadJsonTranslationsFrom');
 
     $features->registerTranslations();
+});
+
+it('boots every tagged extension with itself', function () {
+    [$features] = mockFeatures();
+
+    collect(['one', 'two'])->each(function (string $abstract) use ($features) {
+        app()->instance($abstract, mock(Extension::class)->shouldReceive('boot')->once()->with($features)->getMock());
+        app()->tag($abstract, Extension::TAG);
+    });
+
+    $features->bootExtensions();
+});
+
+it('boots nothing when no extension is tagged', function () {
+    [$features] = mockFeatures();
+
+    expect($features->bootExtensions())->toBe($features);
+});
+
+it('returns an option or its default', function () {
+    [$features] = mockFeatures();
+
+    $features->options(['livewire.namespace' => 'blog']);
+
+    expect($features->option('livewire.namespace'))->toBe('blog')
+        ->and($features->option('missing', 'fallback'))->toBe('fallback');
+});
+
+it('exposes the feature to extensions', function () {
+    [$features, $provider] = mockFeatures();
+
+    expect($features->app())->toBe(app())
+        ->and($features->provider())->toBe($provider)
+        ->and($features->rootPath())->toBe(base_path('features/TwoWords'))
+        ->and($features->rootNamespace())->toBe('Features\\TwoWords')
+        ->and($features->slug())->toBe('two-words');
 });
