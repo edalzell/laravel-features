@@ -130,7 +130,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             return null;
         }
 
-        return $this->app->make(FeatureRegistry::class)->get($this->name());
+        return $this->app->make(FeatureRegistry::class)->get($this->featuresPath());
     }
 
     protected function slug(): string

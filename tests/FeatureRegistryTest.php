@@ -12,11 +12,11 @@ it('stores and returns registered features', function () {
 
     expect($registry->all())->toHaveCount(1)
         ->and($registry->all()->first())->toBe($mail)
-        ->and($registry->get('Mail'))->toBe($mail)
-        ->and($registry->get('Missing'))->toBeNull();
+        ->and($registry->get('/features/Mail'))->toBe($mail)
+        ->and($registry->get('/features/Missing'))->toBeNull();
 });
 
-it('replaces a feature when the same name is added twice', function () {
+it('keeps two features that share a name but not a path', function () {
     $registry = new FeatureRegistry(mock(Application::class));
     $first = new Feature('/a/Mail', 'A');
     $second = new Feature('/b/Mail', 'B');
@@ -24,8 +24,21 @@ it('replaces a feature when the same name is added twice', function () {
     $registry->add($first);
     $registry->add($second);
 
+    expect($registry->all())->toHaveCount(2)
+        ->and($registry->get('/a/Mail'))->toBe($first)
+        ->and($registry->get('/b/Mail'))->toBe($second);
+});
+
+it('replaces a feature when the same path is added twice', function () {
+    $registry = new FeatureRegistry(mock(Application::class));
+    $first = new Feature('/a/Mail', 'A');
+    $second = new Feature('/a/Mail', 'B');
+
+    $registry->add($first);
+    $registry->add($second);
+
     expect($registry->all())->toHaveCount(1)
-        ->and($registry->get('Mail'))->toBe($second);
+        ->and($registry->get('/a/Mail'))->toBe($second);
 });
 
 it('records the feature and registers its service provider', function () {
@@ -39,5 +52,5 @@ it('records the feature and registers its service provider', function () {
     $registry = new FeatureRegistry($app);
     $registry->register($mail);
 
-    expect($registry->get('Mail'))->toBe($mail);
+    expect($registry->get('/features/Mail'))->toBe($mail);
 });

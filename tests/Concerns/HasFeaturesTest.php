@@ -14,6 +14,7 @@ it('registers features at an explicit path and namespace', function () {
     $app = mock(Application::class);
     $registry = new FeatureRegistry($app);
 
+    $app->shouldReceive('singletonIf')->with(FeatureRegistry::class);
     $app->shouldReceive('make')->with(FeatureRegistry::class)->andReturn($registry);
     $app->shouldReceive('register')
         ->once()
@@ -21,7 +22,7 @@ it('registers features at an explicit path and namespace', function () {
 
     (new TestHasFeaturesProvider($app))->registerFeatures('/features/path', 'My\\App');
 
-    expect($registry->get('MyFeature'))
+    expect($registry->get('/features/path/MyFeature'))
         ->name->toBe('MyFeature')
         ->rootPath->toBe('/features/path/MyFeature')
         ->rootNamespace->toBe('My\\App\\MyFeature')
@@ -35,7 +36,7 @@ it('stamps config group from the host composer package name', function () {
 
     (new Edalzell\Features\Tests\Fixtures\PackageHost\ServiceProvider($app))->registerFeatures();
 
-    expect($registry->get('SecureHeaders'))
+    expect($registry->get(fixturePath('PackageHost/features/SecureHeaders')))
         ->configGroup->toBe('juicebox')
         ->publishesConfig->toBeTrue()
         ->rootNamespace->toBe('Edalzell\\Features\\Tests\\Fixtures\\PackageHost\\Features\\SecureHeaders');
@@ -47,9 +48,17 @@ it('stamps the publish opt-out on every feature it registers', function () {
 
     (new Edalzell\Features\Tests\Fixtures\PackageHost\ServiceProvider($app))->registerFeatures(publishesConfig: false);
 
-    expect($registry->get('SecureHeaders'))
+    expect($registry->get(fixturePath('PackageHost/features/SecureHeaders')))
         ->configGroup->toBe('juicebox')
         ->publishesConfig->toBeFalse();
+});
+
+it('shares the registry with a host that registers before this package does', function () {
+    unset(app()[FeatureRegistry::class]);
+
+    (new Edalzell\Features\Tests\Fixtures\PackageHost\ServiceProvider(app()))->registerFeatures();
+
+    expect(app(FeatureRegistry::class)->get(fixturePath('PackageHost/features/SecureHeaders')))->not->toBeNull();
 });
 
 it('skips registration when path does not exist', function () {
