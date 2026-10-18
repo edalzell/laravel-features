@@ -51,9 +51,10 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
      * the same inside a feature. Override this to change a group for one feature, or
      * set `features.route_groups` to change it for all of them. A filename with no
      * entry gets no middleware group and no prefix — only what the file declares. A
-     * closure entry is handed the file's path and loads it itself.
+     * closure entry, or an invokable class name, is handed the file's path and
+     * loads it itself.
      *
-     * @return array<string, array<string, mixed>|Closure>
+     * @return array<string, array<string, mixed>|Closure|class-string>
      */
     protected function routeGroups(): array
     {

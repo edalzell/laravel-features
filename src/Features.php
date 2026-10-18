@@ -45,7 +45,7 @@ class Features
 
     private bool $publishesConfig = true;
 
-    /** @var array<string, array<string, mixed>|Closure> */
+    /** @var array<string, array<string, mixed>|Closure|class-string> */
     private array $routeGroups = [];
 
     public function __construct(private readonly ServiceProvider $provider)
@@ -294,10 +294,11 @@ class Features
      * `loadRoutesFrom()` is a bare require, so without this a feature's
      * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app. A closure is
-     * handed the file's path instead, and loads it however it likes.
+     * route files in a group; features should behave like the app. A closure, or
+     * the name of an invokable class, is handed the file's path instead and loads
+     * it however it likes — the class so that config stays cacheable.
      *
-     * @param  array<string, array<string, mixed>|Closure>  $groups
+     * @param  array<string, array<string, mixed>|Closure|class-string>  $groups
      */
     public function routeGroups(array $groups): static
     {
@@ -494,6 +495,12 @@ class Features
 
         if ($group instanceof Closure) {
             $group($path);
+
+            return;
+        }
+
+        if (is_string($group)) {
+            $this->app->make($group)($path);
 
             return;
         }

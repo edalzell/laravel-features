@@ -81,7 +81,14 @@ protected function routeGroups(): array
 }
 ```
 
-Closures can't be cached, so this only works from `routeGroups()`, not from `config/features.php`.
+Closures can't be cached, so from `config/features.php` name an invokable class instead. It's resolved from the container and called the same way, so a package can set a group for every feature at once:
+
+```php
+// config/features.php
+'route_groups' => [
+    'admin' => App\Features\AdminRoutes::class,
+],
+```
 
 ## Livewire components
 

@@ -58,6 +58,23 @@ it('hands the route file to a closure instead of grouping it', function () {
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
 });
 
+it('hands the route file to an invokable class named in config', function () {
+    config()->set('features.route_groups.api', PrefixedLoader::class);
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('loader/sibling-api')
+        ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
+});
+
+class PrefixedLoader
+{
+    public function __invoke(string $path): void
+    {
+        Route::prefix('loader')->group($path);
+    }
+}
+
 class ClosureSiblingServiceProvider extends SiblingServiceProvider
 {
     protected function featuresPath(): string
