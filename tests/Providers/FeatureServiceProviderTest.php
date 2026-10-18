@@ -16,7 +16,7 @@ it('publishes config', function () {
     $provider
         ->shouldReceive('publishes')
         ->once()
-        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
+        ->with([featureFile('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
 
     $provider->boot();
 });
@@ -49,7 +49,7 @@ it('merges config via register', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'two-words');
+        ->with(featureFile('config/two-words.php'), 'two-words');
 
     $provider->register();
 });
@@ -62,7 +62,7 @@ it('publishes config to group directory when group is set', function () {
         ->shouldReceive('publishes')
         ->once()
         ->with(
-            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
+            [featureFile('config/two-words.php') => config_path('admin/two-words.php')],
             'admin-two-words-config'
         );
 
@@ -76,7 +76,7 @@ it('merges config from group directory via register', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+        ->with(featureFile('config/two-words.php'), 'admin.two-words');
 
     $provider->register();
 });
@@ -99,7 +99,7 @@ it('merges config when the registered feature opts out of publishing', function 
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+        ->with(featureFile('config/two-words.php'), 'admin.two-words');
 
     $provider->register();
 });
@@ -111,7 +111,7 @@ it('loads migrations via register', function () {
     $provider
         ->shouldReceive('loadMigrationsFrom')
         ->once()
-        ->with($disk->path('database/migrations'));
+        ->with(featureFile('database/migrations'));
 
     $provider->register();
 });
@@ -123,7 +123,7 @@ it('loads routes via boot', function () {
     $provider
         ->shouldReceive('loadRoutesFrom')
         ->once()
-        ->withArgs(fn (string $path) => tidy($path) === tidy($disk->path('routes/web.php')));
+        ->withArgs(fn (string $path) => tidy($path) === tidy(featureFile('routes/web.php')));
 
     $provider->boot();
 });
@@ -147,7 +147,7 @@ it('loads views via register', function () {
     $provider
         ->shouldReceive('loadViewsFrom')
         ->once()
-        ->with($disk->path('resources/views'), 'two-words');
+        ->with(featureFile('resources/views'), 'two-words');
 
     $provider->register();
 });

@@ -23,6 +23,12 @@ function fakeFeatureRoot(): string
     return storage_path('framework/testing/disks/local');
 }
 
+/** The path `Features` will build for a file on the on-demand disk: always `/`, whatever the platform. */
+function featureFile(string $relative): string
+{
+    return fakeFeatureRoot().'/'.$relative;
+}
+
 /**
  * @template T of \Illuminate\Support\ServiceProvider
  *

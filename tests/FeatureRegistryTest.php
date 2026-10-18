@@ -54,3 +54,13 @@ it('records the feature and registers its service provider', function () {
 
     expect($registry->get('/features/Mail'))->toBe($mail);
 });
+
+it('finds a feature whichever separator the path uses', function () {
+    $registry = new FeatureRegistry(mock(Application::class));
+    $mail = new Feature('C:\\site/features\\Mail', 'App\\Features');
+
+    $registry->add($mail);
+
+    expect($registry->get('C:/site/features/Mail'))->toBe($mail)
+        ->and($registry->get('C:/site/features/Mail/'))->toBe($mail);
+});

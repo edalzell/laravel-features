@@ -21,7 +21,7 @@ it('merges config when it exists', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'two-words');
+        ->with(featureFile('config/two-words.php'), 'two-words');
 
     $features->registerConfig();
 });
@@ -42,7 +42,7 @@ it('can load migrations', function () {
     $provider
         ->shouldReceive('loadMigrationsFrom')
         ->once()
-        ->with($disk->path('database/migrations'));
+        ->with(featureFile('database/migrations'));
 
     $features->registerMigrations();
 });
@@ -63,7 +63,7 @@ it('can load routes', function () {
     $provider
         ->shouldReceive('loadRoutesFrom')
         ->once()
-        ->withArgs(fn (string $path) => tidy($path) === tidy($disk->path('routes/web.php')));
+        ->withArgs(fn (string $path) => tidy($path) === tidy(featureFile('routes/web.php')));
 
     $features->bootRoutes();
 });
@@ -84,7 +84,7 @@ it('can load views', function () {
     $provider
         ->shouldReceive('loadViewsFrom')
         ->once()
-        ->with($disk->path('resources/views'), 'two-words');
+        ->with(featureFile('resources/views'), 'two-words');
 
     $features->registerViews();
 });
@@ -153,7 +153,7 @@ it('merges config when it exists in group directory', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+        ->with(featureFile('config/two-words.php'), 'admin.two-words');
 
     $features->registerConfig();
 });
@@ -177,7 +177,7 @@ it('publishes grouped config from the flat feature file', function () {
         ->shouldReceive('publishes')
         ->once()
         ->with(
-            [$disk->path('config/two-words.php') => config_path('admin/two-words.php')],
+            [featureFile('config/two-words.php') => config_path('admin/two-words.php')],
             'two-words-config',
         );
 
@@ -191,7 +191,7 @@ it('publishes config when running in console', function () {
     $provider
         ->shouldReceive('publishes')
         ->once()
-        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
+        ->with([featureFile('config/two-words.php') => config_path('two-words.php')], 'two-words-config');
 
     $features->bootConfig();
 });
@@ -225,7 +225,7 @@ it('publishes config with a custom publish handle', function () {
     $provider
         ->shouldReceive('publishes')
         ->once()
-        ->with([$disk->path('config/two-words.php') => config_path('two-words.php')], 'custom-config');
+        ->with([featureFile('config/two-words.php') => config_path('two-words.php')], 'custom-config');
 
     $features->bootConfig();
 });
@@ -248,7 +248,7 @@ it('still merges config when publishing is opted out', function () {
     $provider
         ->shouldReceive('mergeConfigFrom')
         ->once()
-        ->with($disk->path('config/two-words.php'), 'admin.two-words');
+        ->with(featureFile('config/two-words.php'), 'admin.two-words');
 
     $features->registerConfig();
 });
@@ -399,11 +399,11 @@ it('can load translations', function () {
     $provider
         ->shouldReceive('loadTranslationsFrom')
         ->once()
-        ->with($disk->path('lang'), 'two-words');
+        ->with(featureFile('lang'), 'two-words');
     $provider
         ->shouldReceive('loadJsonTranslationsFrom')
         ->once()
-        ->with($disk->path('lang'));
+        ->with(featureFile('lang'));
 
     $features->registerTranslations();
 });
@@ -449,7 +449,7 @@ it('keeps an explicit config file name when the name is set afterwards', functio
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/custom.php', '');
     [$features, $provider] = mockFeatures();
 
-    $provider->shouldReceive('mergeConfigFrom')->once()->with($disk->path('config/custom.php'), 'custom');
+    $provider->shouldReceive('mergeConfigFrom')->once()->with(featureFile('config/custom.php'), 'custom');
 
     $features->configFileName('custom')->name('Other')->registerConfig();
 });

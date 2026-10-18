@@ -14,7 +14,7 @@ class FeatureRegistry
 
     public function add(Feature $feature): void
     {
-        $this->features[$feature->rootPath] = $feature;
+        $this->features[$this->key($feature->rootPath)] = $feature;
     }
 
     /** @return Collection<string, Feature> */
@@ -25,7 +25,7 @@ class FeatureRegistry
 
     public function get(string $rootPath): ?Feature
     {
-        return $this->features[$rootPath] ?? null;
+        return $this->features[$this->key($rootPath)] ?? null;
     }
 
     public function register(Feature $feature): void
@@ -33,5 +33,14 @@ class FeatureRegistry
         $this->add($feature);
 
         $this->app->register($feature->namespace().'\\ServiceProvider');
+    }
+
+    /**
+     * A path arrives spelled two ways: `dirname()` of a provider's file uses the
+     * platform separator, a directory listing may mix it with `/`.
+     */
+    private function key(string $path): string
+    {
+        return rtrim(str_replace('\\', '/', $path), '/');
     }
 }
