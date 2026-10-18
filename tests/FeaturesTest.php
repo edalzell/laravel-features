@@ -438,10 +438,20 @@ it('boots nothing when no extension is tagged', function () {
 it('returns an option or its default', function () {
     [$features] = mockFeatures();
 
-    $features->options(['livewire.namespace' => 'blog']);
+    $features->options(['livewire.namespace' => 'blog', 'unset' => null]);
 
     expect($features->option('livewire.namespace'))->toBe('blog')
-        ->and($features->option('missing', 'fallback'))->toBe('fallback');
+        ->and($features->option('missing', 'fallback'))->toBe('fallback')
+        ->and($features->option('unset', 'fallback'))->toBe('fallback');
+});
+
+it('keeps an explicit config file name when the name is set afterwards', function () {
+    $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/custom.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldReceive('mergeConfigFrom')->once()->with($disk->path('config/custom.php'), 'custom');
+
+    $features->configFileName('custom')->name('Other')->registerConfig();
 });
 
 it('exposes the feature to extensions', function () {
@@ -449,7 +459,8 @@ it('exposes the feature to extensions', function () {
 
     expect($features->app())->toBe(app())
         ->and($features->provider())->toBe($provider)
-        ->and($features->rootPath())->toBe(base_path('features/TwoWords'))
+        ->and($features->rootPath())->toBe(fakeFeatureRoot())
+        ->and($features->pathTo('routes/web.php'))->toBe(fakeFeatureRoot().'/routes/web.php')
         ->and($features->rootNamespace())->toBe('Features\\TwoWords')
         ->and($features->slug())->toBe('two-words');
 });

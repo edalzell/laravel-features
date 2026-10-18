@@ -83,7 +83,7 @@ it('merges config from group directory via register', function () {
 
 it('wont publish config when the registered feature opts out', function () {
     tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
-    app(FeatureRegistry::class)->add(new Feature(base_path('features/TwoWords'), 'Features', 'admin', false));
+    app(FeatureRegistry::class)->add(new Feature(fakeFeatureRoot(), 'Features', 'admin', false));
     $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider->shouldNotReceive('publishes');
@@ -93,7 +93,7 @@ it('wont publish config when the registered feature opts out', function () {
 
 it('merges config when the registered feature opts out of publishing', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
-    app(FeatureRegistry::class)->add(new Feature(base_path('features/TwoWords'), 'Features', 'admin', false));
+    app(FeatureRegistry::class)->add(new Feature(fakeFeatureRoot(), 'Features', 'admin', false));
     $provider = mockServiceProvider(TestServiceProvider::class);
 
     $provider
@@ -202,7 +202,7 @@ class TestGroupedServiceProvider extends FeatureServiceProvider
 {
     protected function featuresPath(): string
     {
-        return base_path('features/TwoWords');
+        return fakeFeatureRoot();
     }
 
     protected function configGroup(): string

@@ -6,21 +6,21 @@ use Edalzell\Features\Tests\TestCase;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
-use Symfony\Component\Filesystem\Path;
 
 uses(TestCase::class)->in(__DIR__);
 
-function mockOnDemandDisk(string $path = '', bool $package = false): Filesystem
+/**
+ * An empty directory to build a feature in. `mockFeatures()` points its feature
+ * here, so what a test puts on this disk is what the feature has.
+ */
+function mockOnDemandDisk(string $path = ''): Filesystem
 {
-    $localDisk = Storage::fake('local');
-    $root = $package ? Path::normalize(__DIR__.'__fixtures__/TwoWords') : base_path($path);
+    return Storage::fake('local');
+}
 
-    Storage::shouldReceive('build')->with([
-        'driver' => 'local',
-        'root' => $root,
-    ])->andReturn($localDisk);
-
-    return $localDisk;
+function fakeFeatureRoot(): string
+{
+    return storage_path('framework/testing/disks/local');
 }
 
 /**
@@ -47,7 +47,7 @@ function mockFeatures(string $featurePath = 'features/TwoWords', ?string $provid
     $provider = mockServiceProvider($providerClass ?? TestServiceProvider::class, $app);
     $name = basename($featurePath);
     $features = (new Features($provider))
-        ->path(base_path($featurePath))
+        ->path(fakeFeatureRoot())
         ->name($name)
         ->namespace('Features\\'.$name);
 
@@ -68,7 +68,7 @@ class TestServiceProvider extends FeatureServiceProvider
 {
     protected function featuresPath(): string
     {
-        return base_path('features/TwoWords');
+        return fakeFeatureRoot();
     }
 
     protected function name(): string

@@ -5,7 +5,6 @@ namespace Edalzell\Features;
 use Closure;
 use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
 use Illuminate\Foundation\Events\DiscoverEvents;
@@ -14,7 +13,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use ReflectionClass;
@@ -27,13 +25,11 @@ class Features
 {
     private readonly Application $app;
 
-    private string $configFileName;
+    private ?string $configFileName = null;
 
     private string $configGroup = '';
 
-    private string $configPublishHandle;
-
-    private ?Filesystem $disk = null;
+    private ?string $configPublishHandle = null;
 
     private string $name;
 
@@ -57,7 +53,6 @@ class Features
         $this->path = dirname($reflection->getFileName(), 2);
         $this->namespace = $reflection->getNamespaceName();
         $this->name = basename($this->path);
-        $this->applySlugDefaults();
     }
 
     public function app(): Application
@@ -86,14 +81,14 @@ class Features
             return $this;
         }
 
-        if (! $this->disk()->exists($path = $this->configRelativePath())) {
+        if (! $this->has($path = $this->configRelativePath())) {
             return $this;
         }
 
         $this->callProtected(
             'publishes',
-            [$this->disk()->path($path) => config_path($this->join('/', $this->configGroup, $this->configFileName.'.php'))],
-            $this->join('-', $this->configPublishHandle, 'config'),
+            [$this->pathTo($path) => config_path($this->join('/', $this->configGroup, $this->configFile().'.php'))],
+            $this->join('-', $this->configPublishHandle ?? $this->slug(), 'config'),
         );
 
         return $this;
@@ -152,7 +147,7 @@ class Features
      */
     public function bootRoutes(): static
     {
-        if ($this->app->routesAreCached() || ! $this->disk()->exists('routes')) {
+        if ($this->app->routesAreCached() || ! $this->has('routes')) {
             return $this;
         }
 
@@ -192,18 +187,9 @@ class Features
         return $this;
     }
 
-    public function disk(): Filesystem
-    {
-        return $this->disk ??= Storage::build([
-            'driver' => 'local',
-            'root' => $this->path,
-        ]);
-    }
-
     public function name(string $name): static
     {
         $this->name = $name;
-        $this->applySlugDefaults();
 
         return $this;
     }
@@ -217,7 +203,7 @@ class Features
 
     public function option(string $key, mixed $default = null): mixed
     {
-        return Arr::get($this->options, $key, $default);
+        return Arr::get($this->options, $key) ?? $default;
     }
 
     /**
@@ -233,12 +219,22 @@ class Features
         return $this;
     }
 
+    /** Whether the feature has this file or directory. */
+    public function has(string $relative): bool
+    {
+        return file_exists($this->pathTo($relative));
+    }
+
     public function path(string $path): static
     {
         $this->path = $path;
-        $this->disk = null;
 
         return $this;
+    }
+
+    public function pathTo(string $relative = ''): string
+    {
+        return $relative === '' ? $this->path : "{$this->path}/".ltrim($relative, '/');
     }
 
     public function provider(): ServiceProvider
@@ -261,11 +257,11 @@ class Features
 
     public function registerConfig(): static
     {
-        if (! $this->disk()->exists($path = $this->configRelativePath())) {
+        if (! $this->has($path = $this->configRelativePath())) {
             return $this;
         }
 
-        $this->callProtected('mergeConfigFrom', $this->disk()->path($path), $this->configMergeKey());
+        $this->callProtected('mergeConfigFrom', $this->pathTo($path), $this->configMergeKey());
 
         return $this;
     }
@@ -282,11 +278,11 @@ class Features
 
     public function registerMigrations(): static
     {
-        if (! $this->disk()->exists('database/migrations')) {
+        if (! $this->has('database/migrations')) {
             return $this;
         }
 
-        $this->callProtected('loadMigrationsFrom', $this->disk()->path('database/migrations'));
+        $this->callProtected('loadMigrationsFrom', $this->pathTo('database/migrations'));
 
         return $this;
     }
@@ -319,23 +315,23 @@ class Features
 
     public function registerTranslations(): static
     {
-        if (! $this->disk()->exists('lang')) {
+        if (! $this->has('lang')) {
             return $this;
         }
 
-        $this->callProtected('loadTranslationsFrom', $this->disk()->path('lang'), $this->slug());
-        $this->callProtected('loadJsonTranslationsFrom', $this->disk()->path('lang'));
+        $this->callProtected('loadTranslationsFrom', $this->pathTo('lang'), $this->slug());
+        $this->callProtected('loadJsonTranslationsFrom', $this->pathTo('lang'));
 
         return $this;
     }
 
     public function registerViews(): static
     {
-        if (! $this->disk()->exists('resources/views')) {
+        if (! $this->has('resources/views')) {
             return $this;
         }
 
-        $this->callProtected('loadViewsFrom', $this->disk()->path('resources/views'), $this->slug());
+        $this->callProtected('loadViewsFrom', $this->pathTo('resources/views'), $this->slug());
 
         return $this;
     }
@@ -355,35 +351,31 @@ class Features
         return str($this->name)->kebab()->toString();
     }
 
-    /**
-     * The settings that take the feature's slug unless the feature says otherwise.
-     * They all follow the name, so they are re-derived whenever it changes.
-     */
-    private function applySlugDefaults(): void
-    {
-        $this->configFileName = $this->slug();
-        $this->configPublishHandle = $this->slug();
-    }
-
     private function callProtected(string $method, mixed ...$args): mixed
     {
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
     }
 
+    /** Defaults to the slug, like the publish handle, unless the feature says otherwise. */
+    private function configFile(): string
+    {
+        return $this->configFileName ?? $this->slug();
+    }
+
     private function configMergeKey(): string
     {
-        return $this->join('.', $this->configGroup, $this->configFileName);
+        return $this->join('.', $this->configGroup, $this->configFile());
     }
 
     private function configRelativePath(): string
     {
-        return $this->join('/', 'config', $this->configFileName.'.php');
+        return $this->join('/', 'config', $this->configFile().'.php');
     }
 
     /** @return array<int, class-string<Command>> */
     private function discoverCommands(): array
     {
-        if (! $this->disk()->exists('src/Console/Commands')) {
+        if (! $this->has('src/Console/Commands')) {
             return [];
         }
 
@@ -398,7 +390,7 @@ class Features
     /** @return array<string, array<string>> */
     private function discoverEvents(): array
     {
-        if (! $this->disk()->exists('src/Listeners')) {
+        if (! $this->has('src/Listeners')) {
             return [];
         }
 
@@ -409,7 +401,7 @@ class Features
         DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => $this->listenerClass($file));
 
         try {
-            return DiscoverEvents::within($this->disk()->path('src/Listeners'), '');
+            return DiscoverEvents::within($this->pathTo('src/Listeners'), '');
         } finally {
             DiscoverEvents::$guessClassNamesUsingCallback = null;
         }
@@ -418,7 +410,7 @@ class Features
     /** @return Collection<string, string> */
     private function discoverPolicies(): Collection
     {
-        if (! $this->disk()->exists('src/Policies')) {
+        if (! $this->has('src/Policies')) {
             return collect();
         }
 
@@ -429,7 +421,7 @@ class Features
     /** @return array<int, string> */
     private function discoverSeeders(): array
     {
-        if (! $this->disk()->exists('database/seeders')) {
+        if (! $this->has('database/seeders')) {
             return [];
         }
 
@@ -446,7 +438,7 @@ class Features
     {
         return tap(new Finder)
             ->files()
-            ->in($this->disk()->path($path))
+            ->in($this->pathTo($path))
             ->name('*.php')
             ->sortByName();
     }
