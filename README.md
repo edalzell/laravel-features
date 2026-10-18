@@ -154,20 +154,30 @@ class StatamicExtensions implements Extension
 {
     public function boot(Features $features): void
     {
-        // $features->rootPath(), rootNamespace(), slug(), disk(), app(), provider()
+        // $features->rootPath(), rootNamespace(), slug(), app(), provider()
+        // $features->has('src/Tags'), $features->pathTo('resources/blueprints')
         // $features->option('statamic.something', $default)
     }
 }
 
-// in the package's service provider
+// in the package's service provider's register()
 $this->app->tag(StatamicExtensions::class, Extension::TAG);
 ```
 
-The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`.
+The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Tag it in `register()`: a feature only sees the extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton, so an extension that remembers which features it has seen should be one. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`; its `livewireNamespace()` override became the `livewire.namespace` option.
 
 ## Seeders
 
-Every feature's `database/seeders` are collected and run together, in the order their features were registered — alphabetical, for an app's own `features/` directory. That order breaks down once one feature's data depends on another's.
+Every feature's `database/seeders` are collected into `Edalzell\Features\Seeders`; call it from the app's `DatabaseSeeder` to run them:
+
+```php
+public function run(): void
+{
+    $this->call(Seeders::class);
+}
+```
+
+They run in the order their features were registered — alphabetical, for an app's own `features/` directory. That order breaks down once one feature's data depends on another's.
 
 `#[SeedAfter]` names the seeders that must run first:
 
@@ -260,7 +270,9 @@ class MyServiceProvider extends SomeOtherProvider
             ->name($this->name())
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
-            ->configPublishHandle($this->configPublishHandle());
+            ->configPublishHandle($this->configPublishHandle())
+            ->options($this->options())
+            ->routeGroups(config('features.route_groups'));
     }
 
     public function boot(): void
@@ -275,7 +287,7 @@ class MyServiceProvider extends SomeOtherProvider
 }
 ```
 
-`Features` derives the path, namespace, and app from your provider via reflection. You only need to call the fluent setters when overriding the defaults.
+`Features` derives the path, namespace, and app from your provider via reflection. You only need to call the fluent setters when overriding the defaults — except `routeGroups()`, which `FeatureServiceProvider` reads from config for you; without it a route file gets no group at all.
 
 ### Auto-discovering features
 
