@@ -150,7 +150,7 @@ Livewire isn't part of Laravel, and neither is anything else a feature might wan
 use Edalzell\Features\Contracts\Extension;
 use Edalzell\Features\Features;
 
-class StatamicAddons implements Extension
+class StatamicExtensions implements Extension
 {
     public function boot(Features $features): void
     {
@@ -160,7 +160,7 @@ class StatamicAddons implements Extension
 }
 
 // in the package's service provider
-$this->app->tag(StatamicAddons::class, Extension::TAG);
+$this->app->tag(StatamicExtensions::class, Extension::TAG);
 ```
 
 The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`.
