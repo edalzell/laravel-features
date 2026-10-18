@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.0 - 2026-10-18
+
+### 🚀 New
+
+- Hook extensions into a feature's boot [@edalzell](https://github.com/edalzell) (#115)
+
+### 🐛 Fixed
+
+- Review pass: registry, discovery, route groups, disk [@edalzell](https://github.com/edalzell) (#117)
+
 ## v1.1.0 - 2026-10-08
 
 ### 🚀 New
