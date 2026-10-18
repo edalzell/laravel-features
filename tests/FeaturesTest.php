@@ -296,6 +296,18 @@ it('discovers and boots seeders', function () {
     $features->bootSeeders();
 });
 
+it('ignores seeder files with no class, and abstract seeders', function () {
+    $disk = mockOnDemandDisk('features/TwoWords');
+    $disk->put('database/seeders/Contract.php', file_get_contents(fixturePath('Seeders/Contract.php')));
+    $disk->put('database/seeders/AbstractSeeder.php', file_get_contents(fixturePath('Seeders/AbstractSeeder.php')));
+    $disk->put('database/seeders/Beta.php', file_get_contents(fixturePath('Seeders/Beta.php')));
+    [$features] = mockFeatures();
+
+    SeedersFacade::shouldReceive('add')->once()->with([Beta::class]);
+
+    $features->bootSeeders();
+});
+
 it('registers commands', function () {
     $content = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Console\Command; class TestCommand extends Command {}';
 

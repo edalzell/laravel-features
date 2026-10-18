@@ -389,7 +389,7 @@ class Features
         return collect($this->finder('src/Console/Commands'))
             ->keys()
             ->map(fn (string $path) => $this->getClassNameFromFile($path))
-            ->filter(fn (?string $class) => $this->isCommand($class))
+            ->filter(fn (?string $class) => $this->isConcrete($class, Command::class))
             ->values()
             ->all();
     }
@@ -433,7 +433,8 @@ class Features
         return collect($this->finder('database/seeders'))
             ->keys()
             ->map(fn (string $path) => $this->getClassNameFromFile($path))
-            ->filter(fn (string $class) => is_subclass_of($class, Seeder::class))
+            ->filter(fn (?string $class) => $this->isConcrete($class, Seeder::class))
+            ->values()
             ->all();
     }
 
@@ -469,9 +470,10 @@ class Features
         return null;
     }
 
-    private function isCommand(?string $class): bool
+    /** @param  class-string  $base */
+    private function isConcrete(?string $class, string $base): bool
     {
-        return is_subclass_of($class, Command::class) && ! (new ReflectionClass($class))->isAbstract();
+        return ! is_null($class) && is_subclass_of($class, $base) && ! (new ReflectionClass($class))->isAbstract();
     }
 
     private function join(string $separator, string ...$parts): string
