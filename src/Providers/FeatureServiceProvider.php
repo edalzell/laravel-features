@@ -26,13 +26,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
             ->options($this->options())
-            ->publishesConfig($this->publishesConfig())
-            ->routeGroups($this->routeGroups());
+            ->publishesConfig($this->publishesConfig());
     }
 
+    /**
+     * Route groups are read here, not in the constructor, so a package that
+     * registers after this one can still set them in config for every feature.
+     */
     public function boot(): void
     {
-        $this->features->bootFeature();
+        $this->features->routeGroups($this->routeGroups())->bootFeature();
     }
 
     public function register(): void
@@ -51,8 +54,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
      * the same inside a feature. Override this to change a group for one feature, or
      * set `features.route_groups` to change it for all of them. A filename with no
      * entry gets no middleware group and no prefix — only what the file declares. A
-     * closure entry, or an invokable class name, is handed the file's path and
-     * loads it itself.
+     * closure entry, or an invokable class name, is handed the file's path and the
+     * `Features` instance and loads it itself.
      *
      * @return array<string, array<string, mixed>|Closure|class-string>
      */

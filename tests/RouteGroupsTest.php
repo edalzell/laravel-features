@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\Features;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -67,11 +68,36 @@ it('hands the route file to an invokable class named in config', function () {
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
 });
 
+it('hands the loader the feature too', function () {
+    config()->set('features.route_groups.api', SlugLoader::class);
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('sibling/sibling-api');
+});
+
+it('reads route groups at boot, after every package has registered', function () {
+    $provider = new SiblingServiceProvider(app());
+    config()->set('features.route_groups.api', PrefixedLoader::class);
+
+    $provider->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('loader/sibling-api');
+});
+
 class PrefixedLoader
 {
     public function __invoke(string $path): void
     {
         Route::prefix('loader')->group($path);
+    }
+}
+
+class SlugLoader
+{
+    public function __invoke(string $path, Features $features): void
+    {
+        Route::prefix($features->slug())->group($path);
     }
 }
 

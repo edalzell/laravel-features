@@ -295,8 +295,8 @@ class Features
      * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
      * route files in a group; features should behave like the app. A closure, or
-     * the name of an invokable class, is handed the file's path instead and loads
-     * it however it likes — the class so that config stays cacheable.
+     * the name of an invokable class, is handed the file's path and this instance
+     * instead and loads it however it likes — the class so config stays cacheable.
      *
      * @param  array<string, array<string, mixed>|Closure|class-string>  $groups
      */
@@ -494,13 +494,13 @@ class Features
         }
 
         if ($group instanceof Closure) {
-            $group($path);
+            $group($path, $this);
 
             return;
         }
 
         if (is_string($group)) {
-            $this->app->make($group)($path);
+            $this->app->make($group)($path, $this);
 
             return;
         }

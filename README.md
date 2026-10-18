@@ -72,7 +72,7 @@ protected function routeGroups(): array
 
 Set an entry to `null`, or remove it, and that file gets no middleware group and no prefix — only what it declares itself.
 
-An entry can also be a closure, which is handed the file's path and loads it itself — for when a route file has to be registered through something other than a plain route group:
+An entry can also be a closure, which is handed the file's path and the `Features` instance and loads it itself — for when a route file has to be registered through something other than a plain route group:
 
 ```php
 protected function routeGroups(): array
