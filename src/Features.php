@@ -66,11 +66,8 @@ class Features
             return $this;
         }
 
-        if (empty($commands = $this->discoverCommands())) {
-            return $this;
-        }
-
-        $this->provider->commands($commands);
+        $this->classes('Console/Commands', Command::class)
+            ->whenNotEmpty(fn (Collection $commands) => $this->provider->commands($commands->all()));
 
         return $this;
     }
@@ -159,9 +156,7 @@ class Features
 
     public function bootSeeders(): static
     {
-        $seeders = $this->discoverSeeders();
-
-        SeedersFacade::add($seeders);
+        SeedersFacade::add(ClassFinder::classes($this->pathTo('database/seeders'), Seeder::class)->all());
 
         return $this;
     }
@@ -384,12 +379,6 @@ class Features
         return $this->join('/', 'config', $this->configFile().'.php');
     }
 
-    /** @return array<int, class-string<Command>> */
-    private function discoverCommands(): array
-    {
-        return $this->classes('Console/Commands', Command::class)->all();
-    }
-
     /** @return array<string, array<string>> */
     private function discoverEvents(): array
     {
@@ -414,12 +403,6 @@ class Features
     private function discoverPolicies(): Collection
     {
         return $this->classes('Policies')->mapWithKeys(fn (string $policy): array => $this->policyMap($policy));
-    }
-
-    /** @return array<int, class-string<Seeder>> */
-    private function discoverSeeders(): array
-    {
-        return ClassFinder::classes($this->pathTo('database/seeders'), Seeder::class)->all();
     }
 
     /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
