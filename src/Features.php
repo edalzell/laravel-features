@@ -480,10 +480,15 @@ class Features
     /** One registered ahead of the feature's provider has booted by the time the feature does. */
     private function hasBooted(ServiceProvider $provider): bool
     {
-        $providerAt = $this->position($provider);
-        $featureAt = $this->position($this->provider);
+        if (is_null($providerAt = $this->position($provider))) {
+            return false;
+        }
 
-        return ! is_null($providerAt) && ! is_null($featureAt) && $providerAt < $featureAt;
+        if (is_null($featureAt = $this->position($this->provider))) {
+            return false;
+        }
+
+        return $providerAt < $featureAt;
     }
 
     private function join(string $separator, string ...$parts): string
