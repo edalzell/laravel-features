@@ -69,21 +69,21 @@ class ClassFinder
      */
     private function classDeclaration(Collection $tokens): ?Collection
     {
-        return $tokens->sliding(3)->first(fn (Collection $window) => $this->declaresClass($window));
+        return $tokens->sliding(3)->first(fn (Collection $candidate) => $this->declaresClass($candidate));
     }
 
-    /** @param  Collection<int, PhpToken>  $window  the token before, `class`, the name */
-    private function declaresClass(Collection $window): bool
+    /** @param  Collection<int, PhpToken>  $candidate  the token before, `class`, the name */
+    private function declaresClass(Collection $candidate): bool
     {
-        [$previous, $token, $next] = $window->values()->all();
+        [$previous, $token, $next] = $candidate->values()->all();
 
         return $token->is(T_CLASS) && $next->is(T_STRING) && ! $previous->is([T_DOUBLE_COLON, T_NEW]);
     }
 
-    /** @param  Collection<int, PhpToken>  $window  `namespace`, the name */
-    private function declaresNamespace(Collection $window): bool
+    /** @param  Collection<int, PhpToken>  $candidate  `namespace`, the name */
+    private function declaresNamespace(Collection $candidate): bool
     {
-        [$token, $next] = $window->values()->all();
+        [$token, $next] = $candidate->values()->all();
 
         return $token->is(T_NAMESPACE) && $next->is([T_STRING, T_NAME_QUALIFIED]);
     }
@@ -110,7 +110,7 @@ class ClassFinder
         return $tokens
             ->takeUntil($class)
             ->sliding(2)
-            ->last(fn (Collection $window) => $this->declaresNamespace($window))
+            ->last(fn (Collection $candidate) => $this->declaresNamespace($candidate))
             ?->last()
             ->text;
     }
