@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 - 2026-10-27
+
+### 🚀 New
+
+- Expose class discovery for custom directories [@edalzell](https://github.com/edalzell) (#122)
+
+### 🧰 Maintenance
+
+- Bump stefanzweifel/git-auto-commit-action from 7.2.0 to 7.2.1 in the github-actions group [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#120)
+
 ## v1.2.0 - 2026-10-18
 
 ### 🚀 New
