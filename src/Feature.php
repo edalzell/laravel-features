@@ -21,8 +21,8 @@ readonly class Feature
     }
 
     /**
-     * The classes under a directory of `src/`, nested ones included unless a
-     * depth caps it; with a base, only its concrete subclasses.
+     * The classes under a directory of `src/`. A depth limits how far down to
+     * look; a base keeps only concrete classes that extend or implement it.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>

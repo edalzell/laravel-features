@@ -36,11 +36,12 @@ class ClassFinder
     }
 
     /**
-     * The classes under a directory, nested ones included, sorted by path so the
-     * result doesn't depend on the filesystem's order. A depth caps how far
-     * down to look, as Finder counts it: 0 is the directory itself.
-     * Without a base nothing is autoloaded: the names come from the files alone.
-     * With one, only concrete subclasses (or implementations) are kept.
+     * The classes declared by the files under a directory, sorted by path so
+     * the result doesn't depend on the filesystem's order. Subdirectories are
+     * searched too, down to the depth if one is given: 0 is the directory
+     * itself, as Finder counts it.
+     * Without a base every class is returned and nothing is autoloaded. With
+     * one, only concrete classes that extend or implement it are kept.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
