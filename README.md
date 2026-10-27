@@ -183,7 +183,7 @@ class ServiceProvider extends FeatureServiceProvider
     {
         parent::boot();
 
-        $this->app['router']->pushMiddlewareToGroup('web', RedirectIfScheduled::class);
+        $this->app['router']->pushMiddlewareToGroup('web', TrackVisits::class);
     }
 }
 ```
