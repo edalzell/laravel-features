@@ -112,6 +112,7 @@ class Features
             ->bootPolicies()
             ->bootRoutes()
             ->bootSeeders()
+            ->bootViews()
             ->bootExtensions();
     }
 
@@ -172,6 +173,25 @@ class Features
     public function classes(string $directory, ?string $base = null, ?int $depth = null): Collection
     {
         return ClassFinder::classes($this->pathTo("src/{$directory}"), $base, $depth);
+    }
+
+    /**
+     * Offered to `vendor:publish` as `{slug}-views`, landing where Laravel
+     * already looks for overrides of the `{slug}::` namespace.
+     */
+    public function bootViews(): static
+    {
+        if (! $this->app->runningInConsole() || ! $this->has('resources/views')) {
+            return $this;
+        }
+
+        $this->callProtected(
+            'publishes',
+            [$this->pathTo('resources/views') => resource_path("views/vendor/{$this->slug()}")],
+            "{$this->slug()}-views",
+        );
+
+        return $this;
     }
 
     public function configFileName(string $name): static

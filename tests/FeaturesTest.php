@@ -89,6 +89,40 @@ it('can load views', function () {
     $features->registerViews();
 });
 
+it('publishes views when running in console', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))->put('resources/views/foo.blade.php', '');
+    [$features, $provider] = mockFeatures();
+
+    $provider
+        ->shouldReceive('publishes')
+        ->once()
+        ->with([featureFile('resources/views') => resource_path('views/vendor/two-words')], 'two-words-views');
+
+    $features->bootViews();
+});
+
+it('doesnt publish views when not running in console', function () {
+    tap(mockOnDemandDisk('features/TwoWords'))->put('resources/views/foo.blade.php', '');
+    $app = mock(Application::class)
+        ->makePartial()
+        ->shouldReceive('runningInConsole')->andReturn(false)
+        ->getMock();
+
+    [$features, $provider] = mockFeatures(app: $app);
+    $provider->shouldNotReceive('publishes');
+
+    $features->bootViews();
+});
+
+it('wont publish views when there arent any', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features, $provider] = mockFeatures();
+
+    $provider->shouldNotReceive('publishes');
+
+    $features->bootViews();
+});
+
 it('wont load views when there arent any', function () {
     mockOnDemandDisk('features/TwoWords');
     [$features, $provider] = mockFeatures();
