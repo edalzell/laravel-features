@@ -14,8 +14,9 @@ class ClassFinder
 
     /**
      * The first class declared in the file; interfaces, enums and traits are
-     * skipped. `Foo::class` and `new class` are `T_CLASS` tokens too, so the
-     * token before decides.
+     * skipped. `Foo::class` and `new class` are `T_CLASS` tokens too, so a
+     * `class` token only counts as a declaration when the token before it is
+     * neither `::` nor `new`.
      */
     public function className(string $file): ?string
     {
