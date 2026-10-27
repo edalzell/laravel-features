@@ -106,7 +106,9 @@ it('registers listeners, nested ones included, and clears the discovery callback
 });
 
 it('registers policies', function () {
-    mockOnDemandDisk('features/TwoWords')->put('src/Policies/PostPolicy.php', '');
+    $content = '<?php namespace Features\\TwoWords\\Policies; class PostPolicy {}';
+
+    mockOnDemandDisk('features/TwoWords')->put('src/Policies/PostPolicy.php', $content);
     [$features] = mockFeatures();
 
     Gate::shouldReceive('policy')
@@ -134,13 +136,15 @@ it('wont register policies if there arent any', function () {
     $features->bootPolicies();
 });
 
-it('can register policies', function () {
-    tap(mockOnDemandDisk('features/TwoWords'))->put('src/Policies/FooPolicy.php', '');
+it('names a policy from its file, nested ones included', function () {
+    $content = '<?php namespace Features\\TwoWords\\Policies\\Admin; class FooPolicy {}';
+
+    tap(mockOnDemandDisk('features/TwoWords'))->put('src/Policies/Admin/FooPolicy.php', $content);
     [$features] = mockFeatures();
 
     Gate::shouldReceive('policy')
         ->once()
-        ->with('Features\TwoWords\Models\Foo', 'Features\TwoWords\Policies\FooPolicy');
+        ->with('Features\\TwoWords\\Models\\Foo', 'Features\\TwoWords\\Policies\\Admin\\FooPolicy');
 
     $features->bootPolicies();
 });

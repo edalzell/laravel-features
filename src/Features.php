@@ -400,8 +400,10 @@ class Features
         // The callback is a static on DiscoverEvents, so it is cleared again
         // straight after: left in place it would misname the app's own listeners
         // the next time anything discovers events — `event:cache`, say.
-        // @phpstan-ignore-next-line argument.type — a name built from the path can't be proven a class-string
-        DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => $this->listenerClass($file));
+        $finder = new ClassFinder($this->pathTo('src/Listeners'));
+
+        // @phpstan-ignore-next-line argument.type — a name parsed from the file can't be proven a class-string
+        DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => $finder->className($file->getRealPath()) ?? '');
 
         try {
             return DiscoverEvents::within($this->pathTo('src/Listeners'), '');
@@ -413,12 +415,7 @@ class Features
     /** @return Collection<string, string> */
     private function discoverPolicies(): Collection
     {
-        if (! $this->has('src/Policies')) {
-            return collect();
-        }
-
-        return collect($this->finder('src/Policies'))
-            ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
+        return $this->classes('Policies')->mapWithKeys(fn (string $policy): array => $this->policyMap($policy));
     }
 
     /** @return array<int, class-string<Seeder>> */
@@ -440,15 +437,6 @@ class Features
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
-    }
-
-    private function listenerClass(SplFileInfo $file): string
-    {
-        return str($file->getRelativePathname())
-            ->beforeLast('.php')
-            ->replace('/', '\\')
-            ->prepend("{$this->namespace}\\Listeners\\")
-            ->toString();
     }
 
     private function loadRouteFile(SplFileInfo $file): void
@@ -486,11 +474,10 @@ class Features
     }
 
     /** @return array<string, string> */
-    private function policyMap(SplFileInfo $file): array
+    private function policyMap(string $policy): array
     {
-        $policyClass = "{$this->namespace}\\Policies\\".$file->getBasename('.php');
-        $modelName = str($file->getBasename('.php'))->replaceEnd('Policy', '')->toString();
+        $model = str(class_basename($policy))->replaceEnd('Policy', '')->toString();
 
-        return ["{$this->namespace}\\Models\\{$modelName}" => $policyClass];
+        return ["{$this->namespace}\\Models\\{$model}" => $policy];
     }
 }
