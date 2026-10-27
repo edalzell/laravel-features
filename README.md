@@ -169,6 +169,27 @@ $this->app->tag(StatamicExtensions::class, Extension::TAG);
 
 The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Tag it in `register()`: a feature only sees the extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton, so an extension that remembers which features it has seen should be one. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`; its `livewireNamespace()` override became the `livewire.namespace` option.
 
+## Boot order
+
+A feature is registered from inside its host's `register()`, and Laravel only marks the host registered once that method returns, so every feature boots before the provider that registered it, and before any package registered later. That matters when a feature's `boot()` must come after the host's: a middleware pushed onto `web` lands ahead of the host's own, say. Name the provider to wait for:
+
+```php
+use Edalzell\Features\Attributes\BootAfter;
+
+#[BootAfter(App\Providers\AppServiceProvider::class)]
+class ServiceProvider extends FeatureServiceProvider
+{
+    public function boot(): void
+    {
+        parent::boot();
+
+        $this->app['router']->pushMiddlewareToGroup('web', RedirectIfScheduled::class);
+    }
+}
+```
+
+The feature's `boot()` then runs right after that provider's, in place of its usual turn. A provider that has already booted costs nothing: the feature boots at once. Naming one that isn't registered throws a `LogicException`, rather than silently never booting.
+
 ## Seeders
 
 Every feature's `database/seeders` are collected into `Edalzell\Features\Seeders`; call it from the app's `DatabaseSeeder` to run them:

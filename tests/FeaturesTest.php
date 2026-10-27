@@ -4,6 +4,8 @@ use Edalzell\Features\Contracts\Extension;
 use Edalzell\Features\Features;
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
+use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredServiceProvider;
+use Edalzell\Features\Tests\Fixtures\DeferredHost;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
 use Edalzell\Features\Tests\Fixtures\Sibling\Events\GreetingSent;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
@@ -495,3 +497,46 @@ it('finds classes under a directory relative to src', function () {
 
     expect($features->classes('Setup')->all())->toBe(['Features\\TwoWords\\Setup\\EnvWriter']);
 });
+
+it('waits for the provider it boots after', function () {
+    $host = new DeferredHost(app());
+    $app = mock(Application::class)->makePartial();
+    $app->instance('files', app('files'));
+    $provider = new DeferredServiceProvider($app);
+    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([1 => $host]);
+    $app->shouldReceive('getProviders')->with($provider)->andReturn([0 => $provider]);
+    $extension = spy(Extension::class);
+    $app->instance('extension', $extension);
+    $app->tag('extension', Extension::TAG);
+
+    (new Features($provider))->path(fakeFeatureRoot())->bootFeature();
+    $extension->shouldNotHaveReceived('boot');
+
+    $host->callBootedCallbacks();
+    $extension->shouldHaveReceived('boot')->once();
+});
+
+it('boots at once when the provider it boots after already has', function () {
+    $host = new DeferredHost(app());
+    $app = mock(Application::class)->makePartial();
+    $app->instance('files', app('files'));
+    $provider = new DeferredServiceProvider($app);
+    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([0 => $host]);
+    $app->shouldReceive('getProviders')->with($provider)->andReturn([1 => $provider]);
+    $extension = spy(Extension::class);
+    $app->instance('extension', $extension);
+    $app->tag('extension', Extension::TAG);
+
+    (new Features($provider))->path(fakeFeatureRoot())->bootFeature();
+
+    $extension->shouldHaveReceived('boot')->once();
+});
+
+it('throws when the provider it boots after is not registered', function () {
+    $app = mock(Application::class)->makePartial();
+    $app->instance('files', app('files'));
+    $provider = new DeferredServiceProvider($app);
+    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([]);
+
+    (new Features($provider))->path(fakeFeatureRoot())->bootFeature();
+})->throws(LogicException::class, DeferredHost::class);
