@@ -31,7 +31,7 @@ class FeatureRegistry
      */
     public function classes(string $directory, ?string $base = null): Collection
     {
-        return $this->all()->flatMap(fn (Feature $feature) => $feature->classes($directory, $base))->values();
+        return $this->all()->flatMap->classes($directory, $base);
     }
 
     public function get(string $rootPath): ?Feature
