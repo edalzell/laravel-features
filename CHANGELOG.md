@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.6.0 - 2026-10-27
+
+### 🚀 New
+
+- Let a feature boot after a named provider [@edalzell](https://github.com/edalzell) (#128)
+
+### 🧰 Maintenance
+
+- Use the README's own example package in the config section [@edalzell](https://github.com/edalzell) (#129)
+
 ## v1.5.0 - 2026-10-27
 
 ### 🚀 New
