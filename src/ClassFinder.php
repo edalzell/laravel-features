@@ -51,17 +51,13 @@ class ClassFinder
             return collect();
         }
 
-        $classes = collect($this->finder())
+        // @phpstan-ignore-next-line return.type — a name parsed from a file can't be proven a class-string
+        return collect($this->finder())
             ->keys()
             ->map(fn (string $path) => $this->className($path))
-            ->filter();
-
-        if (! is_null($base)) {
-            $classes = $classes->filter(fn (string $class) => $this->isConcrete($class, $base));
-        }
-
-        // @phpstan-ignore-next-line return.type — a name parsed from a file can't be proven a class-string
-        return $classes->values();
+            ->filter()
+            ->when($base, fn (Collection $classes, string $base) => $classes->filter(fn (string $class) => $this->isConcrete($class, $base)))
+            ->values();
     }
 
     /**
