@@ -64,7 +64,7 @@ class ClassFinder
             return collect();
         }
 
-        $classes = collect(iterator_to_array($this->finder()))
+        $classes = collect($this->finder())
             ->keys()
             ->map(fn (string $path) => $this->className($path))
             ->filter();
