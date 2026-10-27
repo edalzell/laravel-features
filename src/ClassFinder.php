@@ -12,9 +12,9 @@ class ClassFinder
     public function __construct(private readonly string $directory) {}
 
     /**
-     * The first class declared in the file, or null when it declares none — an
-     * interface, enum or trait, say. `Foo::class` and `new class` are `T_CLASS`
-     * tokens too, so the token before decides.
+     * The first class declared in the file; interfaces, enums and traits are
+     * skipped. `Foo::class` and `new class` are `T_CLASS` tokens too, so the
+     * token before decides.
      */
     public function className(string $file): ?string
     {
