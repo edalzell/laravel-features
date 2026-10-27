@@ -23,6 +23,17 @@ class FeatureRegistry
         return collect($this->features);
     }
 
+    /**
+     * The classes every feature has under a directory of `src/`, in registration order.
+     *
+     * @param  class-string|null  $base
+     * @return Collection<int, class-string>
+     */
+    public function classes(string $directory, ?string $base = null): Collection
+    {
+        return $this->all()->flatMap(fn (Feature $feature) => $feature->classes($directory, $base))->values();
+    }
+
     public function get(string $rootPath): ?Feature
     {
         return $this->features[$this->key($rootPath)] ?? null;

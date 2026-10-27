@@ -448,3 +448,12 @@ it('exposes the feature to extensions', function () {
         ->and($features->rootNamespace())->toBe('Features\\TwoWords')
         ->and($features->slug())->toBe('two-words');
 });
+
+it('finds classes under a directory relative to src', function () {
+    $content = '<?php namespace Features\\TwoWords\\Setup; class EnvWriter {}';
+
+    tap(mockOnDemandDisk('features/TwoWords'))->put('src/Setup/EnvWriter.php', $content);
+    [$features] = mockFeatures();
+
+    expect($features->classes('Setup')->all())->toBe(['Features\\TwoWords\\Setup\\EnvWriter']);
+});

@@ -166,6 +166,18 @@ class Features
         return $this;
     }
 
+    /**
+     * The classes under a directory of `src/`, nested ones included; with a base,
+     * only its concrete subclasses. The built-in conventions go through the same scan.
+     *
+     * @param  class-string|null  $base
+     * @return Collection<int, class-string>
+     */
+    public function classes(string $directory, ?string $base = null): Collection
+    {
+        return (new ClassFinder($this->pathTo("src/{$directory}")))->classes($base);
+    }
+
     public function configFileName(string $name): static
     {
         $this->configFileName = $name;
@@ -375,7 +387,7 @@ class Features
     /** @return array<int, class-string<Command>> */
     private function discoverCommands(): array
     {
-        return (new ClassFinder($this->pathTo('src/Console/Commands')))->classes(Command::class)->all();
+        return $this->classes('Console/Commands', Command::class)->all();
     }
 
     /** @return array<string, array<string>> */

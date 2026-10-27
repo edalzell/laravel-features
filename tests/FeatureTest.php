@@ -1,6 +1,9 @@
 <?php
 
 use Edalzell\Features\Feature;
+use Edalzell\Features\Tests\Fixtures\Discovery\Setup\Configs\MailWriter;
+use Edalzell\Features\Tests\Fixtures\Discovery\Setup\EnvWriter;
+use Edalzell\Features\Tests\Fixtures\Discovery\Setup\Writer;
 
 it('joins a relative path onto the feature root', function () {
     $feature = new Feature('/pkg/features/Mail', 'App\\Features');
@@ -27,4 +30,11 @@ it('reports whether a relative path exists', function () {
         ->and($feature->has('src/Missing'))->toBeFalse();
 
     array_map('rmdir', [$root.'/src/Setup', $root.'/src', $root]);
+});
+
+it('finds classes under a directory relative to src', function () {
+    $feature = new Feature(fixturePath('Discovery'), 'Edalzell\\Features\\Tests\\Fixtures');
+
+    expect($feature->classes('Setup', Writer::class)->all())->toBe([MailWriter::class, EnvWriter::class])
+        ->and($feature->classes('Missing'))->toBeEmpty();
 });

@@ -2,6 +2,10 @@
 
 use Edalzell\Features\Feature;
 use Edalzell\Features\FeatureRegistry;
+use Edalzell\Features\Tests\Fixtures\Discovery\Setup\Configs\MailWriter;
+use Edalzell\Features\Tests\Fixtures\Discovery\Setup\EnvWriter;
+use Edalzell\Features\Tests\Fixtures\Discovery\Setup\Writer;
+use Edalzell\Features\Tests\Fixtures\Sibling\Livewire\Counter;
 use Illuminate\Contracts\Foundation\Application;
 
 it('stores and returns registered features', function () {
@@ -63,4 +67,14 @@ it('finds a feature whichever separator the path uses', function () {
 
     expect($registry->get('C:/site/features/Mail'))->toBe($mail)
         ->and($registry->get('C:/site/features/Mail/'))->toBe($mail);
+});
+
+it('finds classes across every registered feature', function () {
+    $registry = new FeatureRegistry(mock(Application::class));
+    $registry->add(new Feature(fixturePath('Discovery'), 'Edalzell\\Features\\Tests\\Fixtures'));
+    $registry->add(new Feature(fixturePath('Sibling'), 'Edalzell\\Features\\Tests\\Fixtures'));
+    $registry->add(new Feature(fixturePath('TwoWords'), 'Edalzell\\Features\\Tests\\Fixtures'));
+
+    expect($registry->classes('Setup', Writer::class)->all())->toBe([MailWriter::class, EnvWriter::class])
+        ->and($registry->classes('Livewire')->all())->toContain(Counter::class);
 });
