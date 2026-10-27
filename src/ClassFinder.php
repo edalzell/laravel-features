@@ -27,6 +27,8 @@ class ClassFinder
             ->reject->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT])
             ->values();
 
+        // Every run of three consecutive tokens, e.g. [`abstract`, `class`, `Foo`]
+        // or [`::`, `class`, `)`]; the first with `class` declared in the middle.
         if (is_null($window = $tokens->sliding(3)->first(fn (Collection $window) => $this->declaresClass($window)))) {
             return null;
         }
