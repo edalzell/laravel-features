@@ -477,17 +477,13 @@ class Features
             ->sortByName();
     }
 
-    /**
-     * Providers boot in registration order, and `getProviders()` keeps that
-     * order in its keys, so one ahead of this feature's provider has already
-     * booted by the time the feature does.
-     */
+    /** One registered ahead of the feature's provider has booted by the time the feature does. */
     private function hasBooted(ServiceProvider $provider): bool
     {
-        $theirs = array_key_first($this->app->getProviders($provider));
-        $ours = array_key_first($this->app->getProviders($this->provider));
+        $providerAt = $this->position($provider);
+        $featureAt = $this->position($this->provider);
 
-        return ! is_null($theirs) && ! is_null($ours) && $theirs < $ours;
+        return ! is_null($providerAt) && ! is_null($featureAt) && $providerAt < $featureAt;
     }
 
     private function join(string $separator, string ...$parts): string
@@ -527,6 +523,12 @@ class Features
         }
 
         Route::group($group, fn () => $this->callProtected('loadRoutesFrom', $path));
+    }
+
+    /** Where the provider sits in registration order, which is also boot order. */
+    private function position(ServiceProvider $provider): ?int
+    {
+        return array_key_first($this->app->getProviders($provider));
     }
 
     /** @return array<string, string> */
