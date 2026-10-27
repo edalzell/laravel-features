@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.0 - 2026-10-27
+
+### 🚀 New
+
+- Let classes() cap how deep it scans [@edalzell](https://github.com/edalzell) (#124)
+
 ## v1.3.0 - 2026-10-27
 
 ### 🚀 New
