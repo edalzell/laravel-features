@@ -18,10 +18,10 @@ class ClassFinder
      */
     public function className(string $file): ?string
     {
-        $tokens = array_values(array_filter(
-            token_get_all(file_get_contents($file)),
-            fn (array|string $token) => is_string($token) || ! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT]),
-        ));
+        $tokens = collect(token_get_all(file_get_contents($file)))
+            ->reject(fn (array|string $token) => is_array($token) && in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT]))
+            ->values()
+            ->all();
         $namespace = '';
 
         foreach ($tokens as $i => $token) {
