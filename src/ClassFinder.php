@@ -22,9 +22,7 @@ class ClassFinder
     {
         // Drop whitespace and comments so `class` sits directly between the
         // token before it (`::`, `new`) and its name; a space would otherwise
-        // take one of those slots. Not `isIgnorable()`: that also drops the
-        // `<?php` tag, so a class declared right after it would have no token
-        // before it to check.
+        // take one of those slots.
         $tokens = collect(PhpToken::tokenize(file_get_contents($file)))
             ->reject->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT])
             ->values();
