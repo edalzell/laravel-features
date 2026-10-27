@@ -2,6 +2,8 @@
 
 namespace Edalzell\Features;
 
+use Illuminate\Support\Collection;
+
 readonly class Feature
 {
     public string $name;
@@ -16,6 +18,18 @@ readonly class Feature
     ) {
         $this->name = basename($this->rootPath);
         $this->rootNamespace = rtrim($namespacePrefix, '\\').'\\'.$this->name;
+    }
+
+    /**
+     * The classes under a directory of `src/`, nested ones included; with a base,
+     * only its concrete subclasses.
+     *
+     * @param  class-string|null  $base
+     * @return Collection<int, class-string>
+     */
+    public function classes(string $directory, ?string $base = null): Collection
+    {
+        return ClassFinder::classes($this->path("src/{$directory}"), $base);
     }
 
     public function has(string $relative = ''): bool

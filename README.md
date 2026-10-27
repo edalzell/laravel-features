@@ -156,6 +156,7 @@ class StatamicExtensions implements Extension
     {
         // $features->rootPath(), rootNamespace(), slug(), app(), provider()
         // $features->has('src/Tags'), $features->pathTo('resources/blueprints')
+        // $features->classes('Tags', Tags::class)
         // $features->option('statamic.something', $default)
     }
 }
@@ -358,6 +359,20 @@ app(FeatureRegistry::class)
 ```
 
 `registerFeatures()` records each feature via `FeatureRegistry::register()`, which also registers that feature's `ServiceProvider`. `Feature::path()` / `namespace()` with no argument return the feature root. `has()` checks that a relative path exists on disk. Use `FeatureRegistry::add()` when you only need the descriptor without loading the provider (e.g. tests).
+
+### Finding classes in a feature
+
+Commands, policies, listeners and seeders are found by scanning a directory for the classes its files declare. The same scan is yours for any directory under `src/`, so a convention of your own — setup writers in `src/Setup`, say — doesn't need a second one:
+
+```php
+use Edalzell\Features\FeatureRegistry;
+
+app(FeatureRegistry::class)
+    ->classes('Setup', Writer::class)
+    ->each(fn (string $writer) => $writer::run());
+```
+
+`classes()` is on `FeatureRegistry` for every registered feature at once, on `Feature` for one, and on `Features` inside a provider or an [extension](#extensions). The directory is relative to `src/` and is searched recursively, sorted by path. Without a base class every declared class is returned by name, and nothing is autoloaded. With one, only concrete subclasses — or implementations, if the base is an interface — are kept.
 
 ### Features outside the app
 
