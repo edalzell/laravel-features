@@ -525,17 +525,17 @@ class Features
         Route::group($group, fn () => $this->callProtected('loadRoutesFrom', $path));
     }
 
-    /** Where the provider sits in registration order, which is also boot order. */
-    private function position(ServiceProvider $provider): ?int
-    {
-        return array_key_first($this->app->getProviders($provider));
-    }
-
     /** @return array<string, string> */
     private function policyMap(string $policy): array
     {
         $model = str(class_basename($policy))->replaceEnd('Policy', '')->toString();
 
         return ["{$this->namespace}\\Models\\{$model}" => $policy];
+    }
+
+    /** Where the provider sits in registration order, which is also boot order. */
+    private function position(ServiceProvider $provider): ?int
+    {
+        return array_key_first($this->app->getProviders($provider));
     }
 }
