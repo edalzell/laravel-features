@@ -175,7 +175,7 @@ class Features
      */
     public function classes(string $directory, ?string $base = null): Collection
     {
-        return (new ClassFinder($this->pathTo("src/{$directory}")))->classes($base);
+        return ClassFinder::classes($this->pathTo("src/{$directory}"), $base);
     }
 
     public function configFileName(string $name): static
@@ -400,10 +400,8 @@ class Features
         // The callback is a static on DiscoverEvents, so it is cleared again
         // straight after: left in place it would misname the app's own listeners
         // the next time anything discovers events — `event:cache`, say.
-        $finder = new ClassFinder($this->pathTo('src/Listeners'));
-
         // @phpstan-ignore-next-line argument.type — a name parsed from the file can't be proven a class-string
-        DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => $finder->className($file->getRealPath()) ?? '');
+        DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => ClassFinder::className($file->getRealPath()) ?? '');
 
         try {
             return DiscoverEvents::within($this->pathTo('src/Listeners'), '');
@@ -421,7 +419,7 @@ class Features
     /** @return array<int, class-string<Seeder>> */
     private function discoverSeeders(): array
     {
-        return (new ClassFinder($this->pathTo('database/seeders')))->classes(Seeder::class)->all();
+        return ClassFinder::classes($this->pathTo('database/seeders'), Seeder::class)->all();
     }
 
     /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */

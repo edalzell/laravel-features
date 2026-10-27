@@ -7,18 +7,16 @@ use PhpToken;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 
-/** A directory, nested ones included, to the classes its PHP files declare. */
+/** Turns PHP files into the classes they declare. */
 class ClassFinder
 {
-    public function __construct(private readonly string $directory) {}
-
     /**
      * The fully qualified name of the first class declared in the file;
      * interfaces, enums and traits are skipped. `Foo::class` and `new class`
      * are `T_CLASS` tokens too, so a `class` token only counts as a declaration
      * when the token before it is neither `::` nor `new`.
      */
-    public function className(string $file): ?string
+    public static function className(string $file): ?string
     {
         // Drop whitespace and comments so `class` sits directly between the
         // token before it (`::`, `new`) and its name; a space would otherwise
@@ -27,36 +25,37 @@ class ClassFinder
             ->reject->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT])
             ->values();
 
-        if (is_null($declaration = $this->classDeclaration($tokens))) {
+        if (is_null($declaration = self::classDeclaration($tokens))) {
             return null;
         }
 
         [, $class, $name] = $declaration->values()->all();
-        $namespace = $this->namespaceBefore($tokens, $class);
+        $namespace = self::namespaceBefore($tokens, $class);
 
         return is_null($namespace) ? $name->text : "{$namespace}\\{$name->text}";
     }
 
     /**
-     * Sorted by path, so the result doesn't depend on the filesystem's order.
+     * The classes under a directory, nested ones included, sorted by path so the
+     * result doesn't depend on the filesystem's order.
      * Without a base nothing is autoloaded: the names come from the files alone.
      * With one, only concrete subclasses (or implementations) are kept.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
      */
-    public function classes(?string $base = null): Collection
+    public static function classes(string $directory, ?string $base = null): Collection
     {
-        if (! is_dir($this->directory)) {
+        if (! is_dir($directory)) {
             return collect();
         }
 
         // @phpstan-ignore-next-line return.type — a name parsed from a file can't be proven a class-string
-        return collect($this->finder())
+        return collect(self::finder($directory))
             ->keys()
-            ->map(fn (string $path) => $this->className($path))
+            ->map(fn (string $path) => self::className($path))
             ->filter()
-            ->when($base, fn (Collection $classes, string $base) => $classes->filter(fn (string $class) => $this->isConcrete($class, $base)))
+            ->when($base, fn (Collection $classes, string $base) => $classes->filter(fn (string $class) => self::isConcrete($class, $base)))
             ->values();
     }
 
@@ -67,13 +66,13 @@ class ClassFinder
      * @param  Collection<int, PhpToken>  $tokens
      * @return Collection<int, PhpToken>|null
      */
-    private function classDeclaration(Collection $tokens): ?Collection
+    private static function classDeclaration(Collection $tokens): ?Collection
     {
-        return $tokens->sliding(3)->first(fn (Collection $candidate) => $this->declaresClass($candidate));
+        return $tokens->sliding(3)->first(fn (Collection $candidate) => self::declaresClass($candidate));
     }
 
     /** @param  Collection<int, PhpToken>  $candidate  the token before, `class`, the name */
-    private function declaresClass(Collection $candidate): bool
+    private static function declaresClass(Collection $candidate): bool
     {
         [$previous, $token, $next] = $candidate->values()->all();
 
@@ -81,20 +80,20 @@ class ClassFinder
     }
 
     /** @param  Collection<int, PhpToken>  $candidate  `namespace`, the name */
-    private function declaresNamespace(Collection $candidate): bool
+    private static function declaresNamespace(Collection $candidate): bool
     {
         [$token, $next] = $candidate->values()->all();
 
         return $token->is(T_NAMESPACE) && $next->is([T_STRING, T_NAME_QUALIFIED]);
     }
 
-    private function finder(): Finder
+    private static function finder(string $directory): Finder
     {
-        return tap(new Finder)->files()->in($this->directory)->name('*.php')->sortByName();
+        return tap(new Finder)->files()->in($directory)->name('*.php')->sortByName();
     }
 
     /** @param  class-string  $base */
-    private function isConcrete(string $class, string $base): bool
+    private static function isConcrete(string $class, string $base): bool
     {
         return is_subclass_of($class, $base) && ! (new ReflectionClass($class))->isAbstract();
     }
@@ -105,12 +104,12 @@ class ClassFinder
      *
      * @param  Collection<int, PhpToken>  $tokens
      */
-    private function namespaceBefore(Collection $tokens, PhpToken $class): ?string
+    private static function namespaceBefore(Collection $tokens, PhpToken $class): ?string
     {
         return $tokens
             ->takeUntil($class)
             ->sliding(2)
-            ->last(fn (Collection $candidate) => $this->declaresNamespace($candidate))
+            ->last(fn (Collection $candidate) => self::declaresNamespace($candidate))
             ?->last()
             ->text;
     }

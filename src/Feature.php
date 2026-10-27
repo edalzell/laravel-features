@@ -29,7 +29,7 @@ readonly class Feature
      */
     public function classes(string $directory, ?string $base = null): Collection
     {
-        return (new ClassFinder($this->path("src/{$directory}")))->classes($base);
+        return ClassFinder::classes($this->path("src/{$directory}"), $base);
     }
 
     public function has(string $relative = ''): bool
