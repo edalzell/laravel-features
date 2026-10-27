@@ -15,6 +15,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Events\DiscoverEvents;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 it('merges config when it exists', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
@@ -503,8 +504,8 @@ it('waits for the provider it boots after', function () {
     $app = mock(Application::class)->makePartial();
     $app->instance('files', app('files'));
     $provider = new DeferredServiceProvider($app);
-    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([1 => $host]);
-    $app->shouldReceive('getProviders')->with($provider)->andReturn([0 => $provider]);
+    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([DeferredHost::class => $host]);
+    $app->shouldReceive('getProviders')->with(ServiceProvider::class)->andReturn([$provider::class => $provider, DeferredHost::class => $host]);
     $extension = spy(Extension::class);
     $app->instance('extension', $extension);
     $app->tag('extension', Extension::TAG);
@@ -521,13 +522,24 @@ it('boots at once when the provider it boots after already has', function () {
     $app = mock(Application::class)->makePartial();
     $app->instance('files', app('files'));
     $provider = new DeferredServiceProvider($app);
-    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([0 => $host]);
-    $app->shouldReceive('getProviders')->with($provider)->andReturn([1 => $provider]);
+    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([DeferredHost::class => $host]);
+    $app->shouldReceive('getProviders')->with(ServiceProvider::class)->andReturn([DeferredHost::class => $host, $provider::class => $provider]);
     $extension = spy(Extension::class);
     $app->instance('extension', $extension);
     $app->tag('extension', Extension::TAG);
 
     (new Features($provider))->path(fakeFeatureRoot())->bootFeature();
+
+    $extension->shouldHaveReceived('boot')->once();
+});
+
+it('reads the real provider list when deciding whether to wait', function () {
+    app()->register(new DeferredHost(app()));
+    $extension = spy(Extension::class);
+    app()->instance('extension', $extension);
+    app()->tag('extension', Extension::TAG);
+
+    app()->register(new DeferredServiceProvider(app()));
 
     $extension->shouldHaveReceived('boot')->once();
 });

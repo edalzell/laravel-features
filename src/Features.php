@@ -538,9 +538,14 @@ class Features
         return ["{$this->namespace}\\Models\\{$model}" => $policy];
     }
 
-    /** Where the provider sits in registration order, which is also boot order. */
+    /**
+     * Where the provider sits in registration order, which is also boot order.
+     * By identity, since Laravel keys the list by class name.
+     */
     private function position(ServiceProvider $provider): ?int
     {
-        return array_key_first($this->app->getProviders($provider));
+        $position = array_search($provider, array_values($this->app->getProviders(ServiceProvider::class)), true);
+
+        return $position === false ? null : $position;
     }
 }
