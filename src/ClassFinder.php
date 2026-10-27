@@ -36,22 +36,24 @@ class ClassFinder
     }
 
     /**
-     * The classes under a directory, nested ones included, sorted by path so the
-     * result doesn't depend on the filesystem's order.
-     * Without a base nothing is autoloaded: the names come from the files alone.
-     * With one, only concrete subclasses (or implementations) are kept.
+     * The classes declared by the files under a directory, sorted by path so
+     * the result doesn't depend on the filesystem's order. Subdirectories are
+     * searched too, down to the depth if one is given: 0 is the directory
+     * itself, as Finder counts it. Without a base every class is returned and
+     * nothing is autoloaded. With one, only concrete classes that extend or
+     * implement it are kept.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
      */
-    public static function classes(string $directory, ?string $base = null): Collection
+    public static function classes(string $directory, ?string $base = null, ?int $depth = null): Collection
     {
         if (! is_dir($directory)) {
             return collect();
         }
 
         // @phpstan-ignore-next-line return.type — a name parsed from a file can't be proven a class-string
-        return collect(self::finder($directory))
+        return collect(self::finder($directory, $depth))
             ->keys()
             ->map(fn (string $path) => self::className($path))
             ->filter()
@@ -87,9 +89,11 @@ class ClassFinder
         return $token->is(T_NAMESPACE) && $next->is([T_STRING, T_NAME_QUALIFIED]);
     }
 
-    private static function finder(string $directory): Finder
+    private static function finder(string $directory, ?int $depth): Finder
     {
-        return tap(new Finder)->files()->in($directory)->name('*.php')->sortByName();
+        $finder = (new Finder)->files()->in($directory)->name('*.php')->sortByName();
+
+        return is_null($depth) ? $finder : $finder->depth("<= {$depth}");
     }
 
     /** @param  class-string  $base */
