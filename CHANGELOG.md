@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0 - 2026-10-27
+
+### 🚀 New
+
+- Publish a feature's views [@edalzell](https://github.com/edalzell) (#126)
+
 ## v1.4.0 - 2026-10-27
 
 ### 🚀 New
