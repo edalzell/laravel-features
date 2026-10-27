@@ -76,5 +76,6 @@ it('finds classes across every registered feature', function () {
     $registry->add(new Feature(fixturePath('TwoWords'), 'Edalzell\\Features\\Tests\\Fixtures'));
 
     expect($registry->classes('Setup', Writer::class)->all())->toBe([MailWriter::class, EnvWriter::class])
+        ->and($registry->classes('Setup', Writer::class, depth: 0)->all())->toBe([EnvWriter::class])
         ->and($registry->classes('Livewire')->all())->toContain(Counter::class);
 });

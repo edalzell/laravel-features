@@ -36,5 +36,6 @@ it('finds classes under a directory relative to src', function () {
     $feature = new Feature(fixturePath('Discovery'), 'Edalzell\\Features\\Tests\\Fixtures');
 
     expect($feature->classes('Setup', Writer::class)->all())->toBe([MailWriter::class, EnvWriter::class])
+        ->and($feature->classes('Setup', Writer::class, depth: 0)->all())->toBe([EnvWriter::class])
         ->and($feature->classes('Missing'))->toBeEmpty();
 });

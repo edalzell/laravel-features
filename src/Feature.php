@@ -21,15 +21,15 @@ readonly class Feature
     }
 
     /**
-     * The classes under a directory of `src/`, nested ones included; with a base,
-     * only its concrete subclasses.
+     * The classes under a directory of `src/`, nested ones included unless a
+     * depth caps it; with a base, only its concrete subclasses.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
      */
-    public function classes(string $directory, ?string $base = null): Collection
+    public function classes(string $directory, ?string $base = null, ?int $depth = null): Collection
     {
-        return ClassFinder::classes($this->path("src/{$directory}"), $base);
+        return ClassFinder::classes($this->path("src/{$directory}"), $base, $depth);
     }
 
     public function has(string $relative = ''): bool

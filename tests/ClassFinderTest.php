@@ -19,6 +19,14 @@ it('keeps only concrete subclasses of a base', function () {
     expect($classes->all())->toBe([MailWriter::class, EnvWriter::class]);
 });
 
+it('stops at a depth, so nothing below it is read or autoloaded', function () {
+    $path = fixturePath('Discovery/src/Setup');
+
+    expect(ClassFinder::classes($path, depth: 0)->all())->toBe([EnvWriter::class, Helper::class, Writer::class])
+        ->and(ClassFinder::classes($path, Writer::class, depth: 0)->all())->toBe([EnvWriter::class])
+        ->and(ClassFinder::classes($path, Writer::class, depth: 1)->all())->toBe([MailWriter::class, EnvWriter::class]);
+});
+
 it('accepts an interface as the base', function () {
     $classes = ClassFinder::classes(fixturePath('Discovery/src/Setup'), Tagged::class);
 

@@ -29,9 +29,9 @@ class FeatureRegistry
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
      */
-    public function classes(string $directory, ?string $base = null): Collection
+    public function classes(string $directory, ?string $base = null, ?int $depth = null): Collection
     {
-        return $this->all()->flatMap->classes($directory, $base);
+        return $this->all()->flatMap->classes($directory, $base, $depth);
     }
 
     public function get(string $rootPath): ?Feature
