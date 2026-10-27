@@ -400,13 +400,10 @@ class Features
     /** Read through the provider's parents too, so a base class can carry the attribute. */
     private function bootAfterAttribute(): ?BootAfter
     {
-        for ($reflection = new ReflectionClass($this->provider); $reflection; $reflection = $reflection->getParentClass()) {
-            if (! empty($attributes = $reflection->getAttributes(BootAfter::class))) {
-                return $attributes[0]->newInstance();
-            }
-        }
-
-        return null;
+        return collect([$this->provider::class, ...class_parents($this->provider)])
+            ->flatMap(fn (string $class) => (new ReflectionClass($class))->getAttributes(BootAfter::class))
+            ->first()
+            ?->newInstance();
     }
 
     private function bootsAfter(): ?ServiceProvider
