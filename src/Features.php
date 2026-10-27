@@ -3,6 +3,7 @@
 namespace Edalzell\Features;
 
 use Closure;
+use Edalzell\Features\Attributes\BootAfter;
 use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Foundation\Application;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
+use LogicException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -103,17 +105,20 @@ class Features
         return $this;
     }
 
+    /**
+     * A feature registers from inside its host's `register()`, so it boots
+     * before the host and before anything registered later. `#[BootAfter]` on
+     * the feature's provider holds its boot until the named provider has booted.
+     */
     public function bootFeature(): void
     {
-        $this
-            ->bootCommands()
-            ->bootConfig()
-            ->bootListeners()
-            ->bootPolicies()
-            ->bootRoutes()
-            ->bootSeeders()
-            ->bootViews()
-            ->bootExtensions();
+        if (is_null($after = $this->bootsAfter()) || $this->hasBooted($after)) {
+            $this->bootAll();
+
+            return;
+        }
+
+        $after->booted(fn () => $this->bootAll());
     }
 
     public function bootListeners(): static
@@ -379,6 +384,42 @@ class Features
         return str($this->name)->kebab()->toString();
     }
 
+    private function bootAll(): void
+    {
+        $this
+            ->bootCommands()
+            ->bootConfig()
+            ->bootListeners()
+            ->bootPolicies()
+            ->bootRoutes()
+            ->bootSeeders()
+            ->bootViews()
+            ->bootExtensions();
+    }
+
+    /** Read through the provider's parents too, so a base class can carry the attribute. */
+    private function bootAfterAttribute(): ?BootAfter
+    {
+        return collect([$this->provider::class, ...class_parents($this->provider)])
+            ->flatMap(fn (string $class) => (new ReflectionClass($class))->getAttributes(BootAfter::class))
+            ->first()
+            ?->newInstance();
+    }
+
+    private function bootsAfter(): ?ServiceProvider
+    {
+        if (is_null($attribute = $this->bootAfterAttribute())) {
+            return null;
+        }
+
+        throw_if(
+            is_null($provider = Arr::first($this->app->getProviders($attribute->provider))),
+            new LogicException("Feature [{$this->name}] boots after [{$attribute->provider}], which is not registered."),
+        );
+
+        return $provider;
+    }
+
     private function callProtected(string $method, mixed ...$args): mixed
     {
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
@@ -436,6 +477,20 @@ class Features
             ->sortByName();
     }
 
+    /** One registered ahead of the feature's provider has booted by the time the feature does. */
+    private function hasBooted(ServiceProvider $provider): bool
+    {
+        if (is_null($providerAt = $this->position($provider))) {
+            return false;
+        }
+
+        if (is_null($featureAt = $this->position($this->provider))) {
+            return false;
+        }
+
+        return $providerAt < $featureAt;
+    }
+
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
@@ -481,5 +536,11 @@ class Features
         $model = str(class_basename($policy))->replaceEnd('Policy', '')->toString();
 
         return ["{$this->namespace}\\Models\\{$model}" => $policy];
+    }
+
+    /** Where the provider sits in registration order, which is also boot order. */
+    private function position(ServiceProvider $provider): ?int
+    {
+        return array_key_first($this->app->getProviders($provider));
     }
 }
