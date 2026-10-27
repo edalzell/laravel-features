@@ -39,9 +39,9 @@ class ClassFinder
      * The classes declared by the files under a directory, sorted by path so
      * the result doesn't depend on the filesystem's order. Subdirectories are
      * searched too, down to the depth if one is given: 0 is the directory
-     * itself, as Finder counts it.
-     * Without a base every class is returned and nothing is autoloaded. With
-     * one, only concrete classes that extend or implement it are kept.
+     * itself, as Finder counts it. Without a base every class is returned and
+     * nothing is autoloaded. With one, only concrete classes that extend or
+     * implement it are kept.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
