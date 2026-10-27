@@ -50,6 +50,7 @@
         "psr-4": {
             "Edalzell\\Features\\Tests\\": "tests/",
             "Edalzell\\Features\\Tests\\Fixtures\\": "tests/__fixtures__/",
+            "Edalzell\\Features\\Tests\\Fixtures\\Discovery\\": "tests/__fixtures__/Discovery/src",
             "Edalzell\\Features\\Tests\\Fixtures\\PackageHost\\": "tests/__fixtures__/PackageHost/src",
             "Edalzell\\Features\\Tests\\Fixtures\\PackageHost\\Features\\SecureHeaders\\": "tests/__fixtures__/PackageHost/features/SecureHeaders/src",
             "Edalzell\\Features\\Tests\\Fixtures\\PagesOnly\\": "tests/__fixtures__/PagesOnly/src",

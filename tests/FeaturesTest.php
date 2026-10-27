@@ -330,22 +330,6 @@ it('ignores seeder files with no class, and abstract seeders', function () {
     $features->bootSeeders();
 });
 
-it('finds the class past comments, braces, enums and anonymous classes', function () {
-    $spaced = '<?php namespace Edalzell\\Features\\Tests\\Fixtures { use Illuminate\\Console\\Command; class /* spaced */ TestCommand extends Command {} }';
-    $enum = '<?php namespace Features\\TwoWords; enum Shape { case Square; public function anon() { return new class(1) extends \\stdClass {}; } }';
-    $constant = '<?php namespace Features\\TwoWords; use Illuminate\\Console\\Command; #[Attr(Command::class)] interface Marker {}';
-
-    $disk = mockOnDemandDisk('features/TwoWords');
-    $disk->put('src/Console/Commands/TestCommand.php', $spaced);
-    $disk->put('src/Console/Commands/Shape.php', $enum);
-    $disk->put('src/Console/Commands/Marker.php', $constant);
-    [$features, $provider] = mockFeatures();
-
-    $provider->shouldReceive('commands')->once()->with([TestCommand::class]);
-
-    $features->bootCommands();
-});
-
 it('registers commands', function () {
     $content = '<?php namespace Edalzell\Features\Tests\Fixtures; use Illuminate\Console\Command; class TestCommand extends Command {}';
 

@@ -375,16 +375,7 @@ class Features
     /** @return array<int, class-string<Command>> */
     private function discoverCommands(): array
     {
-        if (! $this->has('src/Console/Commands')) {
-            return [];
-        }
-
-        return collect($this->finder('src/Console/Commands'))
-            ->keys()
-            ->map(fn (string $path) => $this->getClassNameFromFile($path))
-            ->filter(fn (?string $class) => $this->isConcrete($class, Command::class))
-            ->values()
-            ->all();
+        return (new ClassFinder($this->pathTo('src/Console/Commands')))->classes(Command::class)->all();
     }
 
     /** @return array<string, array<string>> */
@@ -418,19 +409,10 @@ class Features
             ->mapWithKeys(fn (SplFileInfo $file): array => $this->policyMap($file));
     }
 
-    /** @return array<int, string> */
+    /** @return array<int, class-string<Seeder>> */
     private function discoverSeeders(): array
     {
-        if (! $this->has('database/seeders')) {
-            return [];
-        }
-
-        return collect($this->finder('database/seeders'))
-            ->keys()
-            ->map(fn (string $path) => $this->getClassNameFromFile($path))
-            ->filter(fn (?string $class) => $this->isConcrete($class, Seeder::class))
-            ->values()
-            ->all();
+        return (new ClassFinder($this->pathTo('database/seeders')))->classes(Seeder::class)->all();
     }
 
     /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
@@ -441,51 +423,6 @@ class Features
             ->in($this->pathTo($path))
             ->name('*.php')
             ->sortByName();
-    }
-
-    /**
-     * The first class declared in the file, or null when it declares none — an
-     * interface, enum or trait, say. `Foo::class` and `new class` are `T_CLASS`
-     * tokens too, so the token before decides.
-     */
-    private function getClassNameFromFile(string $filePath): ?string
-    {
-        $tokens = array_values(array_filter(
-            token_get_all(file_get_contents($filePath)),
-            fn (array|string $token) => is_string($token) || ! in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT]),
-        ));
-        $namespace = '';
-
-        foreach ($tokens as $i => $token) {
-            if (! is_array($token)) {
-                continue;
-            }
-
-            $previous = $tokens[$i - 1] ?? null;
-            $next = $tokens[$i + 1] ?? null;
-
-            if ($token[0] === T_NAMESPACE && is_array($next) && in_array($next[0], [T_STRING, T_NAME_QUALIFIED])) {
-                $namespace = $next[1];
-            }
-
-            if ($token[0] !== T_CLASS || ! is_array($next) || $next[0] !== T_STRING) {
-                continue;
-            }
-
-            if (is_array($previous) && in_array($previous[0], [T_DOUBLE_COLON, T_NEW])) {
-                continue;
-            }
-
-            return $namespace === '' ? $next[1] : "{$namespace}\\{$next[1]}";
-        }
-
-        return null;
-    }
-
-    /** @param  class-string  $base */
-    private function isConcrete(?string $class, string $base): bool
-    {
-        return ! is_null($class) && is_subclass_of($class, $base) && ! (new ReflectionClass($class))->isAbstract();
     }
 
     private function join(string $separator, string ...$parts): string
