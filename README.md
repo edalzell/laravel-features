@@ -372,7 +372,7 @@ app(FeatureRegistry::class)
     ->each(fn (string $writer) => $writer::run());
 ```
 
-`classes()` is on `FeatureRegistry` for every registered feature at once, on `Feature` for one, and on `Features` inside a provider or an [extension](#extensions). The directory is relative to `src/` and is searched recursively, sorted by path; pass a `depth` to stop sooner (`0` is the directory itself, as Statamic scans an addon). Without a base class every declared class is returned by name, and nothing is autoloaded. With one, only concrete subclasses — or implementations, if the base is an interface — are kept.
+`classes()` is on `FeatureRegistry` for every registered feature at once, on `Feature` for one, and on `Features` inside a provider or an [extension](#extensions). The directory is relative to `src/` and is searched recursively, sorted by path; pass a `depth` to stop sooner (`0` is the directory itself). Without a base class every declared class is returned by name, and nothing is autoloaded. With one, only concrete subclasses — or implementations, if the base is an interface — are kept.
 
 ### Features outside the app
 
