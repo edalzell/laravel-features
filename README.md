@@ -171,7 +171,7 @@ The tag is resolved through the container, so a package only has to tag itself â
 
 ## Boot order
 
-A feature is registered from inside its host's `register()`, and Laravel only marks the host registered once that method returns, so every feature boots before the provider that registered it, and before any package registered later. That matters when a feature's `boot()` must come after the host's: a middleware pushed onto `web` lands ahead of the host's own, say. Name the provider to wait for:
+A feature is registered from inside its host's `register()`, and Laravel only marks the host registered once that method returns, so every feature boots before the provider that registered it, and before any package registered later. That matters when a feature's own boot code must come after the host's: a middleware pushed onto `web` lands ahead of the host's own, say. Put that code in `bootFeature()` and name the provider to wait for:
 
 ```php
 use Edalzell\Features\Attributes\BootAfter;
@@ -179,16 +179,14 @@ use Edalzell\Features\Attributes\BootAfter;
 #[BootAfter(App\Providers\AppServiceProvider::class)]
 class ServiceProvider extends FeatureServiceProvider
 {
-    public function boot(): void
+    protected function bootFeature(): void
     {
-        parent::boot();
-
         $this->app['router']->pushMiddlewareToGroup('web', TrackVisits::class);
     }
 }
 ```
 
-The feature's `boot()` then runs right after that provider's, in place of its usual turn. A provider that has already booted costs nothing: the feature boots at once. Naming one that isn't registered throws a `LogicException`, rather than silently never booting.
+`bootFeature()` runs once the feature's conventions have booted, right after the named provider's `boot()`, in place of its usual turn. A provider that has already booted costs nothing: the feature boots at once. Naming one that isn't registered throws a `LogicException`, rather than silently never booting. Overriding `boot()` still works, but Laravel calls it at the feature's own turn, so nothing there can wait.
 
 ## Seeders
 
@@ -265,6 +263,7 @@ class MyGreatFeatureServiceProvider extends FeatureServiceProvider
 Override any of these protected methods to customise behaviour:
 
 ```php
+protected function bootFeature(): void           // the feature's own boot code, after the conventions and any `#[BootAfter]` provider
 protected function configFileName(): string      // default: kebab-cased feature name
 protected function configGroup(): string         // default: host Composer package short name when registered via package `features/` (e.g. `the-dev/my-package` â†’ `my-package`); merge key `{group}.{file}`, publish to `config/{group}/{file}.php`
 protected function configPublishHandle(): string // default: kebab-cased feature name

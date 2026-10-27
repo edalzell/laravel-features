@@ -6,8 +6,11 @@ use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\Features;
 use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\SeedersFacade;
+use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredServiceProvider;
+use Edalzell\Features\Tests\Fixtures\DeferredHost;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 
 it('publishes config', function () {
     $disk = tap(mockOnDemandDisk('features/TwoWords'))->put('config/two-words.php', '');
@@ -220,3 +223,45 @@ class TestGroupedServiceProvider extends FeatureServiceProvider
         return 'TwoWords';
     }
 }
+
+it('runs bootFeature() once the conventions have booted', function () {
+    mockOnDemandDisk('features/TwoWords');
+    $provider = new class(app()) extends TestServiceProvider
+    {
+        public array $order = [];
+
+        protected function bootFeature(): void
+        {
+            $this->order[] = 'feature';
+        }
+    };
+    app()->instance('extension', mock(Extension::class)->shouldReceive('boot')->andReturnUsing(fn () => $provider->order[] = 'extension')->getMock());
+    app()->tag('extension', Extension::TAG);
+
+    $provider->boot();
+
+    expect($provider->order)->toBe(['extension', 'feature']);
+});
+
+it('holds bootFeature() for the provider named in BootAfter', function () {
+    $host = new DeferredHost(app());
+    $app = mock(Application::class)->makePartial();
+    $app->instance('files', app('files'));
+    $provider = new class($app) extends DeferredServiceProvider
+    {
+        public bool $booted = false;
+
+        protected function bootFeature(): void
+        {
+            $this->booted = true;
+        }
+    };
+    $app->shouldReceive('getProviders')->with(DeferredHost::class)->andReturn([DeferredHost::class => $host]);
+    $app->shouldReceive('getProviders')->with(ServiceProvider::class)->andReturn([$provider::class => $provider, DeferredHost::class => $host]);
+
+    $provider->boot();
+    expect($provider->booted)->toBeFalse();
+
+    $host->callBootedCallbacks();
+    expect($provider->booted)->toBeTrue();
+});

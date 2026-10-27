@@ -35,13 +35,20 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
      */
     public function boot(): void
     {
-        $this->features->routeGroups($this->routeGroups())->bootFeature();
+        $this->features->routeGroups($this->routeGroups())->bootFeature($this->bootFeature(...));
     }
 
     public function register(): void
     {
         $this->features->registerFeature();
     }
+
+    /**
+     * The feature's own boot code. Runs once the conventions have booted, and
+     * after any provider named in `#[BootAfter]`, which `boot()` itself can't
+     * wait for.
+     */
+    protected function bootFeature(): void {}
 
     protected function configFileName(): string
     {
