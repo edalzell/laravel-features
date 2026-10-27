@@ -25,14 +25,14 @@ class ClassFinder
             ->reject->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT])
             ->values();
 
-        if (($at = $tokens->sliding(3)->search(fn (Collection $window) => $this->declaresClass($window))) === false) {
+        if (is_null($window = $tokens->sliding(3)->first(fn (Collection $window) => $this->declaresClass($window)))) {
             return null;
         }
 
-        $class = $tokens[$at + 2]->text;
-        $namespace = $tokens->take($at + 1)->sliding(2)->last(fn (Collection $window) => $this->declaresNamespace($window));
+        [, $class, $name] = $window->values()->all();
+        $namespace = $tokens->takeUntil($class)->sliding(2)->last(fn (Collection $window) => $this->declaresNamespace($window));
 
-        return is_null($namespace) ? $class : "{$namespace->last()->text}\\{$class}";
+        return is_null($namespace) ? $name->text : "{$namespace->last()->text}\\{$name->text}";
     }
 
     /**
