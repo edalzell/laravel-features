@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.2 - 2026-10-27
+
+### 🐛 Fixed
+
+- Give a feature a boot hook that respects BootAfter [@edalzell](https://github.com/edalzell) (#133)
+
 ## v1.6.1 - 2026-10-27
 
 ### 🐛 Fixed
