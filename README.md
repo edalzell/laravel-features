@@ -31,7 +31,9 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Seeders, Translations, Views |
-| Boot | Commands, Config publishing, Listeners, Policies, Routes, Seeders, then any [extensions](#extensions) — Livewire components ship as one |
+| Boot | Commands, Config publishing, Listeners, Policies, Routes, Seeders, View publishing, then any [extensions](#extensions) — Livewire components ship as one |
+
+Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-views`; the views land in `resources/views/vendor/{slug}`, where Laravel already looks for overrides of the `{slug}::` namespace.
 
 ## Route groups
 
