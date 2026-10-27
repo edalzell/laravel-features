@@ -27,16 +27,14 @@ class ClassFinder
             ->reject->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT])
             ->values();
 
-        // Every run of three consecutive tokens, e.g. [`abstract`, `class`, `Foo`]
-        // or [`::`, `class`, `)`]; the first with `class` declared in the middle.
-        if (is_null($window = $tokens->sliding(3)->first(fn (Collection $window) => $this->declaresClass($window)))) {
+        if (is_null($declaration = $this->classDeclaration($tokens))) {
             return null;
         }
 
-        [, $class, $name] = $window->values()->all();
-        $namespace = $tokens->takeUntil($class)->sliding(2)->last(fn (Collection $window) => $this->declaresNamespace($window));
+        [, $class, $name] = $declaration->values()->all();
+        $namespace = $this->namespaceBefore($tokens, $class);
 
-        return is_null($namespace) ? $name->text : "{$namespace->last()->text}\\{$name->text}";
+        return is_null($namespace) ? $name->text : "{$namespace}\\{$name->text}";
     }
 
     /**
@@ -66,6 +64,18 @@ class ClassFinder
         return $classes->values();
     }
 
+    /**
+     * The first run of three tokens with `class` declared in the middle, e.g.
+     * [`abstract`, `class`, `Foo`]; null when the file declares no class.
+     *
+     * @param  Collection<int, PhpToken>  $tokens
+     * @return Collection<int, PhpToken>|null
+     */
+    private function classDeclaration(Collection $tokens): ?Collection
+    {
+        return $tokens->sliding(3)->first(fn (Collection $window) => $this->declaresClass($window));
+    }
+
     /** @param  Collection<int, PhpToken>  $window  the token before, `class`, the name */
     private function declaresClass(Collection $window): bool
     {
@@ -91,5 +101,21 @@ class ClassFinder
     private function isConcrete(string $class, string $base): bool
     {
         return is_subclass_of($class, $base) && ! (new ReflectionClass($class))->isAbstract();
+    }
+
+    /**
+     * The namespace a class token sits in, so its name can be qualified: the
+     * last one declared before it, as a braced file can declare several.
+     *
+     * @param  Collection<int, PhpToken>  $tokens
+     */
+    private function namespaceBefore(Collection $tokens, PhpToken $class): ?string
+    {
+        return $tokens
+            ->takeUntil($class)
+            ->sliding(2)
+            ->last(fn (Collection $window) => $this->declaresNamespace($window))
+            ?->last()
+            ->text;
     }
 }
