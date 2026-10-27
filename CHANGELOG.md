@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.6.1 - 2026-10-27
+
+### 🐛 Fixed
+
+- Find a provider's position by identity [@edalzell](https://github.com/edalzell) (#131)
+
 ## v1.6.0 - 2026-10-27
 
 ### 🚀 New
