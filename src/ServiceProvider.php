@@ -4,7 +4,6 @@ namespace Edalzell\Features;
 
 use Edalzell\Features\Concerns\HasFeatures;
 use Edalzell\Features\Console\Commands\Make;
-use Edalzell\Features\Contracts\Extension;
 use Edalzell\Features\Extensions\LivewireComponents;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 

@@ -2,7 +2,7 @@
 
 namespace Edalzell\Features\Extensions;
 
-use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extension;
 use Edalzell\Features\Features;
 use Livewire\Livewire;
 
@@ -21,7 +21,7 @@ use Livewire\Livewire;
  * location instead, so components answer to their bare names. The binding is only
  * there once Livewire's provider has run, so without Livewire this is a no-op.
  */
-class LivewireComponents implements Extension
+class LivewireComponents extends Extension
 {
     public function boot(Features $features): void
     {

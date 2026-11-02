@@ -1,6 +1,6 @@
 <?php
 
-use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extension;
 use Edalzell\Features\Feature;
 use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\Features;

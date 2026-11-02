@@ -4,7 +4,6 @@ namespace Edalzell\Features;
 
 use Closure;
 use Edalzell\Features\Attributes\BootAfter;
-use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;

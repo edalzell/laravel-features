@@ -1,6 +1,6 @@
 <?php
 
-use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extension;
 use Edalzell\Features\Features;
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
