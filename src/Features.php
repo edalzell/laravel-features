@@ -38,6 +38,9 @@ class Features
 
     private ?string $configPublishHandle = null;
 
+    /** @var Collection<int, Extension>|null */
+    private ?Collection $extensions = null;
+
     private string $name;
 
     private string $namespace;
@@ -100,12 +103,10 @@ class Features
 
     /**
      * Last, so an extension sees a feature whose Laravel pieces are all in place.
-     * Resolved through the container tag rather than a static list so a package
-     * only has to tag itself to take part.
      */
     public function bootExtensions(): static
     {
-        collect($this->app->tagged(Extension::TAG))->each->boot($this);
+        $this->extensions()->each->boot($this);
 
         return $this;
     }
@@ -484,9 +485,21 @@ class Features
     /** @return array<string, array<string, mixed>|Closure|class-string|null> */
     private function extensionRouteGroups(): array
     {
-        return collect($this->app->tagged(Extension::TAG))
+        return $this->extensions()
             ->flatMap(fn (Extension $extension) => $extension->routeGroups())
             ->all();
+    }
+
+    /**
+     * Resolved through the container tag rather than a static list so a package
+     * only has to tag itself to take part, and once per feature so routes and
+     * boot see the same instances.
+     *
+     * @return Collection<int, Extension>
+     */
+    private function extensions(): Collection
+    {
+        return $this->extensions ??= collect($this->app->tagged(Extension::TAG));
     }
 
     /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
