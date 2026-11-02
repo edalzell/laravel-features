@@ -17,9 +17,16 @@ abstract class Extension
     public function boot(Features $features): void {}
 
     /**
-     * Route groups for every feature, keyed by route filename without extension.
-     * They sit above the package defaults and below a feature's own `routeGroups()`.
-     * The last extension tagged wins a key.
+     * Route groups for every feature's route files, keyed by filename. Entries merge
+     * over the package defaults (`web`, `api`); a feature's own `routeGroups()` merges
+     * over these, and the last extension tagged wins a key. A closure or invokable
+     * class is handed the file's path and the `Features` instance and loads the file
+     * itself.
+     *
+     *     return [
+     *         'api' => ['middleware' => 'api', 'prefix' => 'api/v1'], // change a group
+     *         'cp' => CpRoutes::class,                                // load it yourself
+     *     ];
      *
      * @return array<string, array<string, mixed>|Closure|class-string|null>
      */
