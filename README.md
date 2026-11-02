@@ -429,6 +429,14 @@ $this->registerFeatures(base_path('../../shared/features'), 'Shared\\Features');
 
 The app's own `features/` directory is still scanned, so app-local and shared features can coexist.
 
+## Upgrade
+
+### 1.x to 2.0
+
+- `Edalzell\Features\Contracts\Extension` is gone. Change `implements Contracts\Extension` to `extends Edalzell\Features\Extension`. Its `boot()` is now a no-op by default, so an extension that only supplies route groups needn't define it.
+- `config/features.php` is no longer read, so a published copy is ignored and can be deleted. Move any route group changes to `routeGroups()` on a tagged extension (see [Route groups](#route-groups)).
+- A feature's `routeGroups()` override now merges over the defaults instead of replacing them. One that returned only `['api' => ...]` used to drop `web`; it now keeps it. Return `'web' => null` to get the old behaviour.
+
 ## Testing
 
 ```bash
