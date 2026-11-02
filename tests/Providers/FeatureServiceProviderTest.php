@@ -1,6 +1,6 @@
 <?php
 
-use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extension;
 use Edalzell\Features\Feature;
 use Edalzell\Features\FeatureRegistry;
 use Edalzell\Features\Features;
@@ -183,7 +183,7 @@ it('derives the feature name and slug from the provider location', function () {
 });
 
 it('hands its options to extensions', function () {
-    app()->instance('extension', mock(Extension::class)
+    app()->instance('extension', mock(Extension::class)->makePartial()
         ->shouldReceive('boot')
         ->once()
         ->withArgs(fn (Features $features) => $features->option('livewire.namespace') === 'blog')

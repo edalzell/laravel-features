@@ -1,6 +1,6 @@
 <?php
 
-use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extension;
 use Edalzell\Features\Features;
 use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
@@ -460,6 +460,16 @@ it('boots nothing when no extension is tagged', function () {
     expect($features->bootExtensions())->toBe($features);
 });
 
+it('resolves each extension once per feature', function () {
+    CountingExtension::$made = 0;
+    app()->bind('extension', fn () => new CountingExtension);
+    app()->tag('extension', Extension::TAG);
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(CountingExtension::$made)->toBe(1);
+});
+
 it('returns an option or its default', function () {
     [$features] = mockFeatures();
 
@@ -552,3 +562,13 @@ it('throws when the provider it boots after is not registered', function () {
 
     (new Features($provider))->path(fakeFeatureRoot())->bootFeature();
 })->throws(LogicException::class, DeferredHost::class);
+
+class CountingExtension extends Extension
+{
+    public static int $made = 0;
+
+    public function __construct()
+    {
+        self::$made++;
+    }
+}

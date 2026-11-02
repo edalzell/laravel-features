@@ -56,11 +56,11 @@ A feature's route files are put in a route group by filename, the same way the f
 
 This matters because `loadRoutesFrom()` is a bare `require` — without the grouping, a feature's `web.php` routes would have no session or CSRF, and `api.php` no throttling or prefix.
 
-The mapping is configurable in two places:
-- Globally, via `config('features.route_groups')` — publish it with `php artisan vendor:publish --tag=features-config`.
-- Per feature, by overriding `routeGroups()` on that feature's service provider.
+The mapping can change in two places, merged by key over those defaults:
+- For every feature, by defining `routeGroups()` on an `Edalzell\Features\Extension` tagged with `Extension::TAG`. The last one tagged wins a key.
+- Per feature, by overriding `routeGroups()` on that feature's service provider. This beats extensions, and only needs the keys it changes.
 
-Set an entry to `null` (or remove it) and that file gets no group — only what it declares itself.
+Set an entry to `null` and that file gets no group — only what it declares itself.
 
 ## Wiring it up
 
@@ -81,7 +81,7 @@ protected function configGroup(): string         // default: host Composer packa
 protected function configPublishHandle(): string  // default: kebab-cased feature name
 protected function publishesConfig(): bool        // default: true, or what `registerFeatures()` stamped; false still merges `{group}.{file}`, publishes nothing
 protected function featuresPath(): string         // default: derived from this class's own file location
-protected function routeGroups(): array           // default: config('features.route_groups')
+protected function routeGroups(): array           // default: []; merged over the package defaults and any extension's groups
 ```
 
 **Option 2 — compose a `Features` object**, when the provider already extends something else:

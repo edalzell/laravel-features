@@ -35,6 +35,14 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 
 Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-views`; the views land in `resources/views/vendor/{slug}`, where Laravel already looks for overrides of the `{slug}::` namespace.
 
+## Upgrade
+
+### 1.x to 2.0
+
+- `Edalzell\Features\Contracts\Extension` interface is now an abstract class `Edalzell\Features\Extension` with no-op defaults. Only implement the methods you need.
+- `config/features.php` isn't used anymore, move any route group changes to `routeGroups()` (see [Route groups](#route-groups)), and delete `features.php`.
+- A feature's `routeGroups()` override now merges over the defaults instead of replacing them. One that returned only `['api' => ...]` used to drop `web`; it now keeps it. Return `'web' => null` to get the old behaviour.
+
 ## Route groups
 
 A feature's route files are put in a route group, chosen by filename, the same way the framework does it for an application's own route files:
@@ -47,23 +55,7 @@ A feature's route files are put in a route group, chosen by filename, the same w
 
 Without this, `loadRoutesFrom()` is a bare `require` — a feature's `routes/web.php` would get no session or CSRF, and `routes/api.php` no throttling and no prefix.
 
-Routes are loaded on **boot**, not register. A route file may reach for a macro that another package defines — `Route::livewire()` is the common one — and packages register in discovery order, so this one can run well before the package supplying the macro. Booting happens once every provider has registered, which is also where the framework loads its own route files.
-
-Publish the config to change a group for all features at once — to add an API version, for example:
-
-```bash
-php artisan vendor:publish --tag=features-config
-```
-
-```php
-// config/features.php
-'route_groups' => [
-    'web' => ['middleware' => 'web'],
-    'api' => ['middleware' => 'api', 'prefix' => 'api/v1', 'as' => 'api.v1.'],
-],
-```
-
-Or override `routeGroups()` on one feature's service provider:
+Override `routeGroups()` on a feature's service provider to change a group for that feature. Entries merge over the defaults by key, so name only what changes; here `routes/web.php` keeps its `web` group:
 
 ```php
 protected function routeGroups(): array
@@ -72,7 +64,7 @@ protected function routeGroups(): array
 }
 ```
 
-The two defaults always sit underneath whatever config or a feature provides, so setting one entry never loses the others. Set an entry to `null` and that file gets no middleware group and no prefix — only what it declares itself.
+Set an entry to `null` and that file gets no middleware group and no prefix — only what it declares itself.
 
 An entry can also be a closure, which is handed the file's path and the `Features` instance and loads it itself — for when a route file has to be registered through something other than a plain route group:
 
@@ -83,14 +75,26 @@ protected function routeGroups(): array
 }
 ```
 
-Closures can't be cached, so from `config/features.php` name an invokable class instead. It's resolved from the container and called the same way, so a package can set a group for every feature at once:
+Or name an invokable class, which is resolved from the container and called the same way.
+
+To change a group for every feature — adding an API version, say — define `routeGroups()` on a tagged [extension](#extensions). A package does the same to load its own route files:
 
 ```php
-// config/features.php
-'route_groups' => [
-    'admin' => App\Features\AdminRoutes::class,
-],
+use Edalzell\Features\Extension;
+
+class ApiVersion extends Extension
+{
+    public function routeGroups(): array
+    {
+        return ['api' => ['middleware' => 'api', 'prefix' => 'api/v1', 'as' => 'api.v1.']];
+    }
+}
+
+// in a service provider's register()
+$this->app->tag(ApiVersion::class, Extension::TAG);
 ```
+
+From lowest to highest, a route file's group comes from the defaults, then extensions, then the feature's own `routeGroups()`. If two extensions name the same file, the last one tagged wins.
 
 ## Livewire components
 
@@ -146,13 +150,13 @@ This needs Livewire 4, which introduced both the namespace registration and view
 
 ## Extensions
 
-Livewire isn't part of Laravel, and neither is anything else a feature might want autoloaded — Statamic fieldtypes and tags, say. Rather than teach the core about each one, a package hooks in with an extension: implement `Edalzell\Features\Contracts\Extension` and tag it in your service provider. Every feature hands itself over once its own Laravel pieces have booted:
+Livewire isn't part of Laravel, and neither is anything else a feature might want autoloaded — Statamic fieldtypes and tags, say. Rather than teach the core about each one, a package hooks in with an extension: extend `Edalzell\Features\Extension` and tag it in your service provider. Every feature hands itself over once its own Laravel pieces have booted:
 
 ```php
-use Edalzell\Features\Contracts\Extension;
+use Edalzell\Features\Extension;
 use Edalzell\Features\Features;
 
-class StatamicExtensions implements Extension
+class StatamicExtensions extends Extension
 {
     public function boot(Features $features): void
     {
@@ -167,7 +171,7 @@ class StatamicExtensions implements Extension
 $this->app->tag(StatamicExtensions::class, Extension::TAG);
 ```
 
-The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Tag it in `register()`: a feature only sees the extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton, so an extension that remembers which features it has seen should be one. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`; its `livewireNamespace()` override became the `livewire.namespace` option.
+The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Tag it in `register()`: a feature only sees the extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton, so an extension that remembers which features it has seen should be one. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`; its `livewireNamespace()` override became the `livewire.namespace` option. An extension can also supply [route groups](#route-groups) by defining `routeGroups()`; define only the methods you need.
 
 ## Boot order
 
@@ -270,7 +274,7 @@ protected function configPublishHandle(): string // default: kebab-cased feature
 protected function publishesConfig(): bool       // default: true, or whatever `registerFeatures()` stamped; false still merges `{group}.{file}` but offers nothing to `vendor:publish`
 protected function featuresPath(): string        // default: derived from the provider's own location
 protected function options(): array              // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
-protected function routeGroups(): array          // default: config('features.route_groups')
+protected function routeGroups(): array          // default: []; merged over the package defaults and any extension's groups
 ```
 
 ### Option 2: Standalone `Features` object
@@ -294,8 +298,7 @@ class MyServiceProvider extends SomeOtherProvider
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
-            ->options($this->options())
-            ->routeGroups(config('features.route_groups'));
+            ->options($this->options());
     }
 
     public function boot(): void
@@ -310,7 +313,7 @@ class MyServiceProvider extends SomeOtherProvider
 }
 ```
 
-`Features` derives the path, namespace, and app from your provider via reflection. You only need to call the fluent setters when overriding the defaults — except `routeGroups()`, which `FeatureServiceProvider` reads from config for you; without it a route file gets no group at all.
+`Features` derives the path, namespace, and app from your provider via reflection. You only need to call the fluent setters when overriding the defaults.
 
 ### Auto-discovering features
 

@@ -4,7 +4,6 @@ namespace Edalzell\Features;
 
 use Closure;
 use Edalzell\Features\Attributes\BootAfter;
-use Edalzell\Features\Contracts\Extension;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
@@ -25,6 +24,12 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class Features
 {
+    /** @var array<string, array<string, mixed>> */
+    private const array DEFAULT_ROUTE_GROUPS = [
+        'web' => ['middleware' => 'web'],
+        'api' => ['middleware' => 'api', 'prefix' => 'api'],
+    ];
+
     private readonly Application $app;
 
     private ?string $configFileName = null;
@@ -32,6 +37,9 @@ class Features
     private string $configGroup = '';
 
     private ?string $configPublishHandle = null;
+
+    /** @var Collection<int, Extension>|null */
+    private ?Collection $extensions = null;
 
     private string $name;
 
@@ -95,12 +103,10 @@ class Features
 
     /**
      * Last, so an extension sees a feature whose Laravel pieces are all in place.
-     * Resolved through the container tag rather than a static list so a package
-     * only has to tag itself to take part.
      */
     public function bootExtensions(): static
     {
-        collect($this->app->tagged(Extension::TAG))->each->boot($this);
+        $this->extensions()->each->boot($this);
 
         return $this;
     }
@@ -155,8 +161,10 @@ class Features
             return $this;
         }
 
+        $groups = [...self::DEFAULT_ROUTE_GROUPS, ...$this->extensionRouteGroups(), ...$this->routeGroups];
+
         collect($this->finder('routes')->depth(0))
-            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
+            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file, $groups));
 
         return $this;
     }
@@ -369,7 +377,9 @@ class Features
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
      * route files in a group; features should behave like the app. A closure, or
      * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes — the class so config stays cacheable.
+     * instead and loads it however it likes. These merge over the defaults and any
+     * extension's groups by key, so a feature names only what it changes, and `null`
+     * opts a file out.
      *
      * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
      */
@@ -472,6 +482,26 @@ class Features
         return $this->classes('Policies')->mapWithKeys(fn (string $policy): array => $this->policyMap($policy));
     }
 
+    /** @return array<string, array<string, mixed>|Closure|class-string|null> */
+    private function extensionRouteGroups(): array
+    {
+        return $this->extensions()
+            ->flatMap(fn (Extension $extension) => $extension->routeGroups())
+            ->all();
+    }
+
+    /**
+     * Resolved through the container tag rather than a static list so a package
+     * only has to tag itself to take part, and once per feature so routes and
+     * boot see the same instances.
+     *
+     * @return Collection<int, Extension>
+     */
+    private function extensions(): Collection
+    {
+        return $this->extensions ??= collect($this->app->tagged(Extension::TAG));
+    }
+
     /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
     private function finder(string $path): Finder
     {
@@ -501,13 +531,14 @@ class Features
         return implode($separator, array_filter($parts));
     }
 
-    private function loadRouteFile(SplFileInfo $file): void
+    /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
+    private function loadRouteFile(SplFileInfo $file, array $groups): void
     {
         if (! $path = $file->getRealPath()) {
             return;
         }
 
-        $group = $this->routeGroups[$file->getBasename('.php')] ?? null;
+        $group = $groups[$file->getBasename('.php')] ?? null;
 
         if ($group === null) {
             $this->callProtected('loadRoutesFrom', $path);
