@@ -93,12 +93,16 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * Keyed by route filename without extension. Override this to change a group for
-     * this feature; entries merge over the package defaults and any extension's groups
-     * by key, so name only what changes. An entry is `null` to opt a file out, which
-     * gets it no middleware group and no prefix, only what the file declares. A closure
-     * entry, or an invokable class name, is handed the file's path and the `Features`
-     * instance and loads it itself.
+     * Route groups for this feature's route files, keyed by filename. Entries merge
+     * over the package defaults (`web`, `api`) and any extension's, so name only what
+     * changes. A closure or invokable class is handed the file's path and this
+     * `Features` instance and loads the file itself.
+     *
+     *     return [
+     *         'api' => ['middleware' => 'api', 'prefix' => 'api/v1'], // change a group
+     *         'web' => null,                                          // no group at all
+     *         'admin' => AdminRoutes::class,                          // load it yourself
+     *     ];
      *
      * @return array<string, array<string, mixed>|Closure|class-string|null>
      */
