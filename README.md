@@ -39,8 +39,8 @@ Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-
 
 ### 1.x to 2.0
 
-- `Edalzell\Features\Contracts\Extension` is gone. Change `implements Contracts\Extension` to `extends Edalzell\Features\Extension`. Its `boot()` is now a no-op by default, so an extension that only supplies route groups needn't define it.
-- `config/features.php` is no longer read, so a published copy is ignored and can be deleted. Move any route group changes to `routeGroups()` on a tagged extension (see [Route groups](#route-groups)).
+- `Edalzell\Features\Contracts\Extension` interface is now an abstract class `Edalzell\Features\Extension` with no-op defaults. Only implement the methods you need.
+- `config/features.php` isn't used anymore, move any route group changes to `routeGroups()` (see [Route groups](#route-groups)), and delete `features.php`.
 - A feature's `routeGroups()` override now merges over the defaults instead of replacing them. One that returned only `['api' => ...]` used to drop `web`; it now keeps it. Return `'web' => null` to get the old behaviour.
 
 ## Route groups
@@ -54,8 +54,6 @@ A feature's route files are put in a route group, chosen by filename, the same w
 | anything else | no middleware group, no prefix |
 
 Without this, `loadRoutesFrom()` is a bare `require` — a feature's `routes/web.php` would get no session or CSRF, and `routes/api.php` no throttling and no prefix.
-
-Routes are loaded on **boot**, not register. A route file may reach for a macro that another package defines — `Route::livewire()` is the common one — and packages register in discovery order, so this one can run well before the package supplying the macro. Booting happens once every provider has registered, which is also where the framework loads its own route files.
 
 Override `routeGroups()` on a feature's service provider to change a group for that feature. Entries merge over the defaults by key, so name only what changes; here `routes/web.php` keeps its `web` group:
 
