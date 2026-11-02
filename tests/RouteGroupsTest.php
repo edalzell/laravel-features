@@ -11,6 +11,12 @@ function siblingRoute(string $name): ?Illuminate\Routing\Route
         ->first(fn (Illuminate\Routing\Route $route) => $route->getName() === $name);
 }
 
+/** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
+function siblingWith(array $groups): GroupedSiblingServiceProvider
+{
+    return new GroupedSiblingServiceProvider(app(), $groups);
+}
+
 it('puts routes/web.php in the web middleware group', function () {
     (new SiblingServiceProvider(app()))->boot();
 
@@ -26,46 +32,34 @@ it('puts routes/api.php in the api group and prefixes it', function () {
         ->and($route?->gatherMiddleware())->toContain('api');
 });
 
-it('lets the app change a group through config', function () {
-    config()->set('features.route_groups.api', [
-        'middleware' => 'api',
-        'prefix' => 'api/v1',
-        'as' => 'api.v1.',
-    ]);
-
-    (new SiblingServiceProvider(app()))->boot();
-
-    expect(siblingRoute('api.v1.sibling.api')?->uri())->toBe('api/v1/sibling-api');
-});
-
 it('lets a feature override its own groups', function () {
-    (new OverridingSiblingServiceProvider(app()))->boot();
+    siblingWith(['api' => ['prefix' => 'internal']])->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('internal/sibling-api');
 });
 
-it('adds no middleware group or prefix when the entry is null', function () {
-    config()->set('features.route_groups.api', null);
+it('keeps the other groups when a feature overrides one', function () {
+    siblingWith(['api' => ['prefix' => 'internal']])->boot();
 
-    (new SiblingServiceProvider(app()))->boot();
+    expect(siblingRoute('sibling.web')?->gatherMiddleware())->toContain('web');
+});
+
+it('adds no middleware group or prefix when the entry is null', function () {
+    siblingWith(['api' => null])->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('sibling-api')
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
 });
 
-it('keeps the default groups when config only names another', function () {
-    config()->set('features.route_groups', ['admin' => ['prefix' => 'admin']]);
-
-    (new SiblingServiceProvider(app()))->boot();
+it('keeps the default groups when a feature only names another', function () {
+    siblingWith(['admin' => ['prefix' => 'admin']])->boot();
 
     expect(siblingRoute('sibling.web')?->gatherMiddleware())->toContain('web')
         ->and(siblingRoute('sibling.api')?->uri())->toBe('api/sibling-api');
 });
 
 it('rejects a string group that is not an invokable class', function () {
-    config()->set('features.route_groups.api', 'api');
-
-    (new SiblingServiceProvider(app()))->boot();
+    siblingWith(['api' => 'api'])->boot();
 })->throws(InvalidArgumentException::class, 'Route group [api] for routes/api.php of feature [Sibling]');
 
 it('loads nothing when the routes are cached', function () {
@@ -92,36 +86,23 @@ it('loads route files in name order, top level only', function () {
 });
 
 it('hands the route file to a closure instead of grouping it', function () {
-    (new ClosureSiblingServiceProvider(app()))->boot();
+    siblingWith(['api' => fn (string $path) => Route::prefix('closure')->group($path)])->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('closure/sibling-api')
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
 });
 
-it('hands the route file to an invokable class named in config', function () {
-    config()->set('features.route_groups.api', PrefixedLoader::class);
-
-    (new SiblingServiceProvider(app()))->boot();
+it('hands the route file to an invokable class', function () {
+    siblingWith(['api' => PrefixedLoader::class])->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('loader/sibling-api')
         ->and(siblingRoute('sibling.api')?->gatherMiddleware())->not->toContain('api');
 });
 
 it('hands the loader the feature too', function () {
-    config()->set('features.route_groups.api', SlugLoader::class);
-
-    (new SiblingServiceProvider(app()))->boot();
+    siblingWith(['api' => SlugLoader::class])->boot();
 
     expect(siblingRoute('sibling.api')?->uri())->toBe('sibling/sibling-api');
-});
-
-it('reads route groups at boot, after every package has registered', function () {
-    $provider = new SiblingServiceProvider(app());
-    config()->set('features.route_groups.api', PrefixedLoader::class);
-
-    $provider->boot();
-
-    expect(siblingRoute('sibling.api')?->uri())->toBe('loader/sibling-api');
 });
 
 class PrefixedLoader
@@ -140,22 +121,14 @@ class SlugLoader
     }
 }
 
-class ClosureSiblingServiceProvider extends SiblingServiceProvider
+class GroupedSiblingServiceProvider extends SiblingServiceProvider
 {
-    protected function featuresPath(): string
+    /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
+    public function __construct(Application $app, private array $groups)
     {
-        return dirname(__DIR__).'/tests/__fixtures__/Sibling';
+        parent::__construct($app);
     }
 
-    /** @return array<string, array<string, mixed>|Closure> */
-    protected function routeGroups(): array
-    {
-        return ['api' => fn (string $path) => Route::prefix('closure')->group($path)];
-    }
-}
-
-class OverridingSiblingServiceProvider extends SiblingServiceProvider
-{
     /**
      * Declared here rather than in the fixture, so the path derived from this
      * class's own file would point at the package root. Point it back.
@@ -165,9 +138,14 @@ class OverridingSiblingServiceProvider extends SiblingServiceProvider
         return dirname(__DIR__).'/tests/__fixtures__/Sibling';
     }
 
-    /** @return array<string, array<string, mixed>> */
+    protected function name(): string
+    {
+        return 'Sibling';
+    }
+
+    /** @return array<string, array<string, mixed>|Closure|class-string|null> */
     protected function routeGroups(): array
     {
-        return ['api' => ['prefix' => 'internal']];
+        return $this->groups;
     }
 }

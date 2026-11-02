@@ -15,18 +15,12 @@ class ServiceProvider extends LaravelServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands(Make::class);
-
-            $this->publishes([
-                __DIR__.'/../config/features.php' => config_path('features.php'),
-            ], 'features-config');
         }
     }
 
     public function register(): void
     {
         $this->app->singleton(FeatureRegistry::class);
-
-        $this->mergeConfigFrom(__DIR__.'/../config/features.php', 'features');
 
         $this->app->tag(LivewireComponents::class, Extension::TAG);
 

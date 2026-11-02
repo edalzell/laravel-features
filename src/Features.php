@@ -24,6 +24,12 @@ use Symfony\Component\Finder\SplFileInfo;
 
 class Features
 {
+    /** @var array<string, array<string, mixed>> */
+    private const array DEFAULT_ROUTE_GROUPS = [
+        'web' => ['middleware' => 'web'],
+        'api' => ['middleware' => 'api', 'prefix' => 'api'],
+    ];
+
     private readonly Application $app;
 
     private ?string $configFileName = null;
@@ -154,8 +160,10 @@ class Features
             return $this;
         }
 
+        $groups = [...self::DEFAULT_ROUTE_GROUPS, ...$this->routeGroups];
+
         collect($this->finder('routes')->depth(0))
-            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file));
+            ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file, $groups));
 
         return $this;
     }
@@ -368,7 +376,8 @@ class Features
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
      * route files in a group; features should behave like the app. A closure, or
      * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes — the class so config stays cacheable.
+     * instead and loads it however it likes. These merge over the defaults by key,
+     * so a feature names only what it changes, and `null` opts a file out.
      *
      * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
      */
@@ -500,13 +509,14 @@ class Features
         return implode($separator, array_filter($parts));
     }
 
-    private function loadRouteFile(SplFileInfo $file): void
+    /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
+    private function loadRouteFile(SplFileInfo $file, array $groups): void
     {
         if (! $path = $file->getRealPath()) {
             return;
         }
 
-        $group = $this->routeGroups[$file->getBasename('.php')] ?? null;
+        $group = $groups[$file->getBasename('.php')] ?? null;
 
         if ($group === null) {
             $this->callProtected('loadRoutesFrom', $path);
