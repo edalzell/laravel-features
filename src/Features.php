@@ -160,7 +160,7 @@ class Features
             return $this;
         }
 
-        $groups = [...self::DEFAULT_ROUTE_GROUPS, ...$this->routeGroups];
+        $groups = [...self::DEFAULT_ROUTE_GROUPS, ...$this->extensionRouteGroups(), ...$this->routeGroups];
 
         collect($this->finder('routes')->depth(0))
             ->each(fn (SplFileInfo $file) => $this->loadRouteFile($file, $groups));
@@ -376,8 +376,9 @@ class Features
      * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
      * route files in a group; features should behave like the app. A closure, or
      * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes. These merge over the defaults by key,
-     * so a feature names only what it changes, and `null` opts a file out.
+     * instead and loads it however it likes. These merge over the defaults and any
+     * extension's groups by key, so a feature names only what it changes, and `null`
+     * opts a file out.
      *
      * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
      */
@@ -478,6 +479,14 @@ class Features
     private function discoverPolicies(): Collection
     {
         return $this->classes('Policies')->mapWithKeys(fn (string $policy): array => $this->policyMap($policy));
+    }
+
+    /** @return array<string, array<string, mixed>|Closure|class-string|null> */
+    private function extensionRouteGroups(): array
+    {
+        return collect($this->app->tagged(Extension::TAG))
+            ->flatMap(fn (Extension $extension) => $extension->routeGroups())
+            ->all();
     }
 
     /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */

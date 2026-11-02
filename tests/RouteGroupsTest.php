@@ -1,5 +1,6 @@
 <?php
 
+use Edalzell\Features\Extension;
 use Edalzell\Features\Features;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
@@ -15,6 +16,13 @@ function siblingRoute(string $name): ?Illuminate\Routing\Route
 function siblingWith(array $groups): GroupedSiblingServiceProvider
 {
     return new GroupedSiblingServiceProvider(app(), $groups);
+}
+
+/** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
+function tagRouteGroups(array $groups, string $abstract = 'extension'): void
+{
+    app()->instance($abstract, new RouteGroupsExtension($groups));
+    app()->tag($abstract, Extension::TAG);
 }
 
 it('puts routes/web.php in the web middleware group', function () {
@@ -61,6 +69,49 @@ it('keeps the default groups when a feature only names another', function () {
 it('rejects a string group that is not an invokable class', function () {
     siblingWith(['api' => 'api'])->boot();
 })->throws(InvalidArgumentException::class, 'Route group [api] for routes/api.php of feature [Sibling]');
+
+it('lets an extension change a group for every feature', function () {
+    tagRouteGroups(['api' => PrefixedLoader::class]);
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('loader/sibling-api');
+});
+
+it('keeps the default groups when an extension only names another', function () {
+    tagRouteGroups(['admin' => ['prefix' => 'admin']]);
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.web')?->gatherMiddleware())->toContain('web')
+        ->and(siblingRoute('sibling.api')?->uri())->toBe('api/sibling-api');
+});
+
+it('lets a feature override one of an extension\'s groups and keep the rest', function () {
+    tagRouteGroups(['api' => PrefixedLoader::class, 'web' => ['prefix' => 'extension']]);
+
+    siblingWith(['api' => ['prefix' => 'internal']])->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('internal/sibling-api')
+        ->and(siblingRoute('sibling.web')?->uri())->toBe('extension/sibling-web');
+});
+
+it('lets a feature opt a file out of an extension\'s group', function () {
+    tagRouteGroups(['api' => PrefixedLoader::class]);
+
+    siblingWith(['api' => null])->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('sibling-api');
+});
+
+it('lets the last tagged extension win a group', function () {
+    tagRouteGroups(['api' => ['prefix' => 'first']], 'first');
+    tagRouteGroups(['api' => ['prefix' => 'second']], 'second');
+
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(siblingRoute('sibling.api')?->uri())->toBe('second/sibling-api');
+});
 
 it('loads nothing when the routes are cached', function () {
     $app = mock(Application::class)->makePartial()->shouldReceive('routesAreCached')->andReturn(true)->getMock();
@@ -118,6 +169,18 @@ class SlugLoader
     public function __invoke(string $path, Features $features): void
     {
         Route::prefix($features->slug())->group($path);
+    }
+}
+
+class RouteGroupsExtension extends Extension
+{
+    /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
+    public function __construct(private array $groups) {}
+
+    /** @return array<string, array<string, mixed>|Closure|class-string|null> */
+    public function routeGroups(): array
+    {
+        return $this->groups;
     }
 }
 

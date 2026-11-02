@@ -94,8 +94,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     /**
      * Keyed by route filename without extension. Override this to change a group for
-     * this feature; entries merge over the package defaults by key, so name only what
-     * changes. An entry is `null` to opt a file out, which gets it no middleware group
+     * this feature; entries merge over the package defaults and any extension's groups
+     * by key, so name only what changes. An entry is `null` to opt a file out, which gets it no middleware group
      * and no prefix, only what the file declares. A closure entry, or an invokable
      * class name, is handed the file's path and the `Features` instance and loads it
      * itself.
