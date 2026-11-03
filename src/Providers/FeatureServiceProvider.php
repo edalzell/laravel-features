@@ -39,7 +39,9 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         $this->features->registerFeature();
     }
 
-    /** The feature's own boot code, run after the conventions and any `#[BootAfter]` provider. */
+    /**
+     * The feature's own boot code, run after the conventions and any `#[BootAfter]` provider.
+     */
     protected function bootFeature(): void {}
 
     protected function configFileName(): string
@@ -77,7 +79,9 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return [];
     }
 
-    /** Whether the config is offered to `vendor:publish`; `false` still merges the defaults. */
+    /**
+     * Whether the config is offered to `vendor:publish`; `false` still merges the defaults.
+     */
     protected function publishesConfig(): bool
     {
         return $this->feature()->publishesConfig ?? true;

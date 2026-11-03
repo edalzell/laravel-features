@@ -7,7 +7,9 @@ use PhpToken;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 
-/** Turns PHP files into the classes they declare. */
+/**
+ * Turns PHP files into the classes they declare.
+ */
 class ClassFinder
 {
     /**

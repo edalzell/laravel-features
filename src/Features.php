@@ -146,7 +146,10 @@ class Features
         return $this;
     }
 
-    /** Booted, not registered: a route file may use a macro (`Route::livewire()`) from a package registered later. */
+    /**
+     * Booted, not registered: a route file may use a macro (`Route::livewire()`)
+     * from a package registered later.
+     */
     public function bootRoutes(): static
     {
         if ($this->app->routesAreCached() || ! $this->has('routes')) {
@@ -168,7 +171,9 @@ class Features
         return $this;
     }
 
-    /** Published to where Laravel looks for overrides of the `{slug}::` namespace. */
+    /**
+     * Published to where Laravel looks for overrides of the `{slug}::` namespace.
+     */
     public function bootViews(): static
     {
         if (! $this->app->runningInConsole() || ! $this->has('resources/views')) {
@@ -216,7 +221,9 @@ class Features
         return $this;
     }
 
-    /** Whether the feature has this file or directory. */
+    /**
+     * Whether the feature has this file or directory.
+     */
     public function has(string $relative): bool
     {
         return file_exists($this->pathTo($relative));
@@ -270,7 +277,9 @@ class Features
         return $this->provider;
     }
 
-    /** `false` still merges the defaults at `{group}.{file}`; only `vendor:publish` is skipped. */
+    /**
+     * `false` still merges the defaults at `{group}.{file}`; only `vendor:publish` is skipped.
+     */
     public function publishesConfig(bool $publishes): static
     {
         $this->publishesConfig = $publishes;
@@ -472,7 +481,9 @@ class Features
         return $this->extensions ??= collect($this->app->tagged(Extension::TAG));
     }
 
-    /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
+    /**
+     * Sorted, so what a feature registers doesn't depend on the filesystem's order.
+     */
     private function finder(string $path): Finder
     {
         return tap(new Finder)
@@ -482,7 +493,9 @@ class Features
             ->sortByName();
     }
 
-    /** Registration order is boot order, so one registered ahead of the feature has booted. */
+    /**
+     * Registration order is boot order, so one registered ahead of the feature has booted.
+     */
     private function hasBooted(ServiceProvider $provider): bool
     {
         if (is_null($providerAt = $this->position($provider))) {
