@@ -135,9 +135,9 @@ class AppServiceProvider extends ServiceProvider
 }
 ```
 
-This scans the target directory for subfolders containing `src/ServiceProvider.php` and registers each as `<namespacePrefix>\<FolderName>\ServiceProvider`. **If a folder is missing `src/ServiceProvider.php`, it's silently skipped** — no error, the feature just doesn't exist as far as the app is concerned. If the folder name and the provider's actual namespace don't match (e.g. after renaming a feature folder without updating its `namespace` declaration), registration throws a "class not found" error at boot — that's the signal to check the namespace against the folder name.
+This registers `<namespacePrefix>\<FolderName>\ServiceProvider` for every subfolder holding `src/ServiceProvider.php`. **A folder without one is silently skipped.** A folder name that doesn't match the provider's namespace (renamed folder, stale `namespace`) fails at boot with "class not found".
 
-Each discovered feature is also stored on `FeatureRegistry` (`app(FeatureRegistry::class)->all()`). Use `Feature::path()`, `namespace()`, and `has()` when package code needs a feature's location without re-deriving folder/namespace conventions.
+Each feature is also stored on `FeatureRegistry` (`app(FeatureRegistry::class)->all()`); `Feature::path()`, `namespace()` and `has()` give its location without re-deriving conventions.
 
 ## Adding a feature
 
@@ -145,6 +145,6 @@ Each discovered feature is also stored on `FeatureRegistry` (`app(FeatureRegistr
 php artisan feature:make MyGreatFeature
 ```
 
-Creates `features/MyGreatFeature/src/ServiceProvider.php` extending `FeatureServiceProvider`. From there, drop files into the matching folders — `src/Listeners/SomeListener.php`, `routes/web.php`, `database/migrations/...`, `config/my-great-feature.php` — and they're picked up automatically; no manual registration per file.
+Creates `features/MyGreatFeature/src/ServiceProvider.php` extending `FeatureServiceProvider`; files dropped into the matching folders are picked up with no per-file registration.
 
-For a package feature: `php artisan feature:make MyGreatFeature the-dev/my-package`. This also adds the `HasFeatures` trait and a `registerFeatures()` call to the target package's own service provider if it doesn't have one already.
+For a package feature, `php artisan feature:make MyGreatFeature the-dev/my-package` also adds `HasFeatures` and a `registerFeatures()` call to the package's service provider if missing.

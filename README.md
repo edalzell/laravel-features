@@ -292,7 +292,7 @@ class MyServiceProvider extends SomeOtherProvider
 
 ### Auto-discovering features
 
-Use the `HasFeatures` trait in any service provider to automatically register all features from a directory. In your app, add it to `AppServiceProvider`:
+The `HasFeatures` trait registers every feature in a directory. In an app, add it to `AppServiceProvider`:
 
 ```php
 use Edalzell\Features\Concerns\HasFeatures;
@@ -324,7 +324,7 @@ class MyPackageServiceProvider extends ServiceProvider
 }
 ```
 
-In a package, `registerFeatures()` defaults to looking in `<package-root>/features/` and registering providers under `YourPackage\Features\FeatureName\ServiceProvider`. Pass explicit arguments to override either default:
+In a package, `registerFeatures()` defaults to `<package-root>/features/` and `YourPackage\Features\FeatureName\ServiceProvider`. Pass arguments to override either:
 
 ```php
 $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
@@ -343,7 +343,7 @@ A package feature's config is merged at `{group}.{file}`, the group being the pa
 
 ### Looking up registered features
 
-`registerFeatures()` also records each discovered feature in `FeatureRegistry`. Use that when something outside the feature needs its path or namespace — Setup runners, for example — without re-scanning disk or hardcoding conventions:
+`registerFeatures()` records each feature in `FeatureRegistry`, for when code outside the feature needs its path or namespace:
 
 ```php
 use Edalzell\Features\Feature;
@@ -358,7 +358,7 @@ app(FeatureRegistry::class)
     });
 ```
 
-`registerFeatures()` records each feature via `FeatureRegistry::register()`, which also registers that feature's `ServiceProvider`. `Feature::path()` / `namespace()` with no argument return the feature root. `has()` checks that a relative path exists on disk. Use `FeatureRegistry::add()` when you only need the descriptor without loading the provider (e.g. tests).
+`path()` and `namespace()` with no argument return the feature root; `has()` checks a relative path exists. `FeatureRegistry::add()` records a feature without registering its provider, for tests.
 
 ### Finding classes in a feature
 
@@ -376,7 +376,7 @@ app(FeatureRegistry::class)
 
 ### Features outside the app
 
-A feature works from anywhere — the app, a package, or a directory outside the app entirely, such as a monorepo where two apps share one set of features:
+A feature can live outside the app entirely, as in a monorepo where two apps share one set:
 
 ```
 gym/
@@ -388,9 +388,7 @@ gym/
         └── Scheduling/
 ```
 
-Two things need wiring, in each app that uses them.
-
-**Autoloading** — declare the directory and its namespace in `composer.json`, and the plugin generates PSR-4 entries for every feature it finds:
+Each app wires two things. Autoloading, in `composer.json`, where the plugin generates PSR-4 entries for every feature it finds:
 
 ```json
 "extra": {
@@ -402,13 +400,13 @@ Two things need wiring, in each app that uses them.
 }
 ```
 
-**Registration** — point `registerFeatures()` at the same directory:
+And registration, pointing `registerFeatures()` at the same directory:
 
 ```php
 $this->registerFeatures(base_path('../../shared/features'), 'Shared\\Features');
 ```
 
-The app's own `features/` directory is still scanned, so app-local and shared features can coexist.
+The app's own `features/` directory is still scanned.
 
 ## Testing
 

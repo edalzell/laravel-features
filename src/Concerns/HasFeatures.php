@@ -26,9 +26,7 @@ trait HasFeatures
 
         $configGroup = $usingPackageFeatures ? $this->packageConfigGroup($packageRoot) : '';
 
-        // A host package can register before this package's provider has; the
-        // registry has to be the shared one either way or the feature providers
-        // won't find their own entries.
+        // A host package may register before this package's provider has.
         $this->app->singletonIf(FeatureRegistry::class);
         $registry = $this->app->make(FeatureRegistry::class);
 
