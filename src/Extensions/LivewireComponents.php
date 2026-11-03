@@ -7,19 +7,10 @@ use Edalzell\Features\Features;
 use Livewire\Livewire;
 
 /**
- * Livewire only resolves components from the app's own locations, so a feature
- * has to point it at its own. A feature only says where they live: `src/Livewire`
- * for class components, `resources/views` for the single- and multi-file ones,
- * which keep Livewire's own split — `livewire/` for components, `pages/` for full
- * pages — as a dotted prefix: `my-great-feature::livewire.post-list`,
- * `my-great-feature::pages.show`. Livewire allows a namespace one directory, so
- * the views root is the only way both are reachable under one name. Nothing is
- * read until a component is used.
- *
- * The `livewire.namespace` option is prefixed to every component name so two
- * features can each have a `PostList`; an empty string registers a plain
- * location instead, so components answer to their bare names. The binding is only
- * there once Livewire's provider has run, so without Livewire this is a no-op.
+ * Registers a feature's `src/Livewire` and `resources/views` with Livewire under
+ * the `livewire.namespace` option (default: the slug). The views root is the
+ * namespace's view path so `livewire/` and `pages/` are both reachable under one
+ * name. An empty namespace registers a plain location instead.
  */
 class LivewireComponents extends Extension
 {

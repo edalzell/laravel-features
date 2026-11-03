@@ -81,7 +81,7 @@ Precedence, lowest to highest: defaults, extensions (last tagged wins), the feat
 
 ## Livewire components
 
-Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components under `resources/views` — `livewire/` for ordinary components and `pages/` for full pages, the same split Livewire uses for the app. The views root is registered as the feature's Livewire namespace, so both directories answer under one name with the directory as a dotted prefix:
+Class components go in `src/Livewire`; single- and multi-file components under `resources/views`, in `livewire/` or `pages/` as Livewire splits them for the app. The feature's slug is the Livewire namespace, and the directory becomes a dotted prefix:
 
 ```
 MyGreatFeature/
@@ -102,9 +102,7 @@ MyGreatFeature/
             └── ShowPost.php          -> <livewire:my-great-feature::posts.show-post />
 ```
 
-Single- and multi-file components follow Livewire's own rules — a single-file component is a `.blade.php` holding a `new class extends Component` block, a multi-file component a directory holding `name.php` and `name.blade.php` alongside any `name.js` or `name.css`. Nothing is scanned: Livewire resolves a name the first time it is used, exactly as it does for the app's own components.
-
-The feature's slug goes in front so two features can each have a `PostList`. Change it, or drop it, through the feature's options:
+Nothing is scanned: Livewire resolves a name the first time it is used. Change or drop the namespace through the feature's options:
 
 ```php
 protected function options(): array
@@ -113,23 +111,19 @@ protected function options(): array
 }
 ```
 
-An empty string registers the feature's directories as plain locations instead, so its components answer to their bare names.
+An empty string registers plain locations instead, so components answer to their bare names.
 
 ### Full-page components
 
-A feature's namespace is a peer of Livewire's own `pages::` and `layouts::` — those are just default entries in the app's `component_namespaces`, not a separate mechanism — so a feature routes one of its components as a full page from its own `routes/web.php`, with no extra registration:
+A feature routes one of its components as a full page from its own `routes/web.php`:
 
 ```php
 Route::livewire('posts/create', 'my-great-feature::create-post');
 ```
 
-The page renders into `livewire.component_layout`, the app's layout. To give a feature its own, point a component at a view from the feature's `resources/views`:
+The page renders into the app's layout; `#[Layout('my-great-feature::layout')]` uses one from the feature's `resources/views` instead.
 
-```php
-#[Layout('my-great-feature::layout')]
-```
-
-This needs Livewire 4, which introduced both the namespace registration and view-based components. Livewire is not a dependency of this package: when it isn't installed, nothing is registered and nothing breaks.
+Needs Livewire 4. Livewire is not a dependency of this package; without it, nothing is registered.
 
 ## Extensions
 
