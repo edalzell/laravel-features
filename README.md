@@ -186,9 +186,7 @@ public function run(): void
 }
 ```
 
-They run in the order their features were registered — alphabetical, for an app's own `features/` directory. That order breaks down once one feature's data depends on another's.
-
-`#[SeedAfter]` names the seeders that must run first:
+They run in feature registration order. When one feature's data depends on another's, `#[SeedAfter]` names the seeders that must run first:
 
 ```php
 use Edalzell\Features\Attributes\SeedAfter;
@@ -204,7 +202,7 @@ class AvailabilitySeeder extends Seeder
 }
 ```
 
-A seeder with no `#[SeedAfter]`, or whose dependencies are already satisfied, keeps its registration position — that's the tiebreak, not alphabetical or random order. Naming a seeder outside the collected set is fine and is simply ignored for ordering; that one is the app's own `database/seeders` to order. A cycle between `#[SeedAfter]` declarations throws a `LogicException` naming the seeders involved.
+Registration order is the tiebreak. Naming a seeder outside the collected set is ignored for ordering. A cycle throws a `LogicException` naming the seeders involved.
 
 ## Dependencies
 

@@ -24,9 +24,7 @@ class Seeders extends Seeder
     }
 
     /**
-     * The seeders this one names in `#[SeedAfter]`, narrowed to the ones collected
-     * here: a dependency living elsewhere (an app's own `database/seeders`, say)
-     * has nothing in this list to be ordered against.
+     * The `#[SeedAfter]` seeders that are also collected here; others can't be ordered.
      *
      * @return array<int, string>
      */
@@ -44,11 +42,7 @@ class Seeders extends Seeder
     }
 
     /**
-     * Depth-first topological sort: before a seeder is placed, everything it must
-     * run after is placed first. Walking the collected list in order makes
-     * registration order the tiebreak, and a seeder met again while its own
-     * dependencies are still being placed is a cycle.
-     * https://en.wikipedia.org/wiki/Topological_sorting#Depth-first_search
+     * Depth-first topological sort; registration order is the tiebreak.
      *
      * @return array<int, string>
      */
@@ -62,7 +56,6 @@ class Seeders extends Seeder
                 return;
             }
 
-            // The keys of $placing are the path walked to get here; from this seeder on, it is the cycle.
             throw_if(
                 isset($placing[$seeder]),
                 LogicException::class,

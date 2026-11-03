@@ -64,6 +64,10 @@ Set an entry to `null` and that file gets no group — only what it declares its
 
 Anything Laravel itself doesn't autoload (Livewire components are the built-in case) is wired by an extension: a subclass of `Edalzell\Features\Extension` tagged with `Extension::TAG` in a service provider's `register()`. Each feature is handed to `boot(Features $features)` after its own conventions have booted. Per-feature settings for extensions go through the provider's `options()`, keyed by dotted name (`livewire.namespace`).
 
+## Seeders
+
+Every feature's `database/seeders` are collected into `Edalzell\Features\Seeders`; the app's `DatabaseSeeder` calls that one class. They run in feature registration order; `#[SeedAfter(OtherSeeder::class)]` on a seeder makes it wait for another's.
+
 ## Boot order
 
 A feature boots before the provider that registered it. Boot code that must run after another provider goes in `bootFeature()` with `#[BootAfter(ThatProvider::class)]` on the feature's service provider; overriding `boot()` can't wait.
