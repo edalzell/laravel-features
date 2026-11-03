@@ -11,16 +11,11 @@ use Symfony\Component\Finder\Finder;
 class ClassFinder
 {
     /**
-     * The fully qualified name of the first class declared in the file;
-     * interfaces, enums and traits are skipped. `Foo::class` and `new class`
-     * are `T_CLASS` tokens too, so a `class` token only counts as a declaration
-     * when the token before it is neither `::` nor `new`.
+     * The first class declared in the file, fully qualified. Whitespace and comments
+     * are dropped first so `Foo::class` and `new class` can be told apart from a declaration.
      */
     public static function className(string $file): ?string
     {
-        // Drop whitespace and comments so `class` sits directly between the
-        // token before it (`::`, `new`) and its name; a space would otherwise
-        // take one of those slots.
         $tokens = collect(PhpToken::tokenize(file_get_contents($file)))
             ->reject->is([T_WHITESPACE, T_COMMENT, T_DOC_COMMENT])
             ->values();
@@ -36,12 +31,8 @@ class ClassFinder
     }
 
     /**
-     * The classes declared by the files under a directory, sorted by path so
-     * the result doesn't depend on the filesystem's order. Subdirectories are
-     * searched too, down to the depth if one is given: 0 is the directory
-     * itself, as Finder counts it. Without a base every class is returned and
-     * nothing is autoloaded. With one, only concrete classes that extend or
-     * implement it are kept.
+     * The classes declared under a directory, sorted by path. A depth limits the
+     * search (0 is the directory itself); a base keeps only concrete subclasses.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>
@@ -62,8 +53,7 @@ class ClassFinder
     }
 
     /**
-     * The first run of three tokens with `class` declared in the middle, e.g.
-     * [`abstract`, `class`, `Foo`]; null when the file declares no class.
+     * The first [before, `class`, name] run, e.g. [`abstract`, `class`, `Foo`].
      *
      * @param  Collection<int, PhpToken>  $tokens
      * @return Collection<int, PhpToken>|null
@@ -103,8 +93,7 @@ class ClassFinder
     }
 
     /**
-     * The namespace a class token sits in, so its name can be qualified: the
-     * last one declared before it, as a braced file can declare several.
+     * The last namespace declared before the class token; a braced file can declare several.
      *
      * @param  Collection<int, PhpToken>  $tokens
      */

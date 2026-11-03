@@ -362,7 +362,7 @@ app(FeatureRegistry::class)
 
 ### Finding classes in a feature
 
-Commands, policies, listeners and seeders are found by scanning a directory for the classes its files declare. The same scan is yours for any directory under `src/`, so a convention of your own — setup writers in `src/Setup`, say — doesn't need a second one:
+Commands, policies, listeners and seeders are found by scanning a directory for the classes its files declare. The same scan works for any directory under `src/`, so a convention of your own needs no second one:
 
 ```php
 use Edalzell\Features\FeatureRegistry;
@@ -372,7 +372,7 @@ app(FeatureRegistry::class)
     ->each(fn (string $writer) => $writer::run());
 ```
 
-`classes()` is on `FeatureRegistry` for every registered feature at once, on `Feature` for one, and on `Features` inside a provider or an [extension](#extensions). The directory is relative to `src/` and is searched recursively, sorted by path; pass a `depth` to stop sooner (`0` is the directory itself). Without a base class every declared class is returned by name, and nothing is autoloaded. With one, only concrete classes that extend or implement it are kept.
+`classes()` is on `FeatureRegistry` for every feature, on `Feature` for one, and on `Features` inside a provider or [extension](#extensions). The directory is relative to `src/`, searched recursively, sorted by path; `depth` stops sooner (`0` is the directory itself). A base class keeps only concrete classes that extend or implement it; without one every declared class is returned and nothing is autoloaded.
 
 ### Features outside the app
 
