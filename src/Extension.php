@@ -5,10 +5,9 @@ namespace Edalzell\Features;
 use Closure;
 
 /**
- * A hook for autoloading something Laravel itself doesn't know about — Livewire
- * components, Statamic addons. Tag a subclass with `Extension::TAG` and every
- * feature hands itself over once its own Laravel pieces have booted. Define only
- * what's needed: both methods default to doing nothing.
+ * Autoloads what Laravel itself doesn't know about (Livewire components, say).
+ * Tag a subclass with `Extension::TAG`; every feature hands itself over once its
+ * Laravel pieces have booted. Override only what's needed.
  */
 abstract class Extension
 {

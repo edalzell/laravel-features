@@ -249,8 +249,7 @@ class Features
     }
 
     /**
-     * Settings an extension reads per feature, keyed by dotted name
-     * (`livewire.namespace`). The core doesn't look at them.
+     * Per-feature settings for extensions, keyed by dotted name (`livewire.namespace`).
      *
      * @param  array<string, mixed>  $options
      */
@@ -480,9 +479,7 @@ class Features
     }
 
     /**
-     * Resolved through the container tag rather than a static list so a package
-     * only has to tag itself to take part, and once per feature so routes and
-     * boot see the same instances.
+     * Resolved once per feature, so routes and boot see the same instances.
      *
      * @return Collection<int, Extension>
      */

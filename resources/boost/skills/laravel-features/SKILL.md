@@ -62,6 +62,10 @@ The mapping can change in two places, merged by key over those defaults:
 
 Set an entry to `null` and that file gets no group — only what it declares itself.
 
+## Extensions
+
+Anything Laravel itself doesn't autoload (Livewire components are the built-in case) is wired by an extension: a subclass of `Edalzell\Features\Extension` tagged with `Extension::TAG` in a service provider's `register()`. Each feature is handed to `boot(Features $features)` after its own conventions have booted. Per-feature settings for extensions go through the provider's `options()`, keyed by dotted name (`livewire.namespace`).
+
 ## Wiring it up
 
 **Option 1 — extend `FeatureServiceProvider`** (the default, and what `feature:make` generates):
@@ -81,6 +85,7 @@ protected function configGroup(): string         // default: host Composer packa
 protected function configPublishHandle(): string  // default: kebab-cased feature name
 protected function publishesConfig(): bool        // default: true, or what `registerFeatures()` stamped; false still merges `{group}.{file}`, publishes nothing
 protected function featuresPath(): string         // default: derived from this class's own file location
+protected function options(): array               // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array           // default: []; merged over the package defaults and any extension's groups
 ```
 
@@ -96,6 +101,7 @@ public function __construct(Application $app)
     $this->features = (new Features($this))
         ->path($this->featuresPath())
         ->name($this->name())
+        ->options($this->options())
         ->routeGroups($this->routeGroups());
 }
 

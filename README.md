@@ -133,7 +133,7 @@ This needs Livewire 4, which introduced both the namespace registration and view
 
 ## Extensions
 
-Livewire isn't part of Laravel, and neither is anything else a feature might want autoloaded — Statamic fieldtypes and tags, say. Rather than teach the core about each one, a package hooks in with an extension: extend `Edalzell\Features\Extension` and tag it in your service provider. Every feature hands itself over once its own Laravel pieces have booted:
+An extension autoloads what Laravel itself doesn't know about: Livewire components (built in, `Edalzell\Features\Extensions\LivewireComponents`), Statamic fieldtypes, and so on. Extend `Edalzell\Features\Extension`, tag it in your service provider's `register()`, and every feature hands itself over once its own Laravel pieces have booted:
 
 ```php
 use Edalzell\Features\Extension;
@@ -154,7 +154,7 @@ class StatamicExtensions extends Extension
 $this->app->tag(StatamicExtensions::class, Extension::TAG);
 ```
 
-The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Tag it in `register()`: a feature only sees the extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton, so an extension that remembers which features it has seen should be one. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`; its `livewireNamespace()` override became the `livewire.namespace` option. An extension can also supply [route groups](#route-groups) by defining `routeGroups()`; define only the methods you need.
+A feature only sees extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; each extension reads its own. An extension can also supply [route groups](#route-groups).
 
 ## Boot order
 

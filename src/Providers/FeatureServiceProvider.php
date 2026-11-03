@@ -72,8 +72,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * Settings for extensions, keyed by dotted name — `livewire.namespace`, say.
-     * The core ignores them; each extension reads its own.
+     * Settings for extensions, keyed by dotted name (`livewire.namespace`).
      *
      * @return array<string, mixed>
      */
