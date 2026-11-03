@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.0.0 - 2026-11-03
+
+### 🚀 New
+
+- Let extensions supply route groups [@edalzell](https://github.com/edalzell) (#135)
+
+### 🧰 Maintenance
+
+- Tighten up comments & README [@edalzell](https://github.com/edalzell) (#136)
+
 ## v1.6.2 - 2026-10-27
 
 ### 🐛 Fixed
