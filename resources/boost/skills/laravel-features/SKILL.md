@@ -38,8 +38,6 @@ This is the part that fails silently — get a file in the wrong place and nothi
 | **register()** | Config (merged), Migrations, Seeders (container binding), Translations, Views | `database/migrations/`, `lang/`, `resources/views/`, `config/` |
 | **boot()** | Commands, Config (published for `vendor:publish`), Listeners, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Console/Commands/`, `src/Listeners/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
 
-Config and Seeders each do something different at each phase: `register()` merges the config file into `config()` and creates the seeder-runner binding; `boot()` makes the config file publishable and discovers the actual seeder classes to add to the runner. Listeners, Livewire components, Policies and Routes are boot-only — they need the container fully wired first, so no equivalent happens during register.
-
 Routes boot rather than register so a route file can use a macro (`Route::livewire()`) from a package registered later.
 
 Everything is discovered by scanning a fixed subfolder — `src/Console/Commands`, `src/Listeners`, `src/Policies`, `database/seeders`. A class in the wrong folder isn't wired up, and there's no warning: a listener outside `src/Listeners` just never fires, a policy outside `src/Policies` is never registered with `Gate`, a seeder outside `database/seeders` never gets added to the run. Same for the top-level folders: migrations only load from `database/migrations`, config only from `config/<slug>.php` (kebab-case of the feature name, unless overridden), views only from `resources/views`.
@@ -86,9 +84,9 @@ Override any of these to customize:
 ```php
 protected function bootFeature(): void            // the feature's own boot code, after the conventions and any `#[BootAfter]` provider
 protected function configFileName(): string      // default: kebab-cased feature name
-protected function configGroup(): string         // default: host Composer package short name for package features; merge `{group}.{file}`, publish under `config/{group}/`
+protected function configGroup(): string         // default: package short name for package features, else none; merged at `{group}.{file}`
 protected function configPublishHandle(): string  // default: kebab-cased feature name
-protected function publishesConfig(): bool        // default: true, or what `registerFeatures()` stamped; false still merges `{group}.{file}`, publishes nothing
+protected function publishesConfig(): bool        // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string         // default: derived from this class's own file location
 protected function options(): array               // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array           // default: []; merged over the package defaults and any extension's groups
@@ -128,8 +126,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerFeatures(); // defaults to base_path('features'), namespace 'Features'
-        // or, for a package whose features' settings nest in its own config file (config/{group}.php)
-        // rather than a config/{group}/ directory: $this->registerFeatures(publishesConfig: false)
+        // publishesConfig: false when a package's feature settings nest in config/{group}.php
     }
 }
 ```

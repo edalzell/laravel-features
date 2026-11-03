@@ -252,9 +252,9 @@ Override any of these protected methods to customise behaviour:
 ```php
 protected function bootFeature(): void           // the feature's own boot code, after the conventions and any `#[BootAfter]` provider
 protected function configFileName(): string      // default: kebab-cased feature name
-protected function configGroup(): string         // default: host Composer package short name when registered via package `features/` (e.g. `the-dev/my-package` → `my-package`); merge key `{group}.{file}`, publish to `config/{group}/{file}.php`
+protected function configGroup(): string         // default: package short name for package features, else none; merged at `{group}.{file}`
 protected function configPublishHandle(): string // default: kebab-cased feature name
-protected function publishesConfig(): bool       // default: true, or whatever `registerFeatures()` stamped; false still merges `{group}.{file}` but offers nothing to `vendor:publish`
+protected function publishesConfig(): bool       // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string        // default: derived from the provider's own location
 protected function options(): array              // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array          // default: []; merged over the package defaults and any extension's groups
@@ -340,14 +340,14 @@ $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 
 #### Where a package feature's config lives
 
-A package feature's config is merged at `{group}.{file}`, where the group defaults to the package's Composer short name — `the-dev/my-package` + `features/Maps/config/maps.php` is read as `config('my-package.maps.…')`. A site can then override it in one of two places, and the package picks which by whether it publishes:
+A package feature's config is merged at `{group}.{file}`, the group being the package's Composer short name: `the-dev/my-package` + `features/Maps/config/maps.php` reads as `config('my-package.maps.…')`. A site overrides it in one of two places:
 
 | Convention | Site overrides in | `registerFeatures()` |
 |---|---|---|
-| A directory per package | `config/my-package/maps.php` | default — each feature publishes its file there |
+| A directory per package | `config/my-package/maps.php` | default |
 | Nested in the package's own config | `config/my-package.php` under a `maps` key | `registerFeatures(publishesConfig: false)` |
 
-Opting out only skips `vendor:publish`; the feature's defaults are still merged, so anything the site doesn't set keeps its default. Pick one convention per package: if a site ends up with both `config/my-package.php['maps']` and `config/my-package/maps.php`, Laravel loads the nested file last and it silently replaces the whole `maps` key.
+`publishesConfig: false` only skips `vendor:publish`; the defaults are still merged. Pick one: if a site has both files, Laravel loads the nested one last and it replaces the whole `maps` key.
 
 ### Looking up registered features
 

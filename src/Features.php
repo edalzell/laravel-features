@@ -275,12 +275,7 @@ class Features
         return $this->provider;
     }
 
-    /**
-     * The defaults are still merged at `{group}.{file}`; only the copy into the
-     * app's `config/` is skipped. A host package uses this when its features'
-     * settings belong nested in the package's own config file rather than in a
-     * `config/{group}/` directory of their own.
-     */
+    /** `false` still merges the defaults at `{group}.{file}`; only `vendor:publish` is skipped. */
     public function publishesConfig(bool $publishes): static
     {
         $this->publishesConfig = $publishes;
@@ -425,7 +420,6 @@ class Features
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
     }
 
-    /** Defaults to the slug, like the publish handle, unless the feature says otherwise. */
     private function configFile(): string
     {
         return $this->configFileName ?? $this->slug();

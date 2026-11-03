@@ -77,11 +77,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
         return [];
     }
 
-    /**
-     * Whether the feature's config is offered to `vendor:publish`. A host package
-     * registering its features with `registerFeatures(publishesConfig: false)` keeps
-     * the merged defaults but leaves the app's copy to its own config file.
-     */
+    /** Whether the config is offered to `vendor:publish`; `false` still merges the defaults. */
     protected function publishesConfig(): bool
     {
         return $this->feature()->publishesConfig ?? true;
