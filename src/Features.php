@@ -112,10 +112,8 @@ class Features
     }
 
     /**
-     * A feature registers from inside its host's `register()`, so it boots
-     * before the host and before anything registered later. `#[BootAfter]` on
-     * the feature's provider holds its boot until the named provider has booted.
-     * `$then` is the feature's own boot code, run last, inside the same wait.
+     * A feature boots before its host. `#[BootAfter]` on the provider holds the
+     * boot, and `$then`, until the named provider has booted.
      */
     public function bootFeature(?Closure $then = null): void
     {
@@ -149,11 +147,8 @@ class Features
     }
 
     /**
-     * Booted, not registered. A feature's route file may reach for a macro another
-     * package defines — `Route::livewire()` is the common one — and packages are
-     * registered in discovery order, so this package can run long before the one
-     * that supplies the macro. Booting happens once every provider has registered,
-     * which is also where the framework's own route files are loaded.
+     * Booted, not registered: a route file may use a macro (`Route::livewire()`)
+     * from a package registered later.
      */
     public function bootRoutes(): static
     {
@@ -177,21 +172,7 @@ class Features
     }
 
     /**
-     * The classes under a directory of `src/`. A depth limits how far down to
-     * look; a base keeps only concrete classes that extend or implement it.
-     * The built-in conventions go through the same scan.
-     *
-     * @param  class-string|null  $base
-     * @return Collection<int, class-string>
-     */
-    public function classes(string $directory, ?string $base = null, ?int $depth = null): Collection
-    {
-        return ClassFinder::classes($this->pathTo("src/{$directory}"), $base, $depth);
-    }
-
-    /**
-     * Offered to `vendor:publish` as `{slug}-views`, landing where Laravel
-     * already looks for overrides of the `{slug}::` namespace.
+     * Published to where Laravel looks for overrides of the `{slug}::` namespace.
      */
     public function bootViews(): static
     {
@@ -206,6 +187,17 @@ class Features
         );
 
         return $this;
+    }
+
+    /**
+     * The classes under a directory of `src/`; see `ClassFinder::classes()`.
+     *
+     * @param  class-string|null  $base
+     * @return Collection<int, class-string>
+     */
+    public function classes(string $directory, ?string $base = null, ?int $depth = null): Collection
+    {
+        return ClassFinder::classes($this->pathTo("src/{$directory}"), $base, $depth);
     }
 
     public function configFileName(string $name): static
@@ -229,7 +221,9 @@ class Features
         return $this;
     }
 
-    /** Whether the feature has this file or directory. */
+    /**
+     * Whether the feature has this file or directory.
+     */
     public function has(string $relative): bool
     {
         return file_exists($this->pathTo($relative));
@@ -255,8 +249,7 @@ class Features
     }
 
     /**
-     * Settings an extension reads per feature, keyed by dotted name
-     * (`livewire.namespace`). The core doesn't look at them.
+     * Per-feature settings for extensions, keyed by dotted name (`livewire.namespace`).
      *
      * @param  array<string, mixed>  $options
      */
@@ -285,10 +278,7 @@ class Features
     }
 
     /**
-     * The defaults are still merged at `{group}.{file}`; only the copy into the
-     * app's `config/` is skipped. A host package uses this when its features'
-     * settings belong nested in the package's own config file rather than in a
-     * `config/{group}/` directory of their own.
+     * `false` still merges the defaults at `{group}.{file}`; only `vendor:publish` is skipped.
      */
     public function publishesConfig(bool $publishes): static
     {
@@ -372,14 +362,9 @@ class Features
     }
 
     /**
-     * `loadRoutesFrom()` is a bare require, so without this a feature's
-     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
-     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app. A closure, or
-     * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes. These merge over the defaults and any
-     * extension's groups by key, so a feature names only what it changes, and `null`
-     * opts a file out.
+     * Keyed by route filename, merged over the defaults and any extension's. A
+     * closure or invokable class is handed the file's path and this instance and
+     * loads the file itself; `null` opts the file out of any group.
      *
      * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
      */
@@ -412,7 +397,6 @@ class Features
         }
     }
 
-    /** Read through the provider's parents too, so a base class can carry the attribute. */
     private function bootAfterAttribute(): ?BootAfter
     {
         return collect([$this->provider::class, ...class_parents($this->provider)])
@@ -440,7 +424,6 @@ class Features
         return (new ReflectionMethod($this->provider, $method))->invoke($this->provider, ...$args);
     }
 
-    /** Defaults to the slug, like the publish handle, unless the feature says otherwise. */
     private function configFile(): string
     {
         return $this->configFileName ?? $this->slug();
@@ -463,9 +446,7 @@ class Features
             return [];
         }
 
-        // The callback is a static on DiscoverEvents, so it is cleared again
-        // straight after: left in place it would misname the app's own listeners
-        // the next time anything discovers events — `event:cache`, say.
+        // Cleared in `finally`: left set, the static would misname the app's own listeners next time.
         // @phpstan-ignore-next-line argument.type — a name parsed from the file can't be proven a class-string
         DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => ClassFinder::className($file->getRealPath()) ?? '');
 
@@ -491,9 +472,7 @@ class Features
     }
 
     /**
-     * Resolved through the container tag rather than a static list so a package
-     * only has to tag itself to take part, and once per feature so routes and
-     * boot see the same instances.
+     * Resolved once per feature, so routes and boot see the same instances.
      *
      * @return Collection<int, Extension>
      */
@@ -502,7 +481,9 @@ class Features
         return $this->extensions ??= collect($this->app->tagged(Extension::TAG));
     }
 
-    /** Sorted, so what a feature registers doesn't depend on the filesystem's order. */
+    /**
+     * Sorted, so what a feature registers doesn't depend on the filesystem's order.
+     */
     private function finder(string $path): Finder
     {
         return tap(new Finder)
@@ -512,7 +493,9 @@ class Features
             ->sortByName();
     }
 
-    /** One registered ahead of the feature's provider has booted by the time the feature does. */
+    /**
+     * Registration order is boot order, so one registered ahead of the feature has booted.
+     */
     private function hasBooted(ServiceProvider $provider): bool
     {
         if (is_null($providerAt = $this->position($provider))) {
@@ -574,10 +557,6 @@ class Features
         return ["{$this->namespace}\\Models\\{$model}" => $policy];
     }
 
-    /**
-     * Where the provider sits in registration order, which is also boot order.
-     * By identity, since Laravel keys the list by class name.
-     */
     private function position(ServiceProvider $provider): ?int
     {
         $position = array_search($provider, array_values($this->app->getProviders(ServiceProvider::class)), true);

@@ -26,9 +26,6 @@ Registered:
 * Translations
 * Views
 
-Routes boot rather than register because a route file may use a macro another package
-defines (`Route::livewire()`), and package registration order is not guaranteed.
-
 There are 2 ways to use it:
 
 1) extend FeatureServiceProvider in a service provider
@@ -62,12 +59,12 @@ There are 2 ways to use it:
 # Development
 
 Preferences:
-* that only do one thing
+* methods that only do one thing
 * fluent options instead of large constructors
 * tests for every code path
 * closures should be reduced to only one line, making methods if required, whenever possible
-* methods in classes should be grouped, public, then protected, then private. Within each group, the methods should be sorted alpabetically
-* class properties should be grouped public, then protected, then private and within each group, sorted alpabetically.
+* methods in classes should be grouped, public, then protected, then private. Within each group, the methods should be sorted alphabetically
+* class properties should be grouped public, then protected, then private and within each group, sorted alphabetically.
 
 # Testing
 * test directory structure mirrors the code directory structure

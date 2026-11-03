@@ -38,11 +38,9 @@ This is the part that fails silently — get a file in the wrong place and nothi
 | **register()** | Config (merged), Migrations, Seeders (container binding), Translations, Views | `database/migrations/`, `lang/`, `resources/views/`, `config/` |
 | **boot()** | Commands, Config (published for `vendor:publish`), Listeners, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Console/Commands/`, `src/Listeners/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
 
-Config and Seeders each do something different at each phase: `register()` merges the config file into `config()` and creates the seeder-runner binding; `boot()` makes the config file publishable and discovers the actual seeder classes to add to the runner. Listeners, Livewire components, Policies and Routes are boot-only — they need the container fully wired first, so no equivalent happens during register.
+Routes boot rather than register so a route file can use a macro (`Route::livewire()`) from a package registered later.
 
-Routes are the subtlest of those. A route file may reach for a macro another package defines — `Route::livewire()` most often — and packages register in discovery order, so this package can run long before the one supplying the macro. Loading routes on boot puts them where the framework loads its own.
-
-Everything is discovered by scanning a fixed subfolder — `src/Console/Commands`, `src/Listeners`, `src/Policies`, `database/seeders`. A class in the wrong folder isn't wired up, and there's no warning: a listener outside `src/Listeners` just never fires, a policy outside `src/Policies` is never registered with `Gate`, a seeder outside `database/seeders` never gets added to the run. Same for the top-level folders: migrations only load from `database/migrations`, config only from `config/<slug>.php` (kebab-case of the feature name, unless overridden), views only from `resources/views`.
+Only the Source folders above are scanned; a class or file anywhere else is silently not wired up. Config is `config/<slug>.php`, the kebab-cased feature name unless overridden.
 
 ## Route groups
 
@@ -54,13 +52,25 @@ A feature's route files are put in a route group by filename, the same way the f
 | `routes/api.php` | `api` middleware, `api` prefix |
 | anything else | no middleware group, no prefix — only what the file declares |
 
-This matters because `loadRoutesFrom()` is a bare `require` — without the grouping, a feature's `web.php` routes would have no session or CSRF, and `api.php` no throttling or prefix.
+Without the group, `loadRoutesFrom()` is a bare `require`: no session or CSRF on `web.php`, no throttling or prefix on `api.php`.
 
 The mapping can change in two places, merged by key over those defaults:
 - For every feature, by defining `routeGroups()` on an `Edalzell\Features\Extension` tagged with `Extension::TAG`. The last one tagged wins a key.
 - Per feature, by overriding `routeGroups()` on that feature's service provider. This beats extensions, and only needs the keys it changes.
 
 Set an entry to `null` and that file gets no group — only what it declares itself.
+
+## Extensions
+
+Anything Laravel itself doesn't autoload (Livewire components are the built-in case) is wired by an extension: a subclass of `Edalzell\Features\Extension` tagged with `Extension::TAG` in a service provider's `register()`. Each feature is handed to `boot(Features $features)` after its own conventions have booted. Per-feature settings for extensions go through the provider's `options()`, keyed by dotted name (`livewire.namespace`).
+
+## Seeders
+
+Every feature's `database/seeders` are collected into `Edalzell\Features\Seeders`; the app's `DatabaseSeeder` calls that one class. They run in feature registration order; `#[SeedAfter(OtherSeeder::class)]` on a seeder makes it wait for another's.
+
+## Boot order
+
+A feature boots before the provider that registered it. Boot code that must run after another provider goes in `bootFeature()` with `#[BootAfter(ThatProvider::class)]` on the feature's service provider; overriding `boot()` can't wait.
 
 ## Wiring it up
 
@@ -76,11 +86,13 @@ class ServiceProvider extends FeatureServiceProvider
 Override any of these to customize:
 
 ```php
+protected function bootFeature(): void            // the feature's own boot code, after the conventions and any `#[BootAfter]` provider
 protected function configFileName(): string      // default: kebab-cased feature name
-protected function configGroup(): string         // default: host Composer package short name for package features; merge `{group}.{file}`, publish under `config/{group}/`
+protected function configGroup(): string         // default: package short name for package features, else none; merged at `{group}.{file}`
 protected function configPublishHandle(): string  // default: kebab-cased feature name
-protected function publishesConfig(): bool        // default: true, or what `registerFeatures()` stamped; false still merges `{group}.{file}`, publishes nothing
+protected function publishesConfig(): bool        // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string         // default: derived from this class's own file location
+protected function options(): array               // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array           // default: []; merged over the package defaults and any extension's groups
 ```
 
@@ -96,6 +108,7 @@ public function __construct(Application $app)
     $this->features = (new Features($this))
         ->path($this->featuresPath())
         ->name($this->name())
+        ->options($this->options())
         ->routeGroups($this->routeGroups());
 }
 
@@ -117,15 +130,14 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerFeatures(); // defaults to base_path('features'), namespace 'Features'
-        // or, for a package whose features' settings nest in its own config file (config/{group}.php)
-        // rather than a config/{group}/ directory: $this->registerFeatures(publishesConfig: false)
+        // publishesConfig: false when a package's feature settings nest in config/{group}.php
     }
 }
 ```
 
-This scans the target directory for subfolders containing `src/ServiceProvider.php` and registers each as `<namespacePrefix>\<FolderName>\ServiceProvider`. **If a folder is missing `src/ServiceProvider.php`, it's silently skipped** — no error, the feature just doesn't exist as far as the app is concerned. If the folder name and the provider's actual namespace don't match (e.g. after renaming a feature folder without updating its `namespace` declaration), registration throws a "class not found" error at boot — that's the signal to check the namespace against the folder name.
+This registers `<namespacePrefix>\<FolderName>\ServiceProvider` for every subfolder holding `src/ServiceProvider.php`. **A folder without one is silently skipped.** A folder name that doesn't match the provider's namespace (renamed folder, stale `namespace`) fails at boot with "class not found".
 
-Each discovered feature is also stored on `FeatureRegistry` (`app(FeatureRegistry::class)->all()`). Use `Feature::path()`, `namespace()`, and `has()` when package code needs a feature's location without re-deriving folder/namespace conventions.
+Each feature is also stored on `FeatureRegistry` (`app(FeatureRegistry::class)->all()`); `Feature::path()`, `namespace()` and `has()` give its location without re-deriving conventions.
 
 ## Adding a feature
 
@@ -133,6 +145,6 @@ Each discovered feature is also stored on `FeatureRegistry` (`app(FeatureRegistr
 php artisan feature:make MyGreatFeature
 ```
 
-Creates `features/MyGreatFeature/src/ServiceProvider.php` extending `FeatureServiceProvider`. From there, drop files into the matching folders — `src/Listeners/SomeListener.php`, `routes/web.php`, `database/migrations/...`, `config/my-great-feature.php` — and they're picked up automatically; no manual registration per file.
+Creates `features/MyGreatFeature/src/ServiceProvider.php` extending `FeatureServiceProvider`; files dropped into the matching folders are picked up with no per-file registration.
 
-For a package feature: `php artisan feature:make MyGreatFeature the-dev/my-package`. This also adds the `HasFeatures` trait and a `registerFeatures()` call to the target package's own service provider if it doesn't have one already.
+For a package feature, `php artisan feature:make MyGreatFeature the-dev/my-package` also adds `HasFeatures` and a `registerFeatures()` call to the package's service provider if missing.

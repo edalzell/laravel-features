@@ -45,43 +45,29 @@ Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-
 
 ## Route groups
 
-A feature's route files are put in a route group, chosen by filename, the same way the framework does it for an application's own route files:
+A feature's route files are put in a route group by filename, as the framework does for the app's own. Without it, `loadRoutesFrom()` is a bare `require`: no session or CSRF on `web.php`, no throttling or prefix on `api.php`.
 
 | File | Group |
 |---|---|
 | `routes/web.php` | `web` middleware |
 | `routes/api.php` | `api` middleware, `api` prefix |
-| anything else | no middleware group, no prefix |
+| anything else | none |
 
-Without this, `loadRoutesFrom()` is a bare `require` — a feature's `routes/web.php` would get no session or CSRF, and `routes/api.php` no throttling and no prefix.
-
-Override `routeGroups()` on a feature's service provider to change a group for that feature. Entries merge over the defaults by key, so name only what changes; here `routes/web.php` keeps its `web` group:
+Override `routeGroups()` on the feature's service provider to change a group. Entries merge over the defaults by key, so name only what changes. `null` removes a file's group; a closure or invokable class is handed the file's path and the `Features` instance and loads the file itself:
 
 ```php
 protected function routeGroups(): array
 {
-    return ['api' => ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api/internal']];
+    return [
+        'api' => ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api/internal'],
+        'admin' => fn (string $path) => Admin::routes(fn () => require $path),
+    ];
 }
 ```
 
-Set an entry to `null` and that file gets no middleware group and no prefix — only what it declares itself.
-
-An entry can also be a closure, which is handed the file's path and the `Features` instance and loads it itself — for when a route file has to be registered through something other than a plain route group:
+To change a group for every feature, define `routeGroups()` on a tagged [extension](#extensions):
 
 ```php
-protected function routeGroups(): array
-{
-    return ['admin' => fn (string $path) => Admin::routes(fn () => require $path)];
-}
-```
-
-Or name an invokable class, which is resolved from the container and called the same way.
-
-To change a group for every feature — adding an API version, say — define `routeGroups()` on a tagged [extension](#extensions). A package does the same to load its own route files:
-
-```php
-use Edalzell\Features\Extension;
-
 class ApiVersion extends Extension
 {
     public function routeGroups(): array
@@ -89,16 +75,13 @@ class ApiVersion extends Extension
         return ['api' => ['middleware' => 'api', 'prefix' => 'api/v1', 'as' => 'api.v1.']];
     }
 }
-
-// in a service provider's register()
-$this->app->tag(ApiVersion::class, Extension::TAG);
 ```
 
-From lowest to highest, a route file's group comes from the defaults, then extensions, then the feature's own `routeGroups()`. If two extensions name the same file, the last one tagged wins.
+Precedence, lowest to highest: defaults, extensions (last tagged wins), the feature's own `routeGroups()`.
 
 ## Livewire components
 
-Livewire only looks for components in the app's own locations, so it never sees a feature's. Put class components in `src/Livewire`, and single- or multi-file components under `resources/views` — `livewire/` for ordinary components and `pages/` for full pages, the same split Livewire uses for the app. The views root is registered as the feature's Livewire namespace, so both directories answer under one name with the directory as a dotted prefix:
+Class components go in `src/Livewire`; single- and multi-file components under `resources/views`, in `livewire/` or `pages/` as Livewire splits them for the app. The feature's slug is the Livewire namespace, and the directory becomes a dotted prefix:
 
 ```
 MyGreatFeature/
@@ -119,9 +102,7 @@ MyGreatFeature/
             └── ShowPost.php          -> <livewire:my-great-feature::posts.show-post />
 ```
 
-Single- and multi-file components follow Livewire's own rules — a single-file component is a `.blade.php` holding a `new class extends Component` block, a multi-file component a directory holding `name.php` and `name.blade.php` alongside any `name.js` or `name.css`. Nothing is scanned: Livewire resolves a name the first time it is used, exactly as it does for the app's own components.
-
-The feature's slug goes in front so two features can each have a `PostList`. Change it, or drop it, through the feature's options:
+Nothing is scanned: Livewire resolves a name the first time it is used. Change or drop the namespace through the feature's options:
 
 ```php
 protected function options(): array
@@ -130,27 +111,23 @@ protected function options(): array
 }
 ```
 
-An empty string registers the feature's directories as plain locations instead, so its components answer to their bare names.
+An empty string registers plain locations instead, so components answer to their bare names.
 
 ### Full-page components
 
-A feature's namespace is a peer of Livewire's own `pages::` and `layouts::` — those are just default entries in the app's `component_namespaces`, not a separate mechanism — so a feature routes one of its components as a full page from its own `routes/web.php`, with no extra registration:
+A feature routes one of its components as a full page from its own `routes/web.php`:
 
 ```php
 Route::livewire('posts/create', 'my-great-feature::create-post');
 ```
 
-The page renders into `livewire.component_layout`, the app's layout. To give a feature its own, point a component at a view from the feature's `resources/views`:
+The page renders into the app's layout; `#[Layout('my-great-feature::layout')]` uses one from the feature's `resources/views` instead.
 
-```php
-#[Layout('my-great-feature::layout')]
-```
-
-This needs Livewire 4, which introduced both the namespace registration and view-based components. Livewire is not a dependency of this package: when it isn't installed, nothing is registered and nothing breaks.
+Needs Livewire 4. Livewire is not a dependency of this package; without it, nothing is registered.
 
 ## Extensions
 
-Livewire isn't part of Laravel, and neither is anything else a feature might want autoloaded — Statamic fieldtypes and tags, say. Rather than teach the core about each one, a package hooks in with an extension: extend `Edalzell\Features\Extension` and tag it in your service provider. Every feature hands itself over once its own Laravel pieces have booted:
+An extension autoloads what Laravel itself doesn't know about: Livewire components (built in, `Edalzell\Features\Extensions\LivewireComponents`), Statamic fieldtypes, and so on. Extend `Edalzell\Features\Extension`, tag it in your service provider's `register()`, and every feature hands itself over once its own Laravel pieces have booted:
 
 ```php
 use Edalzell\Features\Extension;
@@ -171,11 +148,11 @@ class StatamicExtensions extends Extension
 $this->app->tag(StatamicExtensions::class, Extension::TAG);
 ```
 
-The tag is resolved through the container, so a package only has to tag itself — Laravel's package discovery does the rest. Tag it in `register()`: a feature only sees the extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton, so an extension that remembers which features it has seen should be one. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; the core never reads them, each extension reads its own. Livewire support is the built-in extension, `Edalzell\Features\Extensions\LivewireComponents`; its `livewireNamespace()` override became the `livewire.namespace` option. An extension can also supply [route groups](#route-groups) by defining `routeGroups()`; define only the methods you need.
+A feature only sees extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; each extension reads its own. An extension can also supply [route groups](#route-groups).
 
 ## Boot order
 
-A feature is registered from inside its host's `register()`, and Laravel only marks the host registered once that method returns, so every feature boots before the provider that registered it, and before any package registered later. That matters when a feature's own boot code must come after the host's: a middleware pushed onto `web` lands ahead of the host's own, say. Put that code in `bootFeature()` and name the provider to wait for:
+A feature is registered from inside its host's `register()`, so it boots before the host and before any package registered later. When the feature's own boot code must come after another provider's, put it in `bootFeature()` and name the provider to wait for:
 
 ```php
 use Edalzell\Features\Attributes\BootAfter;
@@ -190,7 +167,7 @@ class ServiceProvider extends FeatureServiceProvider
 }
 ```
 
-`bootFeature()` runs once the feature's conventions have booted, right after the named provider's `boot()`, in place of its usual turn. A provider that has already booted costs nothing: the feature boots at once. Naming one that isn't registered throws a `LogicException`, rather than silently never booting. Overriding `boot()` still works, but Laravel calls it at the feature's own turn, so nothing there can wait.
+`bootFeature()` runs after the feature's conventions and the named provider's `boot()`. Naming a provider that isn't registered throws a `LogicException`. Overriding `boot()` still works, but it runs at the feature's own turn and can't wait.
 
 ## Seeders
 
@@ -203,9 +180,7 @@ public function run(): void
 }
 ```
 
-They run in the order their features were registered — alphabetical, for an app's own `features/` directory. That order breaks down once one feature's data depends on another's.
-
-`#[SeedAfter]` names the seeders that must run first:
+They run in feature registration order. When one feature's data depends on another's, `#[SeedAfter]` names the seeders that must run first:
 
 ```php
 use Edalzell\Features\Attributes\SeedAfter;
@@ -221,7 +196,7 @@ class AvailabilitySeeder extends Seeder
 }
 ```
 
-A seeder with no `#[SeedAfter]`, or whose dependencies are already satisfied, keeps its registration position — that's the tiebreak, not alphabetical or random order. Naming a seeder outside the collected set is fine and is simply ignored for ordering; that one is the app's own `database/seeders` to order. A cycle between `#[SeedAfter]` declarations throws a `LogicException` naming the seeders involved.
+Registration order is the tiebreak. Naming a seeder outside the collected set is ignored for ordering. A cycle throws a `LogicException` naming the seeders involved.
 
 ## Dependencies
 
@@ -269,9 +244,9 @@ Override any of these protected methods to customise behaviour:
 ```php
 protected function bootFeature(): void           // the feature's own boot code, after the conventions and any `#[BootAfter]` provider
 protected function configFileName(): string      // default: kebab-cased feature name
-protected function configGroup(): string         // default: host Composer package short name when registered via package `features/` (e.g. `the-dev/my-package` → `my-package`); merge key `{group}.{file}`, publish to `config/{group}/{file}.php`
+protected function configGroup(): string         // default: package short name for package features, else none; merged at `{group}.{file}`
 protected function configPublishHandle(): string // default: kebab-cased feature name
-protected function publishesConfig(): bool       // default: true, or whatever `registerFeatures()` stamped; false still merges `{group}.{file}` but offers nothing to `vendor:publish`
+protected function publishesConfig(): bool       // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string        // default: derived from the provider's own location
 protected function options(): array              // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array          // default: []; merged over the package defaults and any extension's groups
@@ -317,7 +292,7 @@ class MyServiceProvider extends SomeOtherProvider
 
 ### Auto-discovering features
 
-Use the `HasFeatures` trait in any service provider to automatically register all features from a directory. In your app, add it to `AppServiceProvider`:
+The `HasFeatures` trait registers every feature in a directory. In an app, add it to `AppServiceProvider`:
 
 ```php
 use Edalzell\Features\Concerns\HasFeatures;
@@ -349,7 +324,7 @@ class MyPackageServiceProvider extends ServiceProvider
 }
 ```
 
-In a package, `registerFeatures()` defaults to looking in `<package-root>/features/` and registering providers under `YourPackage\Features\FeatureName\ServiceProvider`. Pass explicit arguments to override either default:
+In a package, `registerFeatures()` defaults to `<package-root>/features/` and `YourPackage\Features\FeatureName\ServiceProvider`. Pass arguments to override either:
 
 ```php
 $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
@@ -357,18 +332,18 @@ $this->registerFeatures('/path/to/features', 'My\\Namespace\\Features');
 
 #### Where a package feature's config lives
 
-A package feature's config is merged at `{group}.{file}`, where the group defaults to the package's Composer short name — `the-dev/my-package` + `features/Maps/config/maps.php` is read as `config('my-package.maps.…')`. A site can then override it in one of two places, and the package picks which by whether it publishes:
+A package feature's config is merged at `{group}.{file}`, the group being the package's Composer short name: `the-dev/my-package` + `features/Maps/config/maps.php` reads as `config('my-package.maps.…')`. A site overrides it in one of two places:
 
 | Convention | Site overrides in | `registerFeatures()` |
 |---|---|---|
-| A directory per package | `config/my-package/maps.php` | default — each feature publishes its file there |
+| A directory per package | `config/my-package/maps.php` | default |
 | Nested in the package's own config | `config/my-package.php` under a `maps` key | `registerFeatures(publishesConfig: false)` |
 
-Opting out only skips `vendor:publish`; the feature's defaults are still merged, so anything the site doesn't set keeps its default. Pick one convention per package: if a site ends up with both `config/my-package.php['maps']` and `config/my-package/maps.php`, Laravel loads the nested file last and it silently replaces the whole `maps` key.
+`publishesConfig: false` only skips `vendor:publish`; the defaults are still merged. Pick one: if a site has both files, Laravel loads the nested one last and it replaces the whole `maps` key.
 
 ### Looking up registered features
 
-`registerFeatures()` also records each discovered feature in `FeatureRegistry`. Use that when something outside the feature needs its path or namespace — Setup runners, for example — without re-scanning disk or hardcoding conventions:
+`registerFeatures()` records each feature in `FeatureRegistry`, for when code outside the feature needs its path or namespace:
 
 ```php
 use Edalzell\Features\Feature;
@@ -383,11 +358,11 @@ app(FeatureRegistry::class)
     });
 ```
 
-`registerFeatures()` records each feature via `FeatureRegistry::register()`, which also registers that feature's `ServiceProvider`. `Feature::path()` / `namespace()` with no argument return the feature root. `has()` checks that a relative path exists on disk. Use `FeatureRegistry::add()` when you only need the descriptor without loading the provider (e.g. tests).
+`path()` and `namespace()` with no argument return the feature root; `has()` checks a relative path exists. `FeatureRegistry::add()` records a feature without registering its provider, for tests.
 
 ### Finding classes in a feature
 
-Commands, policies, listeners and seeders are found by scanning a directory for the classes its files declare. The same scan is yours for any directory under `src/`, so a convention of your own — setup writers in `src/Setup`, say — doesn't need a second one:
+Commands, policies, listeners and seeders are found by scanning a directory for the classes its files declare. The same scan works for any directory under `src/`, so a convention of your own needs no second one:
 
 ```php
 use Edalzell\Features\FeatureRegistry;
@@ -397,11 +372,11 @@ app(FeatureRegistry::class)
     ->each(fn (string $writer) => $writer::run());
 ```
 
-`classes()` is on `FeatureRegistry` for every registered feature at once, on `Feature` for one, and on `Features` inside a provider or an [extension](#extensions). The directory is relative to `src/` and is searched recursively, sorted by path; pass a `depth` to stop sooner (`0` is the directory itself). Without a base class every declared class is returned by name, and nothing is autoloaded. With one, only concrete classes that extend or implement it are kept.
+`classes()` is on `FeatureRegistry` for every feature, on `Feature` for one, and on `Features` inside a provider or [extension](#extensions). The directory is relative to `src/`, searched recursively, sorted by path; `depth` stops sooner (`0` is the directory itself). A base class keeps only concrete classes that extend or implement it; without one every declared class is returned and nothing is autoloaded.
 
 ### Features outside the app
 
-A feature works from anywhere — the app, a package, or a directory outside the app entirely, such as a monorepo where two apps share one set of features:
+A feature can live outside the app entirely, as in a monorepo where two apps share one set:
 
 ```
 gym/
@@ -413,9 +388,7 @@ gym/
         └── Scheduling/
 ```
 
-Two things need wiring, in each app that uses them.
-
-**Autoloading** — declare the directory and its namespace in `composer.json`, and the plugin generates PSR-4 entries for every feature it finds:
+Each app wires two things. Autoloading, in `composer.json`, where the plugin generates PSR-4 entries for every feature it finds:
 
 ```json
 "extra": {
@@ -427,13 +400,13 @@ Two things need wiring, in each app that uses them.
 }
 ```
 
-**Registration** — point `registerFeatures()` at the same directory:
+And registration, pointing `registerFeatures()` at the same directory:
 
 ```php
 $this->registerFeatures(base_path('../../shared/features'), 'Shared\\Features');
 ```
 
-The app's own `features/` directory is still scanned, so app-local and shared features can coexist.
+The app's own `features/` directory is still scanned.
 
 ## Testing
 

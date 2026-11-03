@@ -40,9 +40,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * The feature's own boot code. Runs once the conventions have booted, and
-     * after any provider named in `#[BootAfter]`, which `boot()` itself can't
-     * wait for.
+     * The feature's own boot code, run after the conventions and any `#[BootAfter]` provider.
      */
     protected function bootFeature(): void {}
 
@@ -72,8 +70,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * Settings for extensions, keyed by dotted name — `livewire.namespace`, say.
-     * The core ignores them; each extension reads its own.
+     * Settings for extensions, keyed by dotted name (`livewire.namespace`).
      *
      * @return array<string, mixed>
      */
@@ -83,9 +80,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * Whether the feature's config is offered to `vendor:publish`. A host package
-     * registering its features with `registerFeatures(publishesConfig: false)` keeps
-     * the merged defaults but leaves the app's copy to its own config file.
+     * Whether the config is offered to `vendor:publish`; `false` still merges the defaults.
      */
     protected function publishesConfig(): bool
     {
@@ -93,10 +88,8 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     }
 
     /**
-     * Route groups for this feature's route files, keyed by filename. Entries merge
-     * over the package defaults (`web`, `api`) and any extension's, so name only what
-     * changes. A closure or invokable class is handed the file's path and this
-     * `Features` instance and loads the file itself.
+     * Route groups for this feature, keyed by route filename, merged over the
+     * defaults and any extension's. Name only what changes.
      *
      *     return [
      *         'api' => ['middleware' => 'api', 'prefix' => 'api/v1'], // change a group

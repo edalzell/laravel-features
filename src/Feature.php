@@ -21,8 +21,7 @@ readonly class Feature
     }
 
     /**
-     * The classes under a directory of `src/`. A depth limits how far down to
-     * look; a base keeps only concrete classes that extend or implement it.
+     * The classes under a directory of `src/`; see `ClassFinder::classes()`.
      *
      * @param  class-string|null  $base
      * @return Collection<int, class-string>

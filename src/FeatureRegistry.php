@@ -47,8 +47,7 @@ class FeatureRegistry
     }
 
     /**
-     * A path arrives spelled two ways: `dirname()` of a provider's file uses the
-     * platform separator, a directory listing may mix it with `/`.
+     * `dirname()` uses the platform separator; a directory listing may mix it with `/`.
      */
     private function key(string $path): string
     {
