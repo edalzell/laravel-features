@@ -112,10 +112,8 @@ class Features
     }
 
     /**
-     * A feature registers from inside its host's `register()`, so it boots
-     * before the host and before anything registered later. `#[BootAfter]` on
-     * the feature's provider holds its boot until the named provider has booted.
-     * `$then` is the feature's own boot code, run last, inside the same wait.
+     * A feature boots before its host. `#[BootAfter]` on the provider holds the
+     * boot, and `$then`, until the named provider has booted.
      */
     public function bootFeature(?Closure $then = null): void
     {
@@ -400,7 +398,6 @@ class Features
         }
     }
 
-    /** Read through the provider's parents too, so a base class can carry the attribute. */
     private function bootAfterAttribute(): ?BootAfter
     {
         return collect([$this->provider::class, ...class_parents($this->provider)])
@@ -498,7 +495,7 @@ class Features
             ->sortByName();
     }
 
-    /** One registered ahead of the feature's provider has booted by the time the feature does. */
+    /** Registration order is boot order, so one registered ahead of the feature has booted. */
     private function hasBooted(ServiceProvider $provider): bool
     {
         if (is_null($providerAt = $this->position($provider))) {
@@ -560,10 +557,6 @@ class Features
         return ["{$this->namespace}\\Models\\{$model}" => $policy];
     }
 
-    /**
-     * Where the provider sits in registration order, which is also boot order.
-     * By identity, since Laravel keys the list by class name.
-     */
     private function position(ServiceProvider $provider): ?int
     {
         $position = array_search($provider, array_values($this->app->getProviders(ServiceProvider::class)), true);

@@ -66,6 +66,10 @@ Set an entry to `null` and that file gets no group — only what it declares its
 
 Anything Laravel itself doesn't autoload (Livewire components are the built-in case) is wired by an extension: a subclass of `Edalzell\Features\Extension` tagged with `Extension::TAG` in a service provider's `register()`. Each feature is handed to `boot(Features $features)` after its own conventions have booted. Per-feature settings for extensions go through the provider's `options()`, keyed by dotted name (`livewire.namespace`).
 
+## Boot order
+
+A feature boots before the provider that registered it. Boot code that must run after another provider goes in `bootFeature()` with `#[BootAfter(ThatProvider::class)]` on the feature's service provider; overriding `boot()` can't wait.
+
 ## Wiring it up
 
 **Option 1 — extend `FeatureServiceProvider`** (the default, and what `feature:make` generates):
@@ -80,6 +84,7 @@ class ServiceProvider extends FeatureServiceProvider
 Override any of these to customize:
 
 ```php
+protected function bootFeature(): void            // the feature's own boot code, after the conventions and any `#[BootAfter]` provider
 protected function configFileName(): string      // default: kebab-cased feature name
 protected function configGroup(): string         // default: host Composer package short name for package features; merge `{group}.{file}`, publish under `config/{group}/`
 protected function configPublishHandle(): string  // default: kebab-cased feature name

@@ -158,7 +158,7 @@ A feature only sees extensions tagged before it boots. The tag resolves a fresh 
 
 ## Boot order
 
-A feature is registered from inside its host's `register()`, and Laravel only marks the host registered once that method returns, so every feature boots before the provider that registered it, and before any package registered later. That matters when a feature's own boot code must come after the host's: a middleware pushed onto `web` lands ahead of the host's own, say. Put that code in `bootFeature()` and name the provider to wait for:
+A feature is registered from inside its host's `register()`, so it boots before the host and before any package registered later. When the feature's own boot code must come after another provider's, put it in `bootFeature()` and name the provider to wait for:
 
 ```php
 use Edalzell\Features\Attributes\BootAfter;
@@ -173,7 +173,7 @@ class ServiceProvider extends FeatureServiceProvider
 }
 ```
 
-`bootFeature()` runs once the feature's conventions have booted, right after the named provider's `boot()`, in place of its usual turn. A provider that has already booted costs nothing: the feature boots at once. Naming one that isn't registered throws a `LogicException`, rather than silently never booting. Overriding `boot()` still works, but Laravel calls it at the feature's own turn, so nothing there can wait.
+`bootFeature()` runs after the feature's conventions and the named provider's `boot()`. Naming a provider that isn't registered throws a `LogicException`. Overriding `boot()` still works, but it runs at the feature's own turn and can't wait.
 
 ## Seeders
 
