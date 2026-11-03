@@ -148,13 +148,7 @@ class Features
         return $this;
     }
 
-    /**
-     * Booted, not registered. A feature's route file may reach for a macro another
-     * package defines — `Route::livewire()` is the common one — and packages are
-     * registered in discovery order, so this package can run long before the one
-     * that supplies the macro. Booting happens once every provider has registered,
-     * which is also where the framework's own route files are loaded.
-     */
+    /** Booted, not registered: a route file may use a macro (`Route::livewire()`) from a package registered later. */
     public function bootRoutes(): static
     {
         if ($this->app->routesAreCached() || ! $this->has('routes')) {
@@ -372,14 +366,9 @@ class Features
     }
 
     /**
-     * `loadRoutesFrom()` is a bare require, so without this a feature's
-     * `routes/web.php` gets no `web` middleware — no session, no CSRF — and
-     * `routes/api.php` no `api` middleware and no prefix. The framework puts its own
-     * route files in a group; features should behave like the app. A closure, or
-     * the name of an invokable class, is handed the file's path and this instance
-     * instead and loads it however it likes. These merge over the defaults and any
-     * extension's groups by key, so a feature names only what it changes, and `null`
-     * opts a file out.
+     * Keyed by route filename, merged over the defaults and any extension's. A
+     * closure or invokable class is handed the file's path and this instance and
+     * loads the file itself; `null` opts the file out of any group.
      *
      * @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups
      */
