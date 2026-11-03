@@ -168,10 +168,7 @@ class Features
         return $this;
     }
 
-    /**
-     * Offered to `vendor:publish` as `{slug}-views`, landing where Laravel
-     * already looks for overrides of the `{slug}::` namespace.
-     */
+    /** Published to where Laravel looks for overrides of the `{slug}::` namespace. */
     public function bootViews(): static
     {
         if (! $this->app->runningInConsole() || ! $this->has('resources/views')) {
@@ -440,9 +437,7 @@ class Features
             return [];
         }
 
-        // The callback is a static on DiscoverEvents, so it is cleared again
-        // straight after: left in place it would misname the app's own listeners
-        // the next time anything discovers events — `event:cache`, say.
+        // Cleared in `finally`: left set, the static would misname the app's own listeners next time.
         // @phpstan-ignore-next-line argument.type — a name parsed from the file can't be proven a class-string
         DiscoverEvents::guessClassNamesUsing(fn (SplFileInfo $file) => ClassFinder::className($file->getRealPath()) ?? '');
 

@@ -40,7 +40,7 @@ This is the part that fails silently — get a file in the wrong place and nothi
 
 Routes boot rather than register so a route file can use a macro (`Route::livewire()`) from a package registered later.
 
-Everything is discovered by scanning a fixed subfolder — `src/Console/Commands`, `src/Listeners`, `src/Policies`, `database/seeders`. A class in the wrong folder isn't wired up, and there's no warning: a listener outside `src/Listeners` just never fires, a policy outside `src/Policies` is never registered with `Gate`, a seeder outside `database/seeders` never gets added to the run. Same for the top-level folders: migrations only load from `database/migrations`, config only from `config/<slug>.php` (kebab-case of the feature name, unless overridden), views only from `resources/views`.
+Only the Source folders above are scanned; a class or file anywhere else is silently not wired up. Config is `config/<slug>.php`, the kebab-cased feature name unless overridden.
 
 ## Route groups
 
