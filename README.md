@@ -45,43 +45,29 @@ Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-
 
 ## Route groups
 
-A feature's route files are put in a route group, chosen by filename, the same way the framework does it for an application's own route files:
+A feature's route files are put in a route group by filename, as the framework does for the app's own. Without it, `loadRoutesFrom()` is a bare `require`: no session or CSRF on `web.php`, no throttling or prefix on `api.php`.
 
 | File | Group |
 |---|---|
 | `routes/web.php` | `web` middleware |
 | `routes/api.php` | `api` middleware, `api` prefix |
-| anything else | no middleware group, no prefix |
+| anything else | none |
 
-Without this, `loadRoutesFrom()` is a bare `require` — a feature's `routes/web.php` would get no session or CSRF, and `routes/api.php` no throttling and no prefix.
-
-Override `routeGroups()` on a feature's service provider to change a group for that feature. Entries merge over the defaults by key, so name only what changes; here `routes/web.php` keeps its `web` group:
+Override `routeGroups()` on the feature's service provider to change a group. Entries merge over the defaults by key, so name only what changes. `null` removes a file's group; a closure or invokable class is handed the file's path and the `Features` instance and loads the file itself:
 
 ```php
 protected function routeGroups(): array
 {
-    return ['api' => ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api/internal']];
+    return [
+        'api' => ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api/internal'],
+        'admin' => fn (string $path) => Admin::routes(fn () => require $path),
+    ];
 }
 ```
 
-Set an entry to `null` and that file gets no middleware group and no prefix — only what it declares itself.
-
-An entry can also be a closure, which is handed the file's path and the `Features` instance and loads it itself — for when a route file has to be registered through something other than a plain route group:
+To change a group for every feature, define `routeGroups()` on a tagged [extension](#extensions):
 
 ```php
-protected function routeGroups(): array
-{
-    return ['admin' => fn (string $path) => Admin::routes(fn () => require $path)];
-}
-```
-
-Or name an invokable class, which is resolved from the container and called the same way.
-
-To change a group for every feature — adding an API version, say — define `routeGroups()` on a tagged [extension](#extensions). A package does the same to load its own route files:
-
-```php
-use Edalzell\Features\Extension;
-
 class ApiVersion extends Extension
 {
     public function routeGroups(): array
@@ -89,12 +75,9 @@ class ApiVersion extends Extension
         return ['api' => ['middleware' => 'api', 'prefix' => 'api/v1', 'as' => 'api.v1.']];
     }
 }
-
-// in a service provider's register()
-$this->app->tag(ApiVersion::class, Extension::TAG);
 ```
 
-From lowest to highest, a route file's group comes from the defaults, then extensions, then the feature's own `routeGroups()`. If two extensions name the same file, the last one tagged wins.
+Precedence, lowest to highest: defaults, extensions (last tagged wins), the feature's own `routeGroups()`.
 
 ## Livewire components
 

@@ -40,7 +40,7 @@ This is the part that fails silently — get a file in the wrong place and nothi
 
 Config and Seeders each do something different at each phase: `register()` merges the config file into `config()` and creates the seeder-runner binding; `boot()` makes the config file publishable and discovers the actual seeder classes to add to the runner. Listeners, Livewire components, Policies and Routes are boot-only — they need the container fully wired first, so no equivalent happens during register.
 
-Routes are the subtlest of those. A route file may reach for a macro another package defines — `Route::livewire()` most often — and packages register in discovery order, so this package can run long before the one supplying the macro. Loading routes on boot puts them where the framework loads its own.
+Routes boot rather than register so a route file can use a macro (`Route::livewire()`) from a package registered later.
 
 Everything is discovered by scanning a fixed subfolder — `src/Console/Commands`, `src/Listeners`, `src/Policies`, `database/seeders`. A class in the wrong folder isn't wired up, and there's no warning: a listener outside `src/Listeners` just never fires, a policy outside `src/Policies` is never registered with `Gate`, a seeder outside `database/seeders` never gets added to the run. Same for the top-level folders: migrations only load from `database/migrations`, config only from `config/<slug>.php` (kebab-case of the feature name, unless overridden), views only from `resources/views`.
 
@@ -54,7 +54,7 @@ A feature's route files are put in a route group by filename, the same way the f
 | `routes/api.php` | `api` middleware, `api` prefix |
 | anything else | no middleware group, no prefix — only what the file declares |
 
-This matters because `loadRoutesFrom()` is a bare `require` — without the grouping, a feature's `web.php` routes would have no session or CSRF, and `api.php` no throttling or prefix.
+Without the group, `loadRoutesFrom()` is a bare `require`: no session or CSRF on `web.php`, no throttling or prefix on `api.php`.
 
 The mapping can change in two places, merged by key over those defaults:
 - For every feature, by defining `routeGroups()` on an `Edalzell\Features\Extension` tagged with `Extension::TAG`. The last one tagged wins a key.
