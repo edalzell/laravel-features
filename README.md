@@ -148,7 +148,7 @@ class StatamicExtensions extends Extension
 $this->app->tag(StatamicExtensions::class, Extension::TAG);
 ```
 
-A feature only sees extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; each extension reads its own. An extension can also supply [route groups](#route-groups).
+A feature only sees extensions tagged before it boots. The tag resolves a fresh instance per feature unless you bind a singleton. Per-feature settings go through `options()` on the feature's service provider, keyed by dotted name; each extension reads its own. It is read at boot, after the feature's config is merged, so an option can depend on `config()`. An extension can also supply [route groups](#route-groups).
 
 ## Boot order
 
@@ -272,13 +272,12 @@ class MyServiceProvider extends SomeOtherProvider
             ->name($this->name())
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
-            ->configPublishHandle($this->configPublishHandle())
-            ->options($this->options());
+            ->configPublishHandle($this->configPublishHandle());
     }
 
     public function boot(): void
     {
-        $this->features->bootFeature();
+        $this->features->options($this->options())->bootFeature();
     }
 
     public function register(): void
