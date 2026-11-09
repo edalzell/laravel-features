@@ -193,11 +193,33 @@ it('hands its options to extensions', function () {
     (new TestOptionsServiceProvider(app()))->boot();
 });
 
+it('reads its options at boot so they can depend on config', function () {
+    app()->instance('extension', mock(Extension::class)->makePartial()
+        ->shouldReceive('boot')
+        ->once()
+        ->withArgs(fn (Features $features) => $features->option('livewire.namespace') === 'blog')
+        ->getMock());
+    app()->tag('extension', Extension::TAG);
+
+    $provider = new TestConfigOptionsServiceProvider(app());
+    config()->set('two-words.namespace', 'blog');
+
+    $provider->boot();
+});
+
 class TestOptionsServiceProvider extends TestServiceProvider
 {
     protected function options(): array
     {
         return ['livewire.namespace' => 'blog'];
+    }
+}
+
+class TestConfigOptionsServiceProvider extends TestServiceProvider
+{
+    protected function options(): array
+    {
+        return ['livewire.namespace' => config('two-words.namespace')];
     }
 }
 

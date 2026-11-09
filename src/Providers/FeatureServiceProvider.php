@@ -25,13 +25,15 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
             ->configFileName($this->configFileName())
             ->configGroup($this->configGroup())
             ->configPublishHandle($this->configPublishHandle())
-            ->options($this->options())
             ->publishesConfig($this->publishesConfig());
     }
 
     public function boot(): void
     {
-        $this->features->routeGroups($this->routeGroups())->bootFeature($this->bootFeature(...));
+        $this->features
+            ->options($this->options())
+            ->routeGroups($this->routeGroups())
+            ->bootFeature($this->bootFeature(...));
     }
 
     public function register(): void
@@ -71,6 +73,7 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
 
     /**
      * Settings for extensions, keyed by dotted name (`livewire.namespace`).
+     * Read at boot, after the feature's config is merged, so an option may depend on it.
      *
      * @return array<string, mixed>
      */
