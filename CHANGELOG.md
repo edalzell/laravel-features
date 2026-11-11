@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.0.1 - 2026-11-11
+
+### 🐛 Fixed
+
+- Read a feature's options() at boot [@edalzell](https://github.com/edalzell) (#140)
+
+### 🧰 Maintenance
+
+- Bump the github-actions group with 3 updates [@[dependabot[bot]](https://github.com/apps/dependabot)](https://github.com/[dependabot[bot]](https://github.com/apps/dependabot)) (#138)
+
 ## v2.0.0 - 2026-11-03
 
 ### 🚀 New
