@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.0 - 2026-11-20
+
+### 🚀 New
+
+- Add #[ListensTo] and src/Subscribers [@edalzell](https://github.com/edalzell) (#142)
+
 ## v2.0.1 - 2026-11-11
 
 ### 🐛 Fixed
