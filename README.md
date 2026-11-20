@@ -81,13 +81,12 @@ Precedence, lowest to highest: defaults, extensions (last tagged wins), the feat
 
 ## Events
 
-Listeners under `src/Listeners` are discovered the way Laravel discovers an app's: the event is whatever `handle()` type-hints. A string or wildcard event has no class to type-hint, so name it with `#[ListensTo]` on the listener, once per event:
+Listeners under `src/Listeners` are discovered the way Laravel discovers an app's: the event is whatever `handle()` type-hints. A string or wildcard event has no class to type-hint, so name it with `#[ListensTo]` on the listener, which takes any number of events:
 
 ```php
 use Edalzell\Features\Attributes\ListensTo;
 
-#[ListensTo('stripe-webhooks::charge.refunded')]
-#[ListensTo('eloquent.saved: *')]
+#[ListensTo('stripe-webhooks::charge.refunded', 'eloquent.saved: *')]
 class RefundOrder
 {
     public function handle(): void {}
