@@ -6,6 +6,11 @@ use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredServiceProvider;
 use Edalzell\Features\Tests\Fixtures\DeferredHost;
+use Edalzell\Features\Tests\Fixtures\Orders\Events\OrderPlaced;
+use Edalzell\Features\Tests\Fixtures\Orders\Listeners\NotifyWarehouse;
+use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordOrderEvent;
+use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordShipment;
+use Edalzell\Features\Tests\Fixtures\Orders\ServiceProvider as OrdersServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
 use Edalzell\Features\Tests\Fixtures\Sibling\Events\GreetingSent;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
@@ -140,6 +145,38 @@ it('registers listeners, nested ones included, and clears the discovery callback
 
     expect(Event::getRawListeners()[GreetingSent::class])->toHaveCount(2)
         ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
+});
+
+it('listens for a string event from the listen map', function () {
+    app()->instance('heard', collect());
+
+    (new Features(new OrdersServiceProvider(app())))
+        ->listen(['orders.shipped' => RecordShipment::class])
+        ->bootListeners();
+
+    event('orders.shipped');
+
+    expect(app('heard')->all())->toBe([RecordShipment::class]);
+});
+
+it('listens for a wildcard event from the listen map', function () {
+    app()->instance('heard', collect());
+
+    (new Features(new OrdersServiceProvider(app())))
+        ->listen(['orders.*' => [RecordOrderEvent::class]])
+        ->bootListeners();
+
+    event('orders.refunded');
+
+    expect(app('heard')->all())->toBe(['orders.refunded']);
+});
+
+it('registers a listener once when it is both discovered and in the listen map', function () {
+    (new Features(new OrdersServiceProvider(app())))
+        ->listen([OrderPlaced::class => [NotifyWarehouse::class]])
+        ->bootListeners();
+
+    expect(Event::getRawListeners()[OrderPlaced::class])->toHaveCount(1);
 });
 
 it('registers policies', function () {
