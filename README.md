@@ -81,19 +81,20 @@ Precedence, lowest to highest: defaults, extensions (last tagged wins), the feat
 
 ## Events
 
-Listeners under `src/Listeners` are discovered the way Laravel discovers an app's: the event is whatever `handle()` type-hints. A string or wildcard event has no class to type-hint, so map those in `listen()` on the feature's service provider, event name to listener(s):
+Listeners under `src/Listeners` are discovered the way Laravel discovers an app's: the event is whatever `handle()` type-hints. A string or wildcard event has no class to type-hint, so name it with `#[ListensTo]` on the listener, once per event:
 
 ```php
-protected function listen(): array
+use Edalzell\Features\Attributes\ListensTo;
+
+#[ListensTo('stripe-webhooks::charge.refunded')]
+#[ListensTo('eloquent.saved: *')]
+class RefundOrder
 {
-    return [
-        'stripe-webhooks::charge.refunded' => RefundOrder::class,
-        'eloquent.saved: *' => [FlushCache::class],
-    ];
+    public function handle(): void {}
 }
 ```
 
-A listener that is both discovered and mapped for the same event is registered once.
+The attribute adds to discovery, so don't also name an event `handle()` already type-hints.
 
 Every class under `src/Subscribers`, nested ones included, is handed to `Event::subscribe()`.
 
@@ -266,7 +267,6 @@ protected function configGroup(): string         // default: package short name 
 protected function configPublishHandle(): string // default: kebab-cased feature name
 protected function publishesConfig(): bool       // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string        // default: derived from the provider's own location
-protected function listen(): array               // default: []; listeners for string and wildcard events
 protected function options(): array              // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array          // default: []; merged over the package defaults and any extension's groups
 ```
