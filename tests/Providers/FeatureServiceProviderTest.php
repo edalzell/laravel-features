@@ -8,7 +8,6 @@ use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredServiceProvider;
 use Edalzell\Features\Tests\Fixtures\DeferredHost;
-use Edalzell\Features\Tests\Fixtures\Orders\ServiceProvider as OrdersServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Event;
@@ -210,9 +209,9 @@ it('reads its options at boot so they can depend on config', function () {
 });
 
 it('registers its subscribers via boot', function () {
-    (new OrdersServiceProvider(app()))->boot();
+    (new SiblingServiceProvider(app()))->boot();
 
-    expect(Event::getRawListeners())->toHaveKey('cancellations.created');
+    expect(Event::getRawListeners())->toHaveKey('greetings.archived');
 });
 
 class TestOptionsServiceProvider extends TestServiceProvider

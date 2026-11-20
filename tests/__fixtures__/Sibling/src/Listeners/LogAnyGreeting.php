@@ -1,11 +1,11 @@
 <?php
 
-namespace Edalzell\Features\Tests\Fixtures\Orders\Listeners;
+namespace Edalzell\Features\Tests\Fixtures\Sibling\Listeners;
 
 use Edalzell\Features\Attributes\ListensTo;
 
-#[ListensTo('orders.*')]
-class RecordOrderEvent
+#[ListensTo('greetings.*')]
+class LogAnyGreeting
 {
     public function handle(string $event): void
     {

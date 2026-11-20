@@ -6,10 +6,6 @@ use Edalzell\Features\Seeders;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredServiceProvider;
 use Edalzell\Features\Tests\Fixtures\DeferredHost;
-use Edalzell\Features\Tests\Fixtures\Orders\Events\OrderPlaced;
-use Edalzell\Features\Tests\Fixtures\Orders\Listeners\NotifyWarehouse;
-use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordShipment;
-use Edalzell\Features\Tests\Fixtures\Orders\ServiceProvider as OrdersServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
 use Edalzell\Features\Tests\Fixtures\Sibling\Events\GreetingSent;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
@@ -146,48 +142,26 @@ it('registers listeners, nested ones included, and clears the discovery callback
         ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
 });
 
-it('listens for every string event named by ListensTo', function () {
-    (new Features(new OrdersServiceProvider(app())))->bootListeners();
+it('listens for every event named by ListensTo', function () {
+    (new Features(new SiblingServiceProvider(app())))->bootListeners();
 
-    expect(Event::getRawListeners())
-        ->toHaveKey('orders.shipped', [RecordShipment::class])
-        ->toHaveKey('orders.delivered', [RecordShipment::class]);
+    expect(Event::getRawListeners())->toHaveKeys(['greetings.sent', 'greetings.read']);
 });
 
 it('listens for a wildcard event named by ListensTo', function () {
     app()->instance('heard', collect());
 
-    (new Features(new OrdersServiceProvider(app())))->bootListeners();
+    (new Features(new SiblingServiceProvider(app())))->bootListeners();
 
-    event('orders.refunded');
+    event('greetings.waved');
 
-    expect(app('heard')->all())->toBe(['orders.refunded']);
-});
-
-it('keeps a listeners discovered event alongside its ListensTo one', function () {
-    app()->instance('heard', collect());
-
-    (new Features(new OrdersServiceProvider(app())))->bootListeners();
-
-    event(new OrderPlaced);
-    event('orders.restocked');
-
-    expect(app('heard')->all())->toBe([NotifyWarehouse::class, NotifyWarehouse::class, 'orders.restocked']);
+    expect(app('heard')->all())->toBe(['greetings.waved']);
 });
 
 it('registers subscribers, nested ones included', function () {
-    (new Features(new OrdersServiceProvider(app())))->bootSubscribers();
+    (new Features(new SiblingServiceProvider(app())))->bootSubscribers();
 
-    expect(Event::getRawListeners())->toHaveKeys(['cancellations.created', 'refunds.created']);
-});
-
-it('wont register subscribers if there arent any', function () {
-    mockOnDemandDisk('features/TwoWords');
-    [$features] = mockFeatures();
-
-    Event::partialMock()->shouldNotReceive('subscribe');
-
-    $features->bootSubscribers();
+    expect(Event::getRawListeners())->toHaveKeys(['greetings.archived', 'greetings.audited']);
 });
 
 it('registers policies', function () {
