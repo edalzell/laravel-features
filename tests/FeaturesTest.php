@@ -146,9 +146,7 @@ it('registers listeners, nested ones included, and clears the discovery callback
         ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
 });
 
-it('listens for a string event named by ListensTo, once per attribute', function () {
-    app()->instance('heard', collect());
-
+it('listens for every string event named by ListensTo', function () {
     (new Features(new OrdersServiceProvider(app())))->bootListeners();
 
     expect(Event::getRawListeners())

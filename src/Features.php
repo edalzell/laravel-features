@@ -539,7 +539,8 @@ class Features
     private function listenToAttributes(string $listener): void
     {
         collect((new ReflectionClass($listener))->getAttributes(ListensTo::class))
-            ->each(fn (ReflectionAttribute $attribute) => Event::listen($attribute->newInstance()->event, $listener));
+            ->flatMap(fn (ReflectionAttribute $attribute) => $attribute->newInstance()->events)
+            ->each(fn (string $event) => Event::listen($event, $listener));
     }
 
     /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
