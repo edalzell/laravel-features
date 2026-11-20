@@ -23,6 +23,7 @@ features/MyGreatFeature/
     ├── Console/Commands/
     ├── Listeners/
     ├── Policies/
+    ├── Subscribers/
     ├── Models/
     └── ServiceProvider.php
 ```
@@ -36,7 +37,9 @@ This is the part that fails silently — get a file in the wrong place and nothi
 | Phase | What | Source |
 |---|---|---|
 | **register()** | Config (merged), Migrations, Seeders (container binding), Translations, Views | `database/migrations/`, `lang/`, `resources/views/`, `config/` |
-| **boot()** | Commands, Config (published for `vendor:publish`), Listeners, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Console/Commands/`, `src/Listeners/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
+| **boot()** | Commands, Config (published for `vendor:publish`), Listeners, Subscribers, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Console/Commands/`, `src/Listeners/`, `src/Subscribers/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
+
+Listeners are discovered from the event `handle()` type-hints. A string or wildcard event (`eloquent.saved: *`) has no class to hint: map it in the provider's `listen()`, event name => listener(s). Classes under `src/Subscribers/` go to `Event::subscribe()`.
 
 Routes boot rather than register so a route file can use a macro (`Route::livewire()`) from a package registered later.
 
@@ -92,6 +95,7 @@ protected function configGroup(): string         // default: package short name 
 protected function configPublishHandle(): string  // default: kebab-cased feature name
 protected function publishesConfig(): bool        // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string         // default: derived from this class's own file location
+protected function listen(): array                // default: []; listeners for string and wildcard events
 protected function options(): array               // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array           // default: []; merged over the package defaults and any extension's groups
 ```

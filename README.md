@@ -31,7 +31,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Seeders, Translations, Views |
-| Boot | Commands, Config publishing, Listeners, Policies, Routes, Seeders, View publishing, then any [extensions](#extensions) — Livewire components ship as one |
+| Boot | Commands, Config publishing, Listeners, Subscribers, Policies, Routes, Seeders, View publishing, then any [extensions](#extensions) — Livewire components ship as one |
 
 Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-views`; the views land in `resources/views/vendor/{slug}`, where Laravel already looks for overrides of the `{slug}::` namespace.
 
@@ -78,6 +78,24 @@ class ApiVersion extends Extension
 ```
 
 Precedence, lowest to highest: defaults, extensions (last tagged wins), the feature's own `routeGroups()`.
+
+## Events
+
+Listeners under `src/Listeners` are discovered the way Laravel discovers an app's: the event is whatever `handle()` type-hints. A string or wildcard event has no class to type-hint, so map those in `listen()` on the feature's service provider, event name to listener(s):
+
+```php
+protected function listen(): array
+{
+    return [
+        'stripe-webhooks::charge.refunded' => RefundOrder::class,
+        'eloquent.saved: *' => [FlushCache::class],
+    ];
+}
+```
+
+A listener that is both discovered and mapped for the same event is registered once.
+
+Every class under `src/Subscribers`, nested ones included, is handed to `Event::subscribe()`.
 
 ## Livewire components
 
@@ -248,6 +266,7 @@ protected function configGroup(): string         // default: package short name 
 protected function configPublishHandle(): string // default: kebab-cased feature name
 protected function publishesConfig(): bool       // default: true unless `registerFeatures(publishesConfig: false)`; false still merges
 protected function featuresPath(): string        // default: derived from the provider's own location
+protected function listen(): array               // default: []; listeners for string and wildcard events
 protected function options(): array              // default: []; settings for extensions, e.g. ['livewire.namespace' => '']
 protected function routeGroups(): array          // default: []; merged over the package defaults and any extension's groups
 ```
