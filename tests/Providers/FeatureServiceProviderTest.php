@@ -14,6 +14,7 @@ use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordShipment;
 use Edalzell\Features\Tests\Fixtures\Orders\ServiceProvider as OrdersServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 it('publishes config', function () {
@@ -220,6 +221,12 @@ it('listens for the events in its listen() map', function () {
     event(new OrderPlaced);
 
     expect(app('heard')->all())->toBe([RecordShipment::class, 'orders.shipped', NotifyWarehouse::class]);
+});
+
+it('registers its subscribers via boot', function () {
+    (new OrdersServiceProvider(app()))->boot();
+
+    expect(Event::getRawListeners())->toHaveKey('cancellations.created');
 });
 
 class TestOptionsServiceProvider extends TestServiceProvider

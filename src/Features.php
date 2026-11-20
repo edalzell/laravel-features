@@ -172,6 +172,13 @@ class Features
         return $this;
     }
 
+    public function bootSubscribers(): static
+    {
+        $this->classes('Subscribers')->each(fn (string $subscriber) => Event::subscribe($subscriber));
+
+        return $this;
+    }
+
     /**
      * Published to where Laravel looks for overrides of the `{slug}::` namespace.
      */
@@ -400,6 +407,7 @@ class Features
             ->bootCommands()
             ->bootConfig()
             ->bootListeners()
+            ->bootSubscribers()
             ->bootPolicies()
             ->bootRoutes()
             ->bootSeeders()

@@ -179,6 +179,21 @@ it('registers a listener once when it is both discovered and in the listen map',
     expect(Event::getRawListeners()[OrderPlaced::class])->toHaveCount(1);
 });
 
+it('registers subscribers, nested ones included', function () {
+    (new Features(new OrdersServiceProvider(app())))->bootSubscribers();
+
+    expect(Event::getRawListeners())->toHaveKeys(['cancellations.created', 'refunds.created']);
+});
+
+it('wont register subscribers if there arent any', function () {
+    mockOnDemandDisk('features/TwoWords');
+    [$features] = mockFeatures();
+
+    Event::partialMock()->shouldNotReceive('subscribe');
+
+    $features->bootSubscribers();
+});
+
 it('registers policies', function () {
     $content = '<?php namespace Features\\TwoWords\\Policies; class PostPolicy {}';
 
