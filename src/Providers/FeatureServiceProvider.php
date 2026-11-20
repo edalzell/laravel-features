@@ -31,7 +31,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     public function boot(): void
     {
         $this->features
-            ->listen($this->listen())
             ->options($this->options())
             ->routeGroups($this->routeGroups())
             ->bootFeature($this->bootFeature(...));
@@ -65,22 +64,6 @@ abstract class FeatureServiceProvider extends LaravelServiceProvider
     protected function featuresPath(): string
     {
         return $this->directory();
-    }
-
-    /**
-     * Listeners for events that have no class for `handle()` to type-hint, so
-     * `src/Listeners` discovery can't find them. Event name => listener(s).
-     *
-     *     return [
-     *         'stripe-webhooks::charge.refunded' => RefundOrder::class, // a string event
-     *         'eloquent.saved: *' => [FlushCache::class],               // a wildcard
-     *     ];
-     *
-     * @return array<string, class-string|array<class-string>>
-     */
-    protected function listen(): array
-    {
-        return [];
     }
 
     protected function name(): string

@@ -8,9 +8,6 @@ use Edalzell\Features\Providers\FeatureServiceProvider;
 use Edalzell\Features\SeedersFacade;
 use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredServiceProvider;
 use Edalzell\Features\Tests\Fixtures\DeferredHost;
-use Edalzell\Features\Tests\Fixtures\Orders\Events\OrderPlaced;
-use Edalzell\Features\Tests\Fixtures\Orders\Listeners\NotifyWarehouse;
-use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordShipment;
 use Edalzell\Features\Tests\Fixtures\Orders\ServiceProvider as OrdersServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
@@ -210,17 +207,6 @@ it('reads its options at boot so they can depend on config', function () {
     config()->set('two-words.namespace', 'blog');
 
     $provider->boot();
-});
-
-it('listens for the events in its listen() map', function () {
-    app()->instance('heard', collect());
-
-    (new OrdersServiceProvider(app()))->boot();
-
-    event('orders.shipped');
-    event(new OrderPlaced);
-
-    expect(app('heard')->all())->toBe([RecordShipment::class, 'orders.shipped', NotifyWarehouse::class]);
 });
 
 it('registers its subscribers via boot', function () {

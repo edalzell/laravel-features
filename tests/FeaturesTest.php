@@ -8,7 +8,6 @@ use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredService
 use Edalzell\Features\Tests\Fixtures\DeferredHost;
 use Edalzell\Features\Tests\Fixtures\Orders\Events\OrderPlaced;
 use Edalzell\Features\Tests\Fixtures\Orders\Listeners\NotifyWarehouse;
-use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordOrderEvent;
 use Edalzell\Features\Tests\Fixtures\Orders\Listeners\RecordShipment;
 use Edalzell\Features\Tests\Fixtures\Orders\ServiceProvider as OrdersServiceProvider;
 use Edalzell\Features\Tests\Fixtures\Seeders\Beta;
@@ -147,36 +146,35 @@ it('registers listeners, nested ones included, and clears the discovery callback
         ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
 });
 
-it('listens for a string event from the listen map', function () {
+it('listens for a string event named by ListensTo, once per attribute', function () {
     app()->instance('heard', collect());
 
-    (new Features(new OrdersServiceProvider(app())))
-        ->listen(['orders.shipped' => RecordShipment::class])
-        ->bootListeners();
+    (new Features(new OrdersServiceProvider(app())))->bootListeners();
 
-    event('orders.shipped');
-
-    expect(app('heard')->all())->toBe([RecordShipment::class]);
+    expect(Event::getRawListeners())
+        ->toHaveKey('orders.shipped', [RecordShipment::class])
+        ->toHaveKey('orders.delivered', [RecordShipment::class]);
 });
 
-it('listens for a wildcard event from the listen map', function () {
+it('listens for a wildcard event named by ListensTo', function () {
     app()->instance('heard', collect());
 
-    (new Features(new OrdersServiceProvider(app())))
-        ->listen(['orders.*' => [RecordOrderEvent::class]])
-        ->bootListeners();
+    (new Features(new OrdersServiceProvider(app())))->bootListeners();
 
     event('orders.refunded');
 
     expect(app('heard')->all())->toBe(['orders.refunded']);
 });
 
-it('registers a listener once when it is both discovered and in the listen map', function () {
-    (new Features(new OrdersServiceProvider(app())))
-        ->listen([OrderPlaced::class => [NotifyWarehouse::class]])
-        ->bootListeners();
+it('keeps a listeners discovered event alongside its ListensTo one', function () {
+    app()->instance('heard', collect());
 
-    expect(Event::getRawListeners()[OrderPlaced::class])->toHaveCount(1);
+    (new Features(new OrdersServiceProvider(app())))->bootListeners();
+
+    event(new OrderPlaced);
+    event('orders.restocked');
+
+    expect(app('heard')->all())->toBe([NotifyWarehouse::class, NotifyWarehouse::class, 'orders.restocked']);
 });
 
 it('registers subscribers, nested ones included', function () {

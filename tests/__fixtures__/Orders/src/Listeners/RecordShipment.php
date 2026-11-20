@@ -2,6 +2,10 @@
 
 namespace Edalzell\Features\Tests\Fixtures\Orders\Listeners;
 
+use Edalzell\Features\Attributes\ListensTo;
+
+#[ListensTo('orders.shipped')]
+#[ListensTo('orders.delivered')]
 class RecordShipment
 {
     public function handle(): void

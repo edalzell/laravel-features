@@ -4,6 +4,7 @@ namespace Edalzell\Features;
 
 use Closure;
 use Edalzell\Features\Attributes\BootAfter;
+use Edalzell\Features\Attributes\ListensTo;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use LogicException;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -40,9 +42,6 @@ class Features
 
     /** @var Collection<int, Extension>|null */
     private ?Collection $extensions = null;
-
-    /** @var array<string, class-string|array<class-string>> */
-    private array $listen = [];
 
     private string $name;
 
@@ -132,8 +131,9 @@ class Features
     public function bootListeners(): static
     {
         collect($this->discoverEvents())
-            ->mergeRecursive(collect($this->listen)->map(Arr::wrap(...)))
             ->each(fn (array $listeners, string $event) => $this->listenTo($event, $listeners));
+
+        $this->classes('Listeners')->each(fn (string $listener) => $this->listenToAttributes($listener));
 
         return $this;
     }
@@ -235,19 +235,6 @@ class Features
     public function has(string $relative): bool
     {
         return file_exists($this->pathTo($relative));
-    }
-
-    /**
-     * Listeners for events discovery can't see: a string or wildcard event has
-     * no class for `handle()` to type-hint. Event name => listener(s).
-     *
-     * @param  array<string, class-string|array<class-string>>  $listen
-     */
-    public function listen(array $listen): static
-    {
-        $this->listen = $listen;
-
-        return $this;
     }
 
     public function name(string $name): static
@@ -536,20 +523,21 @@ class Features
         return implode($separator, array_filter($parts));
     }
 
-    /**
-     * Discovery names a listener `Class@handle`, the map names it `Class`; both are the same listener.
-     */
-    private function listenerKey(string $listener): string
-    {
-        return str_contains($listener, '@') ? $listener : "{$listener}@handle";
-    }
-
     /** @param  array<int, string>  $listeners */
     private function listenTo(string $event, array $listeners): void
     {
-        collect($listeners)
-            ->unique($this->listenerKey(...))
-            ->each(fn (string $listener) => Event::listen($event, $listener));
+        collect(array_unique($listeners))->each(fn (string $listener) => Event::listen($event, $listener));
+    }
+
+    /**
+     * `#[ListensTo]` names the events `handle()` can't type-hint: string and wildcard ones.
+     *
+     * @param  class-string  $listener
+     */
+    private function listenToAttributes(string $listener): void
+    {
+        collect((new ReflectionClass($listener))->getAttributes(ListensTo::class))
+            ->each(fn (ReflectionAttribute $attribute) => Event::listen($attribute->newInstance()->event, $listener));
     }
 
     /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */
