@@ -526,9 +526,7 @@ class Features
     /** @param  array<int, string>  $listeners */
     private function listenTo(string $event, array $listeners): void
     {
-        collect($listeners)
-            ->unique()
-            ->each(fn (string $listener) => Event::listen($event, $listener));
+        collect($listeners)->each(fn (string $listener) => Event::listen($event, $listener));
     }
 
     /**
