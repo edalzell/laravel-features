@@ -4,6 +4,7 @@ namespace Edalzell\Features;
 
 use Closure;
 use Edalzell\Features\Attributes\BootAfter;
+use Edalzell\Features\Attributes\ListensTo;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Seeder;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use LogicException;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -128,11 +130,10 @@ class Features
 
     public function bootListeners(): static
     {
-        foreach ($this->discoverEvents() as $event => $listeners) {
-            foreach (array_unique($listeners, SORT_REGULAR) as $listener) {
-                Event::listen($event, $listener);
-            }
-        }
+        collect($this->discoverEvents())
+            ->each(fn (array $listeners, string $event) => $this->listenTo($event, $listeners));
+
+        $this->classes('Listeners')->each(fn (string $listener) => $this->listenToAttributes($listener));
 
         return $this;
     }
@@ -167,6 +168,13 @@ class Features
     public function bootSeeders(): static
     {
         SeedersFacade::add(ClassFinder::classes($this->pathTo('database/seeders'), Seeder::class)->all());
+
+        return $this;
+    }
+
+    public function bootSubscribers(): static
+    {
+        $this->classes('Subscribers')->each(fn (string $subscriber) => Event::subscribe($subscriber));
 
         return $this;
     }
@@ -386,6 +394,7 @@ class Features
             ->bootCommands()
             ->bootConfig()
             ->bootListeners()
+            ->bootSubscribers()
             ->bootPolicies()
             ->bootRoutes()
             ->bootSeeders()
@@ -512,6 +521,24 @@ class Features
     private function join(string $separator, string ...$parts): string
     {
         return implode($separator, array_filter($parts));
+    }
+
+    /** @param  array<int, string>  $listeners */
+    private function listenTo(string $event, array $listeners): void
+    {
+        collect($listeners)->each(fn (string $listener) => Event::listen($event, $listener));
+    }
+
+    /**
+     * `#[ListensTo]` names the events `handle()` can't type-hint: string and wildcard ones.
+     *
+     * @param  class-string  $listener
+     */
+    private function listenToAttributes(string $listener): void
+    {
+        collect((new ReflectionClass($listener))->getAttributes(ListensTo::class))
+            ->flatMap(fn (ReflectionAttribute $attribute) => $attribute->newInstance()->events)
+            ->each(fn (string $event) => Event::listen($event, $listener));
     }
 
     /** @param  array<string, array<string, mixed>|Closure|class-string|null>  $groups */

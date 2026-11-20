@@ -10,6 +10,7 @@ use Edalzell\Features\Tests\Fixtures\Deferred\ServiceProvider as DeferredService
 use Edalzell\Features\Tests\Fixtures\DeferredHost;
 use Edalzell\Features\Tests\Fixtures\Sibling\ServiceProvider as SiblingServiceProvider;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 it('publishes config', function () {
@@ -205,6 +206,12 @@ it('reads its options at boot so they can depend on config', function () {
     config()->set('two-words.namespace', 'blog');
 
     $provider->boot();
+});
+
+it('registers its subscribers via boot', function () {
+    (new SiblingServiceProvider(app()))->boot();
+
+    expect(Event::getRawListeners())->toHaveKey('greetings.archived');
 });
 
 class TestOptionsServiceProvider extends TestServiceProvider

@@ -31,7 +31,7 @@ Each feature behaves like a mini Laravel app. The following are auto-registered 
 | Phase | What |
 |---|---|
 | Register | Config, Migrations, Seeders, Translations, Views |
-| Boot | Commands, Config publishing, Listeners, Policies, Routes, Seeders, View publishing, then any [extensions](#extensions) — Livewire components ship as one |
+| Boot | Commands, Config publishing, Listeners, Subscribers, Policies, Routes, Seeders, View publishing, then any [extensions](#extensions) — Livewire components ship as one |
 
 Config and views are offered to `vendor:publish` as `{slug}-config` and `{slug}-views`; the views land in `resources/views/vendor/{slug}`, where Laravel already looks for overrides of the `{slug}::` namespace.
 
@@ -78,6 +78,24 @@ class ApiVersion extends Extension
 ```
 
 Precedence, lowest to highest: defaults, extensions (last tagged wins), the feature's own `routeGroups()`.
+
+## Events
+
+Listeners under `src/Listeners` are discovered the way Laravel discovers an app's: the event is whatever `handle()` type-hints. A string or wildcard event has no class to type-hint, so name it with `#[ListensTo]` on the listener, which takes any number of events:
+
+```php
+use Edalzell\Features\Attributes\ListensTo;
+
+#[ListensTo('stripe-webhooks::charge.refunded', 'eloquent.saved: *')]
+class RefundOrder
+{
+    public function handle(): void {}
+}
+```
+
+The attribute adds to discovery, so don't also name an event `handle()` already type-hints.
+
+Every class under `src/Subscribers`, nested ones included, is handed to `Event::subscribe()`.
 
 ## Livewire components
 

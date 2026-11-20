@@ -23,6 +23,7 @@ features/MyGreatFeature/
     ├── Console/Commands/
     ├── Listeners/
     ├── Policies/
+    ├── Subscribers/
     ├── Models/
     └── ServiceProvider.php
 ```
@@ -36,7 +37,9 @@ This is the part that fails silently — get a file in the wrong place and nothi
 | Phase | What | Source |
 |---|---|---|
 | **register()** | Config (merged), Migrations, Seeders (container binding), Translations, Views | `database/migrations/`, `lang/`, `resources/views/`, `config/` |
-| **boot()** | Commands, Config (published for `vendor:publish`), Listeners, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Console/Commands/`, `src/Listeners/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
+| **boot()** | Commands, Config (published for `vendor:publish`), Listeners, Subscribers, Livewire components, Policies, Routes, Seeders (discovered & queued) | `src/Console/Commands/`, `src/Listeners/`, `src/Subscribers/`, `src/Livewire/`, `src/Policies/`, `routes/`, `database/seeders/` |
+
+Listeners are discovered from the event `handle()` type-hints. A string or wildcard event (`eloquent.saved: *`) has no class to hint: name it with `#[ListensTo('event', ...)]` (`Edalzell\Features\Attributes\ListensTo`) on the listener class. Classes under `src/Subscribers/` go to `Event::subscribe()`.
 
 Routes boot rather than register so a route file can use a macro (`Route::livewire()`) from a package registered later.
 

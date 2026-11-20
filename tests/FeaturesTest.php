@@ -142,6 +142,28 @@ it('registers listeners, nested ones included, and clears the discovery callback
         ->and(DiscoverEvents::$guessClassNamesUsingCallback)->toBeNull();
 });
 
+it('listens for every event named by ListensTo', function () {
+    (new Features(new SiblingServiceProvider(app())))->bootListeners();
+
+    expect(Event::getRawListeners())->toHaveKeys(['greetings.sent', 'greetings.read']);
+});
+
+it('listens for a wildcard event named by ListensTo', function () {
+    app()->instance('heard', collect());
+
+    (new Features(new SiblingServiceProvider(app())))->bootListeners();
+
+    event('greetings.waved');
+
+    expect(app('heard')->all())->toBe(['greetings.waved']);
+});
+
+it('registers subscribers, nested ones included', function () {
+    (new Features(new SiblingServiceProvider(app())))->bootSubscribers();
+
+    expect(Event::getRawListeners())->toHaveKeys(['greetings.archived', 'greetings.audited']);
+});
+
 it('registers policies', function () {
     $content = '<?php namespace Features\\TwoWords\\Policies; class PostPolicy {}';
 
